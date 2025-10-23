@@ -4,8 +4,9 @@ public class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("enter your user name");
-        string userName = Console.ReadLine()!;
-        Console.WriteLine($"{userName}, welcome to my first application");
+        Console.WriteLine("Enter your name: ");
+        string x = Console.ReadLine();
+        Console.WriteLine("{0}, wlecome to my first console application", x);
+        Console.ReadKey();
     }
 }
