@@ -14,6 +14,6 @@ partial class Program
     {
         Console.WriteLine("Enter your name: ");
         var x = Console.ReadLine()!;
-        Console.WriteLine("{0}, wlecome to my first console application", x);
+        Console.WriteLine("{0}, welcome to my first console application", x);
     }
 }
