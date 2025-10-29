@@ -4,19 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DO;
-
-public record Order
+namespace DO
 {
-    int Id,
-    OrderType Type,
-    string? Description = null;
-    int CustomerId;
-    DateTime ? OrderDate;
-    OrderStatus ? 
-    DeliveryTransport TransportMethod,
-    string ?  Address = null;
-    string? City = null;
-    string? Country = null;
-    string? ZipCode = null;
-}
+    public record Order
+    {
+        int Id,
+        OrderType Type,
+        double Latitude,
+        double Longitude,
+        string CustomerName,
+        string CustomerAddress,
+        string CustomerPhone,
+        DateTime OrderDate,
+        DeliveryTransport? Transport = null,
+        FragilityLevel? Fragility = null,
+        string? Description = null,
+        OrderStatus? Status = null;
+    }
+
+    public Order() : this(0, OrderType.Regular, 0.0, 0.0, string.Empty, string.Empty, string.Empty, DateTime.Now) { }
+    }
