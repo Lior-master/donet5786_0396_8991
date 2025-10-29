@@ -17,7 +17,7 @@ namespace DO;
 /// <param name="Transport">Primary transport mode used by the courier. See <see cref="DeliveryTransport"/>.</param>
 /// <param name="MaxDistance">
 /// Optional maximum delivery distance (in kilometers) that the courier is willing to travel.
-/// A value of <c>null</c> means no explicit maximum distance is set.
+/// A value of <c>null</c> means no explicit maximum distance is set .
 /// </param>
 public record Courier
 (
