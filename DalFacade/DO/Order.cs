@@ -8,15 +8,6 @@ namespace DO;
 
 public record Order
 {
-    int NextOrderId;
-    int NextDeliveryId;
-    DateTime Clock;
-    int BossId;
-    string BossPasword;
-    string? CompanyAdress = null;
-    double? Latitude = null;
-    double? Longitude = null;
-    double? MaxDistance = null;
     string CustomerName;
     string CustomerAddress;
     string CustomerPhone,
