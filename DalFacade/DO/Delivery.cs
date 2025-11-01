@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DO
+﻿namespace DO
 {
     /// <summary>
     /// Represents a delivery assignment linking an order to a courier, with timing,
@@ -27,7 +21,7 @@ namespace DO
     /// - Use UTC for time fields across services to avoid timezone issues.
     /// - Validate and sanitize any external input used to populate address or distance-related fields before persisting.
     /// </remarks>
-    public class Delivery
+    public record Delivery
     (
         int Id,
         int OrderId,
