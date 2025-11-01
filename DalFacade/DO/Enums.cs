@@ -11,17 +11,35 @@ public enum OrderStatus
     /// <summary>Order is currently being processed.</summary>
     Processing,
 
-    /// <summary>Order has been shipped and is in transit.</summary>
-    Shipped,
-
     /// <summary>Order has been delivered to the recipient.</summary>
     Delivered,
 
     /// <summary>Order was cancelled before shipment.</summary>
-    Cancelled,
+    Canceled,
 
     /// <summary>Order was returned after delivery.</summary>
     Returned
+}
+
+/// <summary>
+/// Outcome of a delivery attempt as reported by the courier or delivery subsystem.
+/// </summary>
+public enum DeliveredStatus
+{
+    /// <summary>Package successfully delivered to the recipient.</summary>
+    Delivered,
+
+    /// <summary>Recipient refused the delivery or returned the package on receipt.</summary>
+    Rejected,
+
+    /// <summary>Delivery was cancelled before completion (by sender, system or courier).</summary>
+    Canceled,
+
+    /// <summary>Recipient was absent at the delivery location when the courier attempted delivery.</summary>
+    Absent,
+
+    /// <summary>Delivery attempt failed due to an error (invalid address, vehicle issue, etc.).</summary>
+    Failed
 }
 
 /// <summary>
@@ -35,14 +53,11 @@ public enum DeliveryTransport
     /// <summary>Bike (eco-friendly, short distances).</summary>
     Bike,
 
-    /// <summary>Scooter or light motorized vehicle.</summary>
-    Scooter,
-
     /// <summary>Car (larger volumes or longer distances).</summary>
     Car,
 
-    /// <summary>Drone delivery (where supported).</summary>
-    Drone
+    /// <summary>foot delivery.</summary>
+    Foot
 }
 
 /// <summary>
@@ -97,4 +112,19 @@ public enum FragilityLevel
 
     /// <summary>Extremely fragile — special packaging and transport required.</summary>
     ExtremelyFragile
+}
+
+/// <summary>
+/// Schedule status indicating whether a delivery is on time, at risk of delay, or late.
+/// </summary>
+public enum ScheduleStatus
+{
+    /// <summary>Delivery is on schedule or ahead of expected time.</summary>
+    OnTime,
+
+    /// <summary>Delivery is at risk of being delayed;</summary>
+    InRisk,
+
+    /// <summary>Delivery has exceeded acceptable time thresholds and is considered late.</summary>
+    Late
 }

@@ -28,6 +28,8 @@ public record Order
     string CustomerAddress,
     string CustomerPhone,
     DateTime OrderDate,
+    double? size = null,
+    double? weight = null,
     double? Latitude = null,
     double? Longitude = null,
     FragilityLevel? Fragility = null,
