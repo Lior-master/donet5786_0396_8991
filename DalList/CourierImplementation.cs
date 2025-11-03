@@ -22,26 +22,54 @@ public class CourierImplementation : ICourier
 
     public void Delete(int id)
     {
-        throw new NotImplementedException();
+        foreach(var it in DataSource.Couriers) // check all courier in courier list
+        {
+            if (it.Id == id)
+            {
+                DataSource.Couriers.Remove(it);
+                return;
+            }
+        }
+        throw new InvalidOperationException($"Object Courier whit ID {id} doesnt exist"); // if not found
     }
 
     public void DeleteAll()
     {
-        throw new NotImplementedException();
+        foreach(var it in DataSource.Couriers)
+        {
+            DataSource.Couriers.Remove(it);
+        }
     }
 
     public Courier? Read(int id)
     {
-        throw new NotImplementedException();
+        foreach(var it in DataSource.Couriers) // check all courier in courier list
+        {
+            if (it.Id == id)
+            {
+                return it;
+            }
+        }
+        return null; // if not found
+
     }
 
     public List<Courier> ReadAll()
     {
-        throw new NotImplementedException();
+        return new List<Courier>(DataSource.Couriers);
     }
 
     public void Update(Courier item)
     {
-        throw new NotImplementedException();
+        foreach(var it in DataSource.Couriers) // check all courier in courier list
+        {
+            if (it.Id == item.Id)
+            {
+                DataSource.Couriers.Remove(it);
+                DataSource.Couriers.Add(item);
+                return;
+            }
+        }
+        throw new InvalidOperationException($"Object Courier whit ID {item.Id} doesnt exist"); // if not found
     }
 }
