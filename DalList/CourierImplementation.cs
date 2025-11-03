@@ -7,8 +7,17 @@ public class CourierImplementation : ICourier
 {
     public void Create(Courier item)
     {
+        if (item == null) {
+            throw new ArgumentNullException("item cannot be null");
+        }
+        foreach(var it in DataSource.Couriers)
+        {
+            if (it.Id == item.Id)
+            {
+                throw new InvalidOperationException($"Courier with Id {item.Id} already exists.");
+            }
+        }
         DataSource.Couriers.Add(item);
-        throw new NotImplementedException();
     }
 
     public void Delete(int id)
