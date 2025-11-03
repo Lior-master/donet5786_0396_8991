@@ -1,40 +1,102 @@
 ﻿namespace Dal;
 
+/// <summary>
+/// Global configuration settings used by the DAL.
+/// All members are static and the class is initialized once via the static constructor.
+/// </summary>
 internal static class Config
 {
+    /// <summary>
+    /// Starting order identifier (constant).
+    /// </summary>
+    internal const int NextOrderId = 1000;
 
-    internal const int startOrderId = 1000;
-    internal const int startDeliveryId = 2000;
+    /// <summary>
+    /// Starting delivery identifier (constant).
+    /// </summary>
+    internal const int NextDeliveryId = 5000;
 
-    internal static int nextOrderId = startOrderId;
-    internal static int nextDeliveryId = startDeliveryId;
+    /// <summary>
+    /// Global clock used by the DAL (current or simulated time).
+    /// </summary>
+    internal static DateTime Clock;
 
-    internal static int NextOrderId => nextOrderId++;
-    internal static int NextDeliveryId => nextDeliveryId++;
+    /// <summary>
+    /// Boss / administrator identifier.
+    /// </summary>
+    internal static int BossId;
 
-    internal static DateTime Clock { get; set; } = DateTime.Now;
+    /// <summary>
+    /// Boss / administrator password.
+    /// </summary>
+    internal static string BossPassword;
 
-    internal static int BossId { get; set; } = 0;
-    internal static string BossPassword { get; set; } = string.Empty; // modifiable plus tard
+    /// <summary>
+    /// Average car speed in km/h.
+    /// </summary>
+    internal static double CarSpeed = 40; // in km/h
 
-    internal static string CompanyAddress { get; set; } = string.Empty;
-    internal static double Latitude { get; set; } = 0;
-    internal static double Longitude { get; set; } = 0;
+    /// <summary>
+    /// Average motorcycle speed in km/h.
+    /// </summary>
+    internal static double MotorcycleSpeed = 50; // in km/h
 
-    internal static double SpeedOfCar { get; set; } = 0;
-    internal static double SpeedOfMotorBike { get; set; } = 0;
-    internal static double SpeedOfBike { get; set; } = 0;
-    internal static double SpeedOfWalking { get; set; } = 0;
+    /// <summary>
+    /// Average bicycle speed in km/h.
+    /// </summary>
+    internal static double BikeSpeed = 20; // in km/h
 
-    internal static double MaxDistance { get; set; } = 0; 
-    internal static TimeSpan MaxDeliveryTimeRange { get; set; } = TimeSpan.FromHours(3);
-    internal static TimeSpan RiskRange { get; set; } = TimeSpan.FromHours(2);
-    internal static TimeSpan InactivityTime { get; set; } = TimeSpan.FromHours(1);
+    /// <summary>
+    /// Average walking speed in km/h.
+    /// </summary>
+    internal static double WalkingSpeed = 5; // in km/h
 
-    internal static void Reset()
+    /// <summary>
+    /// Maximum allowed delivery time span.
+    /// </summary>
+    internal static TimeSpan MaxTimeDelivery;
+
+    /// <summary>
+    /// Time range after which a delivery is considered at risk.
+    /// </summary>
+    internal static TimeSpan RiskRange;
+
+    /// <summary>
+    /// Inactivity time after which the courier is considered inactive.
+    /// </summary>
+    internal static TimeSpan Inactivity;
+
+    /// <summary>
+    /// Company address, if known.
+    /// </summary>
+    internal static string? CompanyAddress = null;
+
+    /// <summary>
+    /// Company latitude, if known.
+    /// </summary>
+    internal static double? Latitude = null;
+
+    /// <summary>
+    /// Company longitude, if known.
+    /// </summary>
+    internal static double? Longitude = null;
+
+    /// <summary>
+    /// Maximum delivery distance, if applicable.
+    /// </summary>
+    internal static double? MaxDistance = null;
+
+    /// <summary>
+    /// Static constructor: initializes default values for the configuration.
+    /// Executes once before the first use of the class.
+    /// </summary>
+    static Config()
     {
-        nextOrderId = startOrderId;
-        nextDeliveryId = startDeliveryId;
         Clock = DateTime.Now;
+        BossId = 0;
+        BossPassword = "";
+        MaxTimeDelivery = TimeSpan.FromHours(1);
+        RiskRange = TimeSpan.FromMinutes(30);
+        Inactivity = TimeSpan.FromDays(30);
     }
 }
