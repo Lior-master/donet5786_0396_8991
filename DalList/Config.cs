@@ -1,6 +1,6 @@
 ﻿namespace Dal;
 
-public static class Config
+internal static class Config
 {
 
     internal const int startOrderId = 1000;
