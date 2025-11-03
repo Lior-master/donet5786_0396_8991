@@ -22,7 +22,7 @@ public class CourierImplementation : ICourier
 
     public void Delete(int id)
     {
-        foreach(var it in DataSource.Couriers)
+        foreach(var it in DataSource.Couriers) // check all courier in courier list
         {
             if (it.Id == id)
             {
@@ -30,12 +30,12 @@ public class CourierImplementation : ICourier
                 return;
             }
         }
-        throw new InvalidOperationException($"There are not Courier whit this ID: {id}");
+        throw new InvalidOperationException($"Object Courier whit ID {id} doesnt exist"); // if not found
     }
 
     public void DeleteAll()
     {
-        foreach(var it in DataSource.Couriers.ToList())
+        foreach(var it in DataSource.Couriers)
         {
             DataSource.Couriers.Remove(it);
         }
@@ -43,14 +43,15 @@ public class CourierImplementation : ICourier
 
     public Courier? Read(int id)
     {
-        foreach(var it in DataSource.Couriers)
+        foreach(var it in DataSource.Couriers) // check all courier in courier list
         {
             if (it.Id == id)
             {
                 return it;
             }
         }
-        throw new InvalidOperationException($"There are not Courier whit this ID: {id}");
+        return null; // if not found
+
     }
 
     public List<Courier> ReadAll()
@@ -60,6 +61,15 @@ public class CourierImplementation : ICourier
 
     public void Update(Courier item)
     {
-        throw new NotImplementedException();
+        foreach(var it in DataSource.Couriers) // check all courier in courier list
+        {
+            if (it.Id == item.Id)
+            {
+                DataSource.Couriers.Remove(it);
+                DataSource.Couriers.Add(item);
+                return;
+            }
+        }
+        throw new InvalidOperationException($"Object Courier whit ID {item.Id} doesnt exist"); // if not found
     }
 }
