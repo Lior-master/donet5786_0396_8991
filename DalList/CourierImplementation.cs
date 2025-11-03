@@ -6,16 +6,10 @@ using System.Collections.Generic;
 public class CourierImplementation : ICourier
 {
     public void Create(Courier item)
-    {
-        if (item == null) {
-            throw new ArgumentNullException("item cannot be null");
-        }
-        foreach(var it in DataSource.Couriers)
+    {        
+        if(Read(item.Id) != null) // check if courier with same id already exists
         {
-            if (it.Id == item.Id)
-            {
-                throw new InvalidOperationException($"Courier with Id {item.Id} already exists.");
-            }
+            throw new InvalidOperationException($"Object Courier whit ID {item.Id} already exists");
         }
         DataSource.Couriers.Add(item);
     }

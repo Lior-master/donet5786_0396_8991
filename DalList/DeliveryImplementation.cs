@@ -6,20 +6,8 @@ public class DeliveryImplementation : IDelivery
 {
     public void Create(Delivery item)
     {
-        // Vérifie si l'ID existe déjà
-        if (item == null)
-        {
-            throw new ArgumentNullException("item cannot be null");
-        }
-        foreach (var it in DataSource.Deliveries)
-        {
-            if (it.Id == item.Id)
-            {
-                throw new InvalidOperationException($"Courier with Id {item.Id} already exists.");
-            }
-        }
-        // Ajouter la livraison à la liste
-        DataSource.Deliveries.Add(item);
+        Delivery clone = item with { Id = Config.NextDeliveryIdValue };
+        DataSource.Deliveries.Add(clone);
     }
 
 

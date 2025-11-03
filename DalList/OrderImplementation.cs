@@ -6,7 +6,8 @@ public class OrderImplementation : IOrder
 {
     public void Create(Order item)
     {
-        throw new NotImplementedException();
+        Order clone = item with { Id = Config.NextOrderId };
+        DataSource.Orders.Add(clone);
     }
 
     public void Delete(int id)
