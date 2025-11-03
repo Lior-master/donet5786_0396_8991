@@ -34,6 +34,8 @@ public class DeliveryImplementation : IDelivery
             }
         }
 
+        // If id not found, act accordingly (consistently with Update): throw an exception.
+        throw new InvalidOperationException($"Delivery with Id {id} does not exist.");
     }
 
     public void DeleteAll()
@@ -61,11 +63,12 @@ public class DeliveryImplementation : IDelivery
 
     public void Update(Delivery item)
     {
-        for (int i = 0; i < DataSource.Deliveries.Count; i++)
+        foreach (var it in DataSource.Deliveries)
         {
-            if (DataSource.Deliveries[i].Id == item.Id)
+            if (it.Id == item.Id)
             {
-                DataSource.Deliveries[i] = item;
+                DataSource.Deliveries.Remove(it);
+                DataSource.Deliveries.Add(item);
                 return;
             }
         }
