@@ -12,8 +12,13 @@ public interface IConfig
     double BikeSpeed { get; set; }
     double WalkingSpeed { get; set; }
     TimeSpan MaxTimeDelivery { get; set; }
-    TimeSpan MinTimeDelivery { get; set; }
-    double MaxSpeedDelivery { get; set; }
+    TimeSpan RiskRange { get; set; }
+    TimeSpan Inactivity { get; set; }
+    string CompanyAdress { get; set; }
+    double Latitude { get; set; }
+    double Longitude { get; set; }
+    double MaxDistance { get; set; }
+
 
     void Reset();
 }
