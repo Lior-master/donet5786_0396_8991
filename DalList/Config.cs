@@ -9,12 +9,32 @@ internal static class Config
     /// <summary>
     /// Starting order identifier (constant).
     /// </summary>
-    internal const int NextOrderId = 1000;
+    internal const int InitialOrderId = 1000;
+
+    /// <summary>
+    /// Backing field for <see cref="NextOrderId"/>.
+    /// </summary>
+    private static int nextOrderId = InitialOrderId;
+
+    /// <summary>
+    /// Returns the next available order identifier and advances the internal counter.
+    /// </summary>
+    internal static int NextOrderId { get => nextOrderId++; }
 
     /// <summary>
     /// Starting delivery identifier (constant).
     /// </summary>
     internal const int NextDeliveryId = 5000;
+
+    /// <summary>
+    /// Backing field for <see cref="NextDeliveryIdValue"/>.
+    /// </summary>
+    private static int nextDeliveryId = NextDeliveryId;
+
+    /// <summary>
+    /// Returns the next available delivery identifier and advances the internal counter.
+    /// </summary>
+    internal static int NextDeliveryIdValue { get => nextDeliveryId++; }
 
     /// <summary>
     /// Global clock used by the DAL (current or simulated time).
@@ -98,5 +118,21 @@ internal static class Config
         MaxTimeDelivery = TimeSpan.FromHours(1);
         RiskRange = TimeSpan.FromMinutes(30);
         Inactivity = TimeSpan.FromDays(30);
+    }
+
+    internal static void Reset()
+    {
+        nextOrderId = InitialOrderId;
+        nextDeliveryId = NextDeliveryId;
+        Clock = DateTime.Now;
+        BossId = 0;
+        BossPassword = "";
+        MaxTimeDelivery = TimeSpan.FromHours(1);
+        RiskRange = TimeSpan.FromMinutes(30);
+        Inactivity = TimeSpan.FromDays(30);
+        CompanyAddress = null;
+        Latitude = null;
+        Longitude = null;
+        MaxDistance = null;
     }
 }
