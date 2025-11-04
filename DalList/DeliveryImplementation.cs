@@ -23,7 +23,7 @@ public class DeliveryImplementation : IDelivery
         }
 
         // If id not found, act accordingly (consistently with Update): throw an exception.
-        throw new Exception($"Delivery with Id {id} does not exist.");
+        throw new InvalidOperationException($"Delivery with Id {id} does not exist.");
     }
 
     public void DeleteAll()
@@ -60,6 +60,6 @@ public class DeliveryImplementation : IDelivery
                 return;
             }
         }
-        throw new Exception($"Delivery with Id {item.Id} does not exist.");
+        throw new InvalidOperationException($"Delivery with Id {item.Id} does not exist.");
     }
 }

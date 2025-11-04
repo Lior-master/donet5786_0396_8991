@@ -49,5 +49,5 @@ public record Order
     /// - Description = null
     /// - Status = null
     /// </remarks>
-    public Order() : this(0, OrderType.Standard, string.Empty, string.Empty, string.Empty, DateTime.Now) { }
+public Order() : this(0, OrderStatus.Pending, string.Empty, string.Empty, string.Empty, DateTime.Now) { }
 }
