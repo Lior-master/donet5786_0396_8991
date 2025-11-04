@@ -7,10 +7,6 @@ public class CourierImplementation : ICourier
 {
     public void Create(Courier item)
     {        
-        if(Read(item.Id) != null) // check if courier with same id already exists
-        {
-            throw new InvalidOperationException($"Object Courier whit ID {item.Id} already exists");
-        }
         DataSource.Couriers.Add(item);
     }
 
@@ -24,15 +20,12 @@ public class CourierImplementation : ICourier
                 return;
             }
         }
-        throw new InvalidOperationException($"Object Courier whit ID {id} doesnt exist"); // if not found
+        throw new Exception($"Object Courier whit ID {id} doesnt exist"); // if not found
     }
 
     public void DeleteAll()
     {
-        foreach(var it in DataSource.Couriers)
-        {
-            DataSource.Couriers.Remove(it);
-        }
+        DataSource.Couriers.Clear();
     }
 
     public Courier? Read(int id)
@@ -63,6 +56,6 @@ public class CourierImplementation : ICourier
                 return;
             }
         }
-        throw new InvalidOperationException($"Object Courier whit ID {item.Id} doesnt exist"); // if not found
+        throw new Exception($"Object Courier whit ID {item.Id} doesnt exist"); // if not found
     }
 }

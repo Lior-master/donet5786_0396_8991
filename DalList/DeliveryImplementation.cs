@@ -13,11 +13,11 @@ public class DeliveryImplementation : IDelivery
 
     public void Delete(int id)
     {
-        for (int i = 0; i < DataSource.Deliveries.Count; i++)
+        foreach (var it in DataSource.Deliveries)
         {
-            if (DataSource.Deliveries[i].Id == id)
+            if (it.Id == id)
             {
-                DataSource.Deliveries.RemoveAt(i);
+                DataSource.Deliveries.Remove(it);
                 return;
             }
         }

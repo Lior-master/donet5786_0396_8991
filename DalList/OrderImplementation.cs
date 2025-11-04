@@ -20,7 +20,7 @@ public class OrderImplementation : IOrder
                 return;
             }
         }
-        throw new InvalidOperationException($"Object Order whit ID {id} doesnt exist"); // if not found
+        throw new Exception($"Object Order whit ID {id} doesnt exist"); // if not found
     }
 
     public void DeleteAll()
@@ -60,7 +60,7 @@ public class OrderImplementation : IOrder
                 return;
             }
         }
-        throw new InvalidOperationException($"Object Order whit ID {item.Id} doesnt exist"); // if not found
+        throw new Exception($"Object Order whit ID {item.Id} doesnt exist"); // if not found
     }
 
 }

@@ -83,7 +83,7 @@ public static class Initialization
             (
                 Id: 0,
                 CustomerName: $"Customer_{i + 1}",
-                CustomerAddress: addresses[s_rand.Next(0,6)].Street,
+                CustomerAddress: addresses[s_rand.Next(0,5)].Street,
                 CustomerPhone: $"+200000000{i + 1:D2}",
                 Status: status,
                 OrderDate: DateTime.Now.AddHours(-s_rand.Next(0, 48))
@@ -101,7 +101,7 @@ public static class Initialization
         for (int i = 0; i < 50; i++)
         {
             // 1️ Choose a random order
-            int orderId = s_rand.Next(1, 61);
+            int orderId = s_rand.Next(1, 60);
             Order? order = s_dalOrder!.Read(orderId);
             if (order == null)
                 continue;
