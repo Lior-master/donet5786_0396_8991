@@ -73,9 +73,11 @@ internal class Program
                         string? phone = Console.ReadLine();
                         Console.Write("Enter email: ");
                         string? email = Console.ReadLine();
+                        Console.Write("Enter Id: ");
+                        int ID = int.Parse(Console.ReadLine() ?? "0");
 
                         Courier newCourier = new Courier(
-                            Id: 0,
+                            Id: ID,
                             Name: name ?? "Unknown",
                             Phone: phone ?? "0000000000",
                             Email: email ?? "none@gmail.com",

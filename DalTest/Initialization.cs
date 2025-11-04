@@ -52,7 +52,7 @@ public static class Initialization
 
             Courier courier = new Courier
             (
-                Id: 0,
+                Id: i+100001,
                 Name: $"Courier_{i + 1}",
                 Phone: $"+100000000{i + 1:D2}",
                 Email: $"Courier_{i + 1}@gmail.com",
