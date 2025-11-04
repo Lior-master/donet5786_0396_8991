@@ -48,7 +48,7 @@ internal class Program
                     case Menu.Initialize:
                         
                         Initialization.Do(s_dalCourier, s_dalOrder, s_dalDelivery, s_dalConfig);
-                        Console.WriteLine("✅ Data initialized successfully!");
+                        Console.WriteLine("Data initialized successfully!");
                         break;
 
                     case Menu.ShowAllCouriers:
@@ -87,7 +87,7 @@ internal class Program
                         );
 
                         s_dalCourier!.Create(newCourier);
-                        Console.WriteLine("✅ Courier added successfully!");
+                        Console.WriteLine("Courier added successfully!");
                         break;
 
                     case Menu.ReadCourier:
@@ -97,18 +97,18 @@ internal class Program
                         if (courier != null)
                             Console.WriteLine(courier);
                         else
-                            Console.WriteLine("❌ Courier not found.");
+                            Console.WriteLine("Courier not found.");
                         break;
 
                     case Menu.DeleteCourier:
                         Console.Write("Enter courier ID to delete: ");
                         int idDel = int.Parse(Console.ReadLine() ?? "0");
                         s_dalCourier!.Delete(idDel);
-                        Console.WriteLine("✅ Courier deleted.");
+                        Console.WriteLine("Courier deleted.");
                         break;
 
                     case Menu.Exit:
-                        Console.WriteLine("👋 Exiting program...");
+                        Console.WriteLine("Exiting program...");
                         break;
 
                     default:

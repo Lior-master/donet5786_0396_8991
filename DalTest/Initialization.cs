@@ -94,135 +94,39 @@ public static class Initialization
 
     private static void createDeliveries()
     {
-        // Keep track of each courier’s last delivery end time
-        List<int> courierIds = new List<int>();
-        List<DateTime> courierEndTimes = new List<DateTime>();
+        Console.WriteLine("Initializing Delivery list...");
 
-        for (int i = 0; i < 50; i++)
+        // Get all existing orders and couriers
+        var orders = s_dalOrder!.ReadAll().ToList();
+        var couriers = s_dalCourier!.ReadAll().ToList();
+
+        if (orders.Count == 0 || couriers.Count == 0)
         {
-            // 1️ Choose a random order
-            int orderId = s_rand.Next(1, 60);
-            Order? order = s_dalOrder!.Read(orderId);
-            if (order == null)
-                continue;
+            Console.WriteLine("No orders or couriers to create deliveries.");
+            return;
+        }
 
-            // 2️ Find the customer's address
-            Adresses? addr = null;
-            foreach (var a in addresses)
-            {
-                if (a.Street == order.CustomerAddress)
-                {
-                    addr = a;
-                    break;
-                }
-            }
-            if (addr == null)
-                continue;
+        for (int i = 0; i < 50 && i < orders.Count; i++)
+        {
+            // Pick a random order
+            Order order = orders[s_rand.Next(0, orders.Count)];
 
-            // 3️ Find couriers who can handle this order
-            List<Courier> possibleCouriers = new List<Courier>();
+            // Pick a random courier compatible with the order
+            Courier courier = couriers[s_rand.Next(0, couriers.Count)];
 
-            foreach (var courier in s_dalCourier!.ReadAll())
-            {
-                if (courier != null && courier.IsActive)
-                {
-                    double distance = 0;
+            // Random pickup time (past 24h)
+            DateTime pickup = DateTime.Now.AddMinutes(-s_rand.Next(0, 1440));
 
-                    // Choose the correct distance according to transport type
-                    if (courier.Transport == DeliveryTransport.Foot)
-                        distance = addr.DistanceWalkingFromCompany;
-                    else if (courier.Transport == DeliveryTransport.Bike)
-                        distance = addr.DistanceWalkingFromCompany;
-                    else if (courier.Transport == DeliveryTransport.Motorcycle)
-                        distance = addr.DistanceCarFromCompany;
-                    else if (courier.Transport == DeliveryTransport.Car)
-                        distance = addr.DistanceCarFromCompany;
-                    else
-                        distance = addr.DistanceFromCompany;
-
-                    // Check if the courier can deliver this distance
-                    if (courier.MaxDistance >= distance)
-                        possibleCouriers.Add(courier);
-                }
-            }
-
-            if (possibleCouriers.Count == 0)
-                continue;
-
-            // 4️ Pick a random eligible courier
-            Courier chosen = possibleCouriers[s_rand.Next(possibleCouriers.Count)];
-
-            // 5️ Calculate distance and delivery duration
-            double deliveryDistance = 0;
-            double deliveryTimeMinutes = 0;
-
-            if (chosen.Transport == DeliveryTransport.Foot)
-            {
-                deliveryDistance = addr.DistanceWalkingFromCompany;
-                deliveryTimeMinutes = deliveryDistance * 15; // about 4 km/h
-            }
-            else if (chosen.Transport == DeliveryTransport.Bike)
-            {
-                deliveryDistance = addr.DistanceWalkingFromCompany;
-                deliveryTimeMinutes = deliveryDistance * 6; // about 10 km/h
-            }
-            else if (chosen.Transport == DeliveryTransport.Motorcycle)
-            {
-                deliveryDistance = addr.DistanceCarFromCompany;
-                deliveryTimeMinutes = deliveryDistance * 2; // about 30 km/h
-            }
-            else if (chosen.Transport == DeliveryTransport.Car)
-            {
-                deliveryDistance = addr.DistanceCarFromCompany;
-                deliveryTimeMinutes = deliveryDistance * 1.5; // about 40 km/h
-            }
-            else
-            {
-                deliveryDistance = addr.DistanceFromCompany;
-                deliveryTimeMinutes = deliveryDistance * 10;
-            }
-
-            // 6️ Determine pickup time
-            DateTime pickupTime = DateTime.Now.AddMinutes(-s_rand.Next(0, 1440));
-
-            // Check if this courier already has a previous delivery
-            bool found = false;
-            for (int j = 0; j < courierIds.Count; j++)
-            {
-                if (courierIds[j] == chosen.Id)
-                {
-                    found = true;
-                    // If the courier is still busy, delay the next pickup
-                    if (pickupTime < courierEndTimes[j])
-                    {
-                        pickupTime = courierEndTimes[j].AddMinutes(10); // 10 min break
-                    }
-                    // Update this courier's last delivery end time
-                    courierEndTimes[j] = pickupTime.AddMinutes(deliveryTimeMinutes);
-                    break;
-                }
-            }
-
-            // If this courier has no previous deliveries, add them to the tracking lists
-            if (!found)
-            {
-                courierIds.Add(chosen.Id);
-                courierEndTimes.Add(pickupTime.AddMinutes(deliveryTimeMinutes));
-            }
-
-            // 7️ Create the delivery
+            // Create delivery
             Delivery delivery = new Delivery
             (
                 Id: 0,
-                OrderId: orderId,
-                CourierId: chosen.Id,
-                PickupTime: pickupTime,
-                Transport: chosen.Transport,
-                Distance: deliveryDistance,
-                ArrivalTime: pickupTime.AddMinutes(deliveryTimeMinutes)
+                OrderId: order.Id,
+                CourierId: courier.Id,
+                PickupTime: pickup,
+                Transport: courier.Transport
             );
 
-            // 8️ Save the delivery in DAL
             s_dalDelivery!.Create(delivery);
         }
     }
