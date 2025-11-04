@@ -12,6 +12,25 @@ public static class Initialization
 
     private static readonly Random s_rand = new();
 
+    public class Adresses
+    {
+        public string Street { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public double DistanceFromCompany { get; set; }
+        public double DistanceWalkingFromCompany { get; set; }
+
+        public Adresses(string street, double latitude, double longitude, double distanceFromCompany, double distanceWalkingFromCompany)
+        {
+            Street = street;
+            Latitude = latitude;
+            Longitude = longitude;
+            DistanceFromCompany = distanceFromCompany;
+            DistanceWalkingFromCompany = distanceWalkingFromCompany;
+        }
+
+    }
+
     private static void createCouriers()
     {
         for (int i = 0; i < 25; i++)
@@ -85,4 +104,15 @@ public static class Initialization
 
         }
     }
+    public static Adresses[] addresses = new Adresses[]
+    {
+        new Adresses("123 Main St", 40.7128, -74.0060, 5.0, 6.0),
+        new Adresses("456 Elm St", 34.0522, -118.2437, 10.0, 12.0),
+        new Adresses("789 Oak St", 41.8781, -87.6298, 15.0, 18.0),
+        new Adresses("101 Pine St", 29.7604, -95.3698, 20.0, 24.0),
+        new Adresses("202 Maple St", 39.7392, -104.9903, 25.0, 30.0)
+    };
+
 }
+
+
