@@ -9,7 +9,7 @@ public class CourierImplementation : ICourier
     {        
         if(Read(item.Id) != null) // check if courier with same id already exists
         {
-            throw new InvalidOperationException($"Object Courier whit ID {item.Id} already exists");
+            throw new Exception($"Object Courier whit ID {item.Id} already exists");
         }
         DataSource.Couriers.Add(item);
     }
@@ -24,7 +24,7 @@ public class CourierImplementation : ICourier
                 return;
             }
         }
-        throw new InvalidOperationException($"Object Courier whit ID {id} doesnt exist"); // if not found
+        throw new Exception($"Object Courier whit ID {id} doesnt exist"); // if not found
     }
 
     public void DeleteAll()
@@ -63,6 +63,6 @@ public class CourierImplementation : ICourier
                 return;
             }
         }
-        throw new InvalidOperationException($"Object Courier whit ID {item.Id} doesnt exist"); // if not found
+        throw new Exception($"Object Courier whit ID {item.Id} doesnt exist"); // if not found
     }
 }
