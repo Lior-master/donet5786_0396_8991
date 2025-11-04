@@ -19,14 +19,16 @@ public static class Initialization
         public double Longitude { get; set; }
         public double DistanceFromCompany { get; set; }
         public double DistanceWalkingFromCompany { get; set; }
+        public double DistanceCarFromCompany { get; set; } 
 
-        public Adresses(string street, double latitude, double longitude, double distanceFromCompany, double distanceWalkingFromCompany)
+        public Adresses(string street, double latitude, double longitude, double distanceFromCompany, double distanceWalkingFromCompany, double distanceCarFromCompany)
         {
             Street = street;
             Latitude = latitude;
             Longitude = longitude;
             DistanceFromCompany = distanceFromCompany;
             DistanceWalkingFromCompany = distanceWalkingFromCompany;
+            DistanceCarFromCompany = distanceCarFromCompany;
         }
 
     }
@@ -112,12 +114,14 @@ public static class Initialization
     
     public static Adresses[] addresses = new Adresses[]
     {
-        new Adresses("123 Main St", 40.7128, -74.0060, 5.0, 6.0),
-        new Adresses("456 Elm St", 34.0522, -118.2437, 10.0, 12.0),
-        new Adresses("789 Oak St", 41.8781, -87.6298, 15.0, 18.0),
-        new Adresses("101 Pine St", 29.7604, -95.3698, 20.0, 24.0),
-        new Adresses("202 Maple St", 39.7392, -104.9903, 25.0, 30.0)
+        new Adresses("2 Kadish Luz St", 31.759170644410922, 35.18416389561243, 2.2, 2.6, 3.3),
+        new Adresses("21 Vaad Haleumi St",31.76503763226389, 35.19018701095478, 1.5, 12.0, 3.7),
+        new Adresses("42 Bayit Vagan St", 31.768730189008583, 35.184873153283796, 1.1, 18.0, 2.5),
+        new Adresses("24 Ouziel St", 31.770329906428557, 35.1847366055818, 0.9, 24.0, 1.8),
+        new Adresses("30 Barouh Duvdevani St", 31.761875305999634, 35.19177485143465, 1.9, 30.0, 3.3)
     };
+    public static Adresses CompanyAdress = new Adresses("22 Hameyasdim St", 31.778449894212013, 35.18761502733661, 0.0, 0.0, 0.0);
+   
 
 }
 
