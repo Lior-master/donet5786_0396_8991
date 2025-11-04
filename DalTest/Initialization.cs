@@ -91,6 +91,7 @@ public static class Initialization
             s_dalOrder!.Create(order);
         }
     }
+
     private static void createDeliveries()
     {
         // Keep track of each courier’s last delivery end time
@@ -226,7 +227,7 @@ public static class Initialization
         }
     }
 
-    public static Adresses[] addresses = new Adresses[]
+    private static Adresses[] addresses = new Adresses[]
     {
         new Adresses("2 Kadish Luz St", 31.759170644410922, 35.18416389561243, 2.2, 2.6, 3.3),
         new Adresses("21 Vaad Haleumi St",31.76503763226389, 35.19018701095478, 1.5, 12.0, 3.7),
@@ -234,9 +235,27 @@ public static class Initialization
         new Adresses("24 Ouziel St", 31.770329906428557, 35.1847366055818, 0.9, 24.0, 1.8),
         new Adresses("30 Barouh Duvdevani St", 31.761875305999634, 35.19177485143465, 1.9, 30.0, 3.3)
     };
+
     public static Adresses CompanyAdress = new Adresses("22 Hameyasdim St", 31.778449894212013, 35.18761502733661, 0.0, 0.0, 0.0);
    
+    public static void Do(ICourier? dalCourier, IOrder? dalOrder, IDelivery? dalDelivery, IConfig? dalConfig)
+    {
+        s_dalCourier = dalCourier ?? throw new NullReferenceException("DAL object cannot be null!");
+        s_dalOrder = dalOrder ?? throw new NullReferenceException("DAL object cannot be null!");
+        s_dalDelivery = dalDelivery ?? throw new NullReferenceException("DAL object cannot be null!");
+        s_dalConfig = dalConfig ?? throw new NullReferenceException("DAL object cannot be null!");
 
+        Console.WriteLine("Reset Configaration values and List values...");
+        s_dalConfig.Reset();
+        s_dalCourier.DeleteAll();
+        s_dalOrder.DeleteAll();
+        s_dalDelivery.DeleteAll();
+
+        Console.WriteLine("Initializing Delivery list...");
+        createCouriers();
+        createOrders();
+        createDeliveries();
+    }
 }
 
 
