@@ -68,4 +68,21 @@ public static class Initialization
             s_dalOrder!.Create(order);
         }
     }
+    private static void createDeliveries()
+    {
+        for (int i = 0; i < 50; i++)
+        {
+            Delivery Delivery = new Delivery
+            (
+                Id: 0,
+                OrderId: s_rand.Next(1, 51),
+                CourierId: s_rand.Next(1, 26),
+                PickupTime: DateTime.Now.AddMinutes(-s_rand.Next(0, 1440)),
+                Transport: (DeliveryTransport)s_rand.Next(0, 4)
+            );
+            s_dalDelivery!.Create(Delivery);
+
+
+        }
+    }
 }

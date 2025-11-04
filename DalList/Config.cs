@@ -44,7 +44,7 @@ internal static class Config
     /// <summary>
     /// Boss / administrator identifier.
     /// </summary>
-    internal static int BossId;
+    internal static int BossId ;
 
     /// <summary>
     /// Boss / administrator password.
