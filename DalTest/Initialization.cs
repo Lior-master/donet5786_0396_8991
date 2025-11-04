@@ -91,19 +91,25 @@ public static class Initialization
     {
         for (int i = 0; i < 50; i++)
         {
-            Delivery Delivery = new Delivery
+            int orderId = s_rand.Next(1, 61);  
+            int courierId = s_rand.Next(1, 26); 
+
+            DateTime pickupTime = DateTime.Now.AddMinutes(-s_rand.Next(0, 1440));
+
+            Delivery delivery = new Delivery
             (
                 Id: 0,
-                OrderId: s_rand.Next(1, 51),
-                CourierId: s_rand.Next(1, 26),
-                PickupTime: DateTime.Now.AddMinutes(-s_rand.Next(0, 1440)),
+                OrderId: orderId,
+                CourierId: courierId,
+                PickupTime: pickupTime,
                 Transport: (DeliveryTransport)s_rand.Next(0, 4)
             );
-            s_dalDelivery!.Create(Delivery);
 
-
+            s_dalDelivery!.Create(delivery);
         }
     }
+
+    
     public static Adresses[] addresses = new Adresses[]
     {
         new Adresses("123 Main St", 40.7128, -74.0060, 5.0, 6.0),
