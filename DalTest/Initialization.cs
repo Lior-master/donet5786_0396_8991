@@ -1,7 +1,9 @@
 ﻿namespace DalTest;
 
-using DO;
+using Dal;
 using DalApi;
+using DO;
+using System.Diagnostics.Metrics;
 
 public static class Initialization
 {
@@ -30,7 +32,7 @@ public static class Initialization
             DistanceWalkingFromCompany = distanceWalkingFromCompany;
             DistanceCarFromCompany = distanceCarFromCompany;
         }
-
+        // methode pour calculer la distance entre deux points geographiques si besoin
     }
 
     private static void createCouriers()
@@ -42,9 +44,9 @@ public static class Initialization
             double maxDistance = transport switch
             {
                 DeliveryTransport.Foot => s_rand.Next(0, 3),   // 0–2 km
-                DeliveryTransport.Bike => s_rand.Next(0, 8),   // 0–7 km
-                DeliveryTransport.Motorcycle => s_rand.Next(0, 15), // 0–14 km
-                DeliveryTransport.Car => s_rand.Next(0, 50), // 0–49 km
+                DeliveryTransport.Bike => s_rand.Next(3, 8),   // 3–7 km
+                DeliveryTransport.Motorcycle => s_rand.Next(8, 15), // 8–14 km
+                DeliveryTransport.Car => s_rand.Next(15, 50), // 15–49 km
                 _ => 1
             };
 
@@ -81,7 +83,7 @@ public static class Initialization
             (
                 Id: 0,
                 CustomerName: $"Customer_{i + 1}",
-                CustomerAddress: $"Address_{i + 1}",
+                CustomerAddress: addresses[s_rand.Next(0,6)].Street,
                 CustomerPhone: $"+200000000{i + 1:D2}",
                 Status: status,
                 OrderDate: DateTime.Now.AddHours(-s_rand.Next(0, 48))
@@ -93,25 +95,70 @@ public static class Initialization
     {
         for (int i = 0; i < 50; i++)
         {
-            int orderId = s_rand.Next(1, 61);  
-            int courierId = s_rand.Next(1, 26); 
+            // 1️ Choose an existing order at random
+            int orderId = s_rand.Next(1, 61);
+            Order order = s_dalOrder!.Read(orderId);
 
-            DateTime pickupTime = DateTime.Now.AddMinutes(-s_rand.Next(0, 1440));
+            // 2️ Find the address corresponding to that order
+            Adresses? addr = null;
+            foreach (var a in addresses)
+            {
+                if (a.Street == order.CustomerAddress)
+                {
+                    addr = a;
+                    break;
+                }
+            }
+            // 3️ Build a list of couriers who can deliver this order
+            List<Courier> possibleCouriers = new List<Courier>();
 
+            foreach (var courier in s_dalCourier!.ReadAll())
+            {
+                if (courier != null && courier.IsActive)
+                {
+                    double distance = 0;
+
+                    // Calculate appropriate distance based on the courier's transport
+                    if (courier.Transport == DeliveryTransport.Foot)
+                        distance = addr.DistanceWalkingFromCompany;
+                    else if (courier.Transport == DeliveryTransport.Bike)
+                        distance = addr.DistanceWalkingFromCompany; // bike ≈ walking
+                    else if (courier.Transport == DeliveryTransport.Motorcycle)
+                        distance = addr.DistanceCarFromCompany;     // motorcycle ≈ car
+                    else if (courier.Transport == DeliveryTransport.Car)
+                        distance = addr.DistanceCarFromCompany;
+                    else
+                        distance = addr.DistanceFromCompany;
+
+                    // Check if the courier can deliver this distance
+                    if (courier.MaxDistance >= distance)
+                    {
+                        possibleCouriers.Add(courier);
+                    }
+                }
+            }
+
+            // 4️ If no courier can deliver -> skip
+            if (possibleCouriers.Count == 0)
+                continue;
+
+            // 5️ Pick a random courier among valid ones
+            Courier chosen = possibleCouriers[s_rand.Next(possibleCouriers.Count)];
+
+            // 6 Create the delivery
             Delivery delivery = new Delivery
             (
                 Id: 0,
                 OrderId: orderId,
-                CourierId: courierId,
-                PickupTime: pickupTime,
-                Transport: (DeliveryTransport)s_rand.Next(0, 4)
+                CourierId: chosen.Id,
+                PickupTime: DateTime.Now.AddMinutes(-s_rand.Next(0, 1440)), 
+                Transport: chosen.Transport
             );
-
             s_dalDelivery!.Create(delivery);
         }
     }
 
-    
+
     public static Adresses[] addresses = new Adresses[]
     {
         new Adresses("2 Kadish Luz St", 31.759170644410922, 35.18416389561243, 2.2, 2.6, 3.3),

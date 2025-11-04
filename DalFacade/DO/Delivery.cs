@@ -25,11 +25,11 @@
     (
         int Id,
         int OrderId,
+        DeliveryTransport Transport,
         int CourierId,
         DateTime PickupTime,
         DateTime? ArrivalTime = null,
         double? Distance = null,
-        DeliveryTransport Transport = DeliveryTransport.Car,
         OrderStatus? Status = null
     )
     {
@@ -47,6 +47,6 @@
         /// - Transport = <see cref="DeliveryTransport.Car"/>
         /// - Status = <see cref="OrderStatus.Pending"/> (may be null depending on caller)
         /// </remarks>
-        public Delivery() : this(0, 0, 0, DateTime.Now) { }
+        public Delivery() : this(0, 0,DeliveryTransport.Car, 0, DateTime.Now) { }
     }
 }
