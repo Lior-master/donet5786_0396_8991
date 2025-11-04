@@ -36,7 +36,7 @@ public static class Initialization
                 Password: "password",
                 IsActive: s_rand.Next(0, 5) % 2 == 0,
                 Transport: transport,
-                StartDate: DateTime.Now.AddDays(-s_rand.Next(0, 365)),
+                StartDate: DateTime.Now.AddDays(s_rand.Next(-365, 0)),
                 MaxDistance: maxDistance
             );
 
@@ -46,16 +46,25 @@ public static class Initialization
 
     private static void createOrders()
     {
-        for (int i = 0; i < 50; i++)
+        for (int i = 0; i < 60; i++)
         {
+            OrderStatus status;
+            if (i < 25)
+                status = OrderStatus.Pending;
+            else if (i < 37)
+                status = OrderStatus.Processing;
+            else
+                status = (OrderStatus)s_rand.Next(2, 5);
+
             Order order = new Order
             (
                 Id: 0,
                 CustomerName: $"Customer_{i + 1}",
                 CustomerAddress: $"Address_{i + 1}",
-                OrderTime: DateTime.Now.AddMinutes(-s_rand.Next(0, 1440)),
-                Weight: s_rand.Next(1, 10),
-                Status: OrderStatus.Pending);
+                CustomerPhone: $"+200000000{i + 1:D2}",
+                Status: status,
+                OrderDate: DateTime.Now.AddDays(-s_rand.Next(0, 365))
+            );
             s_dalOrder!.Create(order);
         }
     }

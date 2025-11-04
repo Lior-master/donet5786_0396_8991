@@ -23,7 +23,7 @@
 public record Order
 (
     int Id,
-    OrderType Type,
+    OrderStatus Status,
     string CustomerName,
     string CustomerAddress,
     string CustomerPhone,
