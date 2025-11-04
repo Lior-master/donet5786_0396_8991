@@ -93,13 +93,19 @@ public static class Initialization
     }
     private static void createDeliveries()
     {
+        // Keep track of each courier’s last delivery end time
+        List<int> courierIds = new List<int>();
+        List<DateTime> courierEndTimes = new List<DateTime>();
+
         for (int i = 0; i < 50; i++)
         {
-            // 1️ Choose an existing order at random
+            // 1️ Choose a random order
             int orderId = s_rand.Next(1, 61);
-            Order order = s_dalOrder!.Read(orderId);
+            Order? order = s_dalOrder!.Read(orderId);
+            if (order == null)
+                continue;
 
-            // 2️ Find the address corresponding to that order
+            // 2️ Find the customer's address
             Adresses? addr = null;
             foreach (var a in addresses)
             {
@@ -109,7 +115,10 @@ public static class Initialization
                     break;
                 }
             }
-            // 3️ Build a list of couriers who can deliver this order
+            if (addr == null)
+                continue;
+
+            // 3️ Find couriers who can handle this order
             List<Courier> possibleCouriers = new List<Courier>();
 
             foreach (var courier in s_dalCourier!.ReadAll())
@@ -118,13 +127,13 @@ public static class Initialization
                 {
                     double distance = 0;
 
-                    // Calculate appropriate distance based on the courier's transport
+                    // Choose the correct distance according to transport type
                     if (courier.Transport == DeliveryTransport.Foot)
                         distance = addr.DistanceWalkingFromCompany;
                     else if (courier.Transport == DeliveryTransport.Bike)
-                        distance = addr.DistanceWalkingFromCompany; // bike ≈ walking
+                        distance = addr.DistanceWalkingFromCompany;
                     else if (courier.Transport == DeliveryTransport.Motorcycle)
-                        distance = addr.DistanceCarFromCompany;     // motorcycle ≈ car
+                        distance = addr.DistanceCarFromCompany;
                     else if (courier.Transport == DeliveryTransport.Car)
                         distance = addr.DistanceCarFromCompany;
                     else
@@ -132,32 +141,90 @@ public static class Initialization
 
                     // Check if the courier can deliver this distance
                     if (courier.MaxDistance >= distance)
-                    {
                         possibleCouriers.Add(courier);
-                    }
                 }
             }
 
-            // 4️ If no courier can deliver -> skip
             if (possibleCouriers.Count == 0)
                 continue;
 
-            // 5️ Pick a random courier among valid ones
+            // 4️ Pick a random eligible courier
             Courier chosen = possibleCouriers[s_rand.Next(possibleCouriers.Count)];
 
-            // 6 Create the delivery
+            // 5️ Calculate distance and delivery duration
+            double deliveryDistance = 0;
+            double deliveryTimeMinutes = 0;
+
+            if (chosen.Transport == DeliveryTransport.Foot)
+            {
+                deliveryDistance = addr.DistanceWalkingFromCompany;
+                deliveryTimeMinutes = deliveryDistance * 15; // about 4 km/h
+            }
+            else if (chosen.Transport == DeliveryTransport.Bike)
+            {
+                deliveryDistance = addr.DistanceWalkingFromCompany;
+                deliveryTimeMinutes = deliveryDistance * 6; // about 10 km/h
+            }
+            else if (chosen.Transport == DeliveryTransport.Motorcycle)
+            {
+                deliveryDistance = addr.DistanceCarFromCompany;
+                deliveryTimeMinutes = deliveryDistance * 2; // about 30 km/h
+            }
+            else if (chosen.Transport == DeliveryTransport.Car)
+            {
+                deliveryDistance = addr.DistanceCarFromCompany;
+                deliveryTimeMinutes = deliveryDistance * 1.5; // about 40 km/h
+            }
+            else
+            {
+                deliveryDistance = addr.DistanceFromCompany;
+                deliveryTimeMinutes = deliveryDistance * 10;
+            }
+
+            // 6️ Determine pickup time
+            DateTime pickupTime = DateTime.Now.AddMinutes(-s_rand.Next(0, 1440));
+
+            // Check if this courier already has a previous delivery
+            bool found = false;
+            for (int j = 0; j < courierIds.Count; j++)
+            {
+                if (courierIds[j] == chosen.Id)
+                {
+                    found = true;
+                    // If the courier is still busy, delay the next pickup
+                    if (pickupTime < courierEndTimes[j])
+                    {
+                        pickupTime = courierEndTimes[j].AddMinutes(10); // 10 min break
+                    }
+                    // Update this courier's last delivery end time
+                    courierEndTimes[j] = pickupTime.AddMinutes(deliveryTimeMinutes);
+                    break;
+                }
+            }
+
+            // If this courier has no previous deliveries, add them to the tracking lists
+            if (!found)
+            {
+                courierIds.Add(chosen.Id);
+                courierEndTimes.Add(pickupTime.AddMinutes(deliveryTimeMinutes));
+            }
+
+            // 7️ Create the delivery
             Delivery delivery = new Delivery
             (
                 Id: 0,
                 OrderId: orderId,
                 CourierId: chosen.Id,
-                PickupTime: DateTime.Now.AddMinutes(-s_rand.Next(0, 1440)), 
-                Transport: chosen.Transport
+                PickupTime: pickupTime,
+                Transport: chosen.Transport,
+                Distance: deliveryDistance,
+                ArrivalTime: pickupTime.AddMinutes(deliveryTimeMinutes)
             );
+
+            // 8️ Save the delivery in DAL
             s_dalDelivery!.Create(delivery);
         }
     }
-
 
     public static Adresses[] addresses = new Adresses[]
     {
