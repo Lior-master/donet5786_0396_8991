@@ -63,7 +63,7 @@ public static class Initialization
                 CustomerAddress: $"Address_{i + 1}",
                 CustomerPhone: $"+200000000{i + 1:D2}",
                 Status: status,
-                OrderDate: DateTime.Now.AddDays(-s_rand.Next(0, 365))
+                OrderDate: DateTime.Now.AddHours(-s_rand.Next(0, 48))
             );
             s_dalOrder!.Create(order);
         }
