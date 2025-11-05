@@ -7,12 +7,13 @@ using System.Diagnostics.Metrics;
 
 public static class Initialization
 {
-    private static ICourier? s_dalCourier;
-    private static IDelivery? s_dalDelivery;
-    private static IOrder? s_dalOrder;
-    private static IConfig? s_dalConfig;
+   
+    private static IDal? s_dal;
 
     private static readonly Random s_rand = new();
+    private const int MIN_ID = 200000000;
+    private const int MAX_ID = 400000000;
+
 
     public class Adresses
     {
@@ -63,7 +64,7 @@ public static class Initialization
                 MaxDistance: maxDistance
             );
 
-            s_dalCourier!.Create(courier);
+            s_dal!.Courier.Create(courier);
         }
     }
 
@@ -88,7 +89,7 @@ public static class Initialization
                 Status: status,
                 OrderDate: DateTime.Now.AddHours(-s_rand.Next(0, 48))
             );
-            s_dalOrder!.Create(order);
+            s_dal!.Order.Create(order);
         }
     }
 
@@ -97,8 +98,8 @@ public static class Initialization
         Console.WriteLine("Initializing Delivery list...");
 
         // Get all existing orders and couriers
-        var orders = s_dalOrder!.ReadAll().ToList();
-        var couriers = s_dalCourier!.ReadAll().ToList();
+        var orders = s_dal!.Order.ReadAll().ToList();
+        var couriers = s_dal!.Courier.ReadAll().ToList();
 
         if (orders.Count == 0 || couriers.Count == 0)
         {
@@ -127,7 +128,7 @@ public static class Initialization
                 Transport: courier.Transport
             );
 
-            s_dalDelivery!.Create(delivery);
+            s_dal!.Delivery.Create(delivery);
         }
     }
 
@@ -141,19 +142,14 @@ public static class Initialization
     };
 
     public static Adresses CompanyAdress = new Adresses("22 Hameyasdim St", 31.778449894212013, 35.18761502733661, 0.0, 0.0, 0.0);
-   
-    public static void Do(ICourier? dalCourier, IOrder? dalOrder, IDelivery? dalDelivery, IConfig? dalConfig)
+
+    public static void Do(IDal dal) 
+
     {
-        s_dalCourier = dalCourier ?? throw new NullReferenceException("DAL object cannot be null!");
-        s_dalOrder = dalOrder ?? throw new NullReferenceException("DAL object cannot be null!");
-        s_dalDelivery = dalDelivery ?? throw new NullReferenceException("DAL object cannot be null!");
-        s_dalConfig = dalConfig ?? throw new NullReferenceException("DAL object cannot be null!");
+        s_dal = dal ?? throw new NullReferenceException("DAL object can not be null!");
 
         Console.WriteLine("Reset Configaration values and List values...");
-        s_dalConfig.Reset();
-        s_dalCourier.DeleteAll();
-        s_dalOrder.DeleteAll();
-        s_dalDelivery.DeleteAll();
+        s_dal.ResetDB();
 
         Console.WriteLine("Initializing Delivery list...");
         createCouriers();

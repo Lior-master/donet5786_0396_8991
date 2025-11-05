@@ -6,10 +6,7 @@ namespace DalTest;
 
 internal class Program
 {
-    private static ICourier? s_dalCourier = new CourierImplementation();
-    private static IDelivery? s_dalDelivery = new DeliveryImplementation();
-    private static IOrder? s_dalOrder = new OrderImplementation();
-    private static IConfig? s_dalConfig = new ConfigImplementation();
+    static readonly IDal s_dal = new DalList();
 
     private enum Menu
     {
@@ -47,22 +44,22 @@ internal class Program
                 {
                     case Menu.Initialize:
                         
-                        Initialization.Do(s_dalCourier, s_dalOrder, s_dalDelivery, s_dalConfig);
+                        Initialization.Do(s_dal);
                         Console.WriteLine("Data initialized successfully!");
                         break;
 
                     case Menu.ShowAllCouriers:
-                        foreach (var c in s_dalCourier!.ReadAll())
+                        foreach (var c in s_dal!.Courier.ReadAll())
                             Console.WriteLine(c);
                         break;
 
                     case Menu.ShowAllOrders:
-                        foreach (var o in s_dalOrder!.ReadAll())
+                        foreach (var o in s_dal!.Order.ReadAll())
                             Console.WriteLine(o);
                         break;
 
                     case Menu.ShowAllDeliveries:
-                        foreach (var d in s_dalDelivery!.ReadAll())
+                        foreach (var d in s_dal!.Delivery.ReadAll())
                             Console.WriteLine(d);
                         break;
 
@@ -88,14 +85,14 @@ internal class Program
                             MaxDistance: 10
                         );
 
-                        s_dalCourier!.Create(newCourier);
+                        s_dal!.Courier.Create(newCourier);
                         Console.WriteLine("Courier added successfully!");
                         break;
 
                     case Menu.ReadCourier:
                         Console.Write("Enter courier ID: ");
                         int id = int.Parse(Console.ReadLine() ?? "0");
-                        Courier? courier = s_dalCourier!.Read(id);
+                        Courier? courier = s_dal!.Courier.Read(id);
                         if (courier != null)
                             Console.WriteLine(courier);
                         else
@@ -105,7 +102,7 @@ internal class Program
                     case Menu.DeleteCourier:
                         Console.Write("Enter courier ID to delete: ");
                         int idDel = int.Parse(Console.ReadLine() ?? "0");
-                        s_dalCourier!.Delete(idDel);
+                        s_dal!.Courier .Delete(idDel);
                         Console.WriteLine("Courier deleted.");
                         break;
 

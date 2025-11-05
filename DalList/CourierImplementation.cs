@@ -30,19 +30,18 @@ internal class CourierImplementation : ICourier
 
     public Courier? Read(int id)
     {
-        foreach(var it in DataSource.Couriers) // check all courier in courier list
-        {
-            if (it.Id == id)
-            {
-                return it;
-            }
-        }
-        return null; // if not found
+        return DataSource.Couriers.FirstOrDefault(item => item.Id == id);
     }
 
-    public List<Courier> ReadAll()
+    public IEnumerable<Courier> ReadAll(Func<Courier, bool>? filter = null)
     {
-        return new List<Courier>(DataSource.Couriers);
+       foreach (var item in DataSource.Couriers)
+        {
+            if (filter == null || filter(item))
+            {
+                yield return item;
+            }
+        }
     }
 
     public void Update(Courier item)

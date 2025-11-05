@@ -33,20 +33,19 @@ internal class OrderImplementation : IOrder
 
     public Order? Read(int id)
     {
-        foreach (var it in DataSource.Orders) // check all order in orders list
-        {
-            if (it.Id == id)
-            {
-                return it;
-            }
-        }
-        return null; // if not found
+        return DataSource.Orders.FirstOrDefault(item => item.Id == id);
 
     }
 
-    public List<Order> ReadAll()
+    public IEnumerable<Order> ReadAll(Func<Order, bool>? filter = null)
     {
-        return new List<Order>(DataSource.Orders);
+        foreach (var item in DataSource.Orders)
+        {
+            if (filter == null || filter(item))
+            {
+                yield return item;
+            }
+        }
     }
 
     public void Update(Order item)

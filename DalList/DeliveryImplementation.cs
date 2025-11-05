@@ -34,19 +34,18 @@ internal class DeliveryImplementation : IDelivery
 
     public Delivery? Read(int id)
     {
-        foreach (var item in DataSource.Deliveries)
-        {
-            if (item.Id == id)
-            {
-                return item;
-            }
-        }
-        return null;
+        return DataSource.Deliveries.FirstOrDefault(item => item.Id == id);
     }
 
-    public List<Delivery> ReadAll()
+    public IEnumerable<Delivery> ReadAll(Func<Delivery, bool>? filter = null)
     {
-        return new List<Delivery>(DataSource.Deliveries);
+        foreach (var item in DataSource.Deliveries)
+        {
+            if (filter == null || filter(item))
+            {
+                yield return item;
+            }
+        }
     }
 
     public void Update(Delivery item)
