@@ -2,7 +2,7 @@
 using DalApi;
 using DO;
 
-public class OrderImplementation : IOrder
+internal class OrderImplementation : IOrder
 {
     public void Create(Order item)
     {

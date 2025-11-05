@@ -2,7 +2,7 @@
 using DalApi;
 using DO;
 
-public class DeliveryImplementation : IDelivery
+internal class DeliveryImplementation : IDelivery
 {
     public void Create(Delivery item)
     {
