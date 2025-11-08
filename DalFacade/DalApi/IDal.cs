@@ -1,13 +1,10 @@
-﻿
-namespace DalApi
+﻿namespace DalApi;
+
+public interface IDal
 {
-    public interface IDal
-    {
-        IOrder Order { get; }
-        ICourier Courier { get; }
-        IDelivery Delivery { get; }
+    IOrder Order { get; }
+    ICourier Courier { get; }
+    IDelivery Delivery { get; }
 
-        void ResetDB();
-    }
-
+    void ResetDB();
 }

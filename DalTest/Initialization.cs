@@ -95,8 +95,6 @@ public static class Initialization
 
     private static void createDeliveries()
     {
-        Console.WriteLine("Initializing Delivery list...");
-
         // Get all existing orders and couriers
         var orders = s_dal!.Order.ReadAll().ToList();
         var couriers = s_dal!.Courier.ReadAll().ToList();
