@@ -95,8 +95,6 @@ public static class Initialization
 
     private static void createDeliveries()
     {
-        Console.WriteLine("Initializing Delivery list...");
-
         // Get all existing orders and couriers
         var orders = s_dal!.Order.ReadAll().ToList();
         var couriers = s_dal!.Courier.ReadAll().ToList();
@@ -146,7 +144,7 @@ public static class Initialization
     public static void Do(IDal dal) 
 
     {
-        s_dal = dal ?? throw new NullReferenceException("DAL object can not be null!");
+        s_dal = dal ?? throw new DalNullReferenceException("DAL object can not be null!");
 
         Console.WriteLine("Reset Configaration values and List values...");
         s_dal.ResetDB();

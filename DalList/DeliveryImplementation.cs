@@ -23,7 +23,7 @@ internal class DeliveryImplementation : IDelivery
         }
 
         // If id not found, act accordingly (consistently with Update): throw an exception.
-        throw new InvalidOperationException($"Delivery with Id {id} does not exist.");
+        throw new DalDoesNotExistException($"Delivery with Id {id} does not exist.");
     }
 
     public void DeleteAll()
@@ -59,6 +59,6 @@ internal class DeliveryImplementation : IDelivery
                 return;
             }
         }
-        throw new InvalidOperationException($"Delivery with Id {item.Id} does not exist.");
+        throw new DalDoesNotExistException($"Delivery with Id {item.Id} does not exist.");
     }
 }

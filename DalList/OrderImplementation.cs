@@ -20,7 +20,7 @@ internal class OrderImplementation : IOrder
                 return;
             }
         }
-        throw new Exception($"Object Order whit ID {id} doesnt exist"); // if not found
+        throw new DalDoesNotExistException($"Object Order whit ID {id} doesnt exist"); // if not found
     }
 
     public void DeleteAll()
@@ -59,7 +59,7 @@ internal class OrderImplementation : IOrder
                 return;
             }
         }
-        throw new Exception($"Object Order whit ID {item.Id} doesnt exist"); // if not found
+        throw new DalDoesNotExistException($"Object Order whit ID {item.Id} doesnt exist"); // if not found
     }
 
 }
