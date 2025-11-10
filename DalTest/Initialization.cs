@@ -144,7 +144,7 @@ public static class Initialization
     public static void Do(IDal dal) 
 
     {
-        s_dal = dal ?? throw new NullReferenceException("DAL object can not be null!");
+        s_dal = dal ?? throw new DalNullReferenceException("DAL object can not be null!");
 
         Console.WriteLine("Reset Configaration values and List values...");
         s_dal.ResetDB();
