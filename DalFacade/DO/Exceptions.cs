@@ -1,6 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿namespace DO;
 
-namespace DO;
 [Serializable]
 public class DalDoesNotExistException : Exception
 {
