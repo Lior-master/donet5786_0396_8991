@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
+  <NextOrderId>1000</NextOrderId>
+  <NextDeliveryId>5000</NextDeliveryId>
+  <Clock>2025-11-18T12:00:00</Clock>
+  <BossId>0</BossId>
+  <BossPassword></BossPassword>
+  <CarSpeed>40</CarSpeed>
+  <MotorcycleSpeed>50</MotorcycleSpeed>
+  <BikeSpeed>20</BikeSpeed>
+  <WalkingSpeed>5</WalkingSpeed>
+  <!-- MaxTimeDelivery is stored as hours -->
+  <MaxTimeDelivery>1</MaxTimeDelivery>
+  <!-- RiskRange is stored as minutes -->
+  <RiskRange>30</RiskRange>
+  <!-- Inactivity is stored as days -->
+  <Inactivity>30</Inactivity>
+  <CompanyAddress></CompanyAddress>
+  <Latitude></Latitude>
+  <Longitude></Longitude>
+  <MaxDistance></MaxDistance>
 </config>
-
 
