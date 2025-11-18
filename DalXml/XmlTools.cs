@@ -114,6 +114,30 @@ static class XMLTools
         root.Element(elemName)?.SetValue((elemVal).ToString());
         XMLTools.SaveListToXMLElement(root, xmlFileName);
     }
+    public static double? GetConfigDoubleVal(string xmlFileName, string elemName)
+    {
+        XElement root = XMLTools.LoadListFromXMLElement(xmlFileName);
+        double? num = root.ToDoubleNullable(elemName) ?? throw new DalFormatException($"can't convert:  {xmlFileName}, {elemName}");
+        return num;
+    }
+    public static void SetConfigDoubleVal(string xmlFileName, string elemName, double elemVal)
+    {
+        XElement root = XMLTools.LoadListFromXMLElement(xmlFileName);
+        root.Element(elemName)?.SetValue((elemVal).ToString());
+        XMLTools.SaveListToXMLElement(root, xmlFileName);
+    }
+    public static string? GetConfigStringVal(string xmlFileName, string elemName)
+    {
+        XElement root = XMLTools.LoadListFromXMLElement(xmlFileName);
+        string? str = (string?)root.Element(elemName) ?? throw new DalFormatException($"can't convert:  {xmlFileName}, {elemName}");
+        return str;
+    }
+    public static void SetConfigStringVal(string xmlFileName, string elemName, string elemVal)
+    {
+        XElement root = XMLTools.LoadListFromXMLElement(xmlFileName);
+        root.Element(elemName)?.SetValue(elemVal);
+        XMLTools.SaveListToXMLElement(root, xmlFileName);
+    }
     #endregion
 
 
