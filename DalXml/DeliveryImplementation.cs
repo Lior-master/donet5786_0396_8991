@@ -1,14 +1,28 @@
 ﻿namespace Dal;
 using DalApi;
 using DO;
+using System.Xml.Linq;
 
 internal class DeliveryImplementation : IDelivery
 {
+    static Delivery getDelivery(XElement d)
+    {
+        return new DO.Delivery()
+        {
+            Id = d.ToIntNullable("Id") ?? throw new DalFormatException("cant convert id"),
+            OrderId = d.ToIntNullable("OrderId") ?? throw new DalFormatException("cant convert order id"),
+            Transport = d.ToEnumNullable<DeliveryTransport>("Transport") ?? DeliveryTransport.Car,
+            CourierId = d.ToIntNullable("CourierId") ?? 0,
+            PickupTime = d.ToDateTimeNullable("PickupTime") ?? DateTime.Now,
+            ArrivalTime = d.ToDateTimeNullable("ArrivalTime"),
+            Distance = d.ToDoubleNullable("Distance"),
+            Status = d.ToEnumNullable<OrderStatus>("Status")
+        };
+    }
+
     public void Create(Delivery item)
     {
-        List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
-        deliveries.Add(item);
-        XmlTools.SaveListToXMLSerializer(deliveries, Config.s_deliveries_xml);
+        throw new NotImplementedException();
     }
 
     public void Delete(int id)
@@ -35,13 +49,9 @@ internal class DeliveryImplementation : IDelivery
 
     public Delivery? Read(int id)
     {
-        List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
-        foreach (var item in deliveries)
-        {
-            if (item.Id == id)
-                return item;
-        }
-        return null;
+        XElement? deliveryElem = XmlTools.LoadListFromXMLElement(Config.s_deliveries_xml).Elements()
+            .FirstOrDefault(d => (int?)d.Element("Id") == id);
+        return deliveryElem == null ? null : getDelivery(deliveryElem);
     }
 
     public IEnumerable<Delivery> ReadAll(Func<Delivery, bool>? filter = null)

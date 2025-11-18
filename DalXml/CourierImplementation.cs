@@ -1,9 +1,24 @@
 ﻿namespace Dal;
 using DalApi;
 using DO;
+using System.Xml.Linq;
 
 internal class CourierImplementation : ICourier
 {
+    static Courier getCourier(XElement c)
+    {
+        return new DO.Courier()
+        {
+            Id = c.ToIntNullable("Id") ?? throw new DalFormatException("cant convert id"),
+            Name = (string?)c.Element("Name") ?? "",
+            Phone = (string?)c.Element("Phone") ?? "",
+            Email = (string?)c.Element("Email") ?? "",
+            Password = (string?)c.Element("Password") ?? "",
+            IsActive = (bool?)c.Element("IsActive") ?? false,
+            Transport = c.ToEnumNullable<DeliveryTransport>("Transport") ?? DeliveryTransport.Car,
+            StartDate = c.ToDateTimeNullable("StartDate") ?? DateTime.Now
+        };
+    }
     public void Create(Courier item)
     {
         // Load existing couriers, add the new one and save.
@@ -34,13 +49,9 @@ internal class CourierImplementation : ICourier
 
     public Courier? Read(int id)
     {
-        List<Courier> couriers = XmlTools.LoadListFromXMLSerializer<Courier>(Config.s_couriers_xml);
-        foreach (var item in couriers)
-        {
-            if (item.Id == id)
-                return item;
-        }
-        return null;
+        XElement? courierElem = XmlTools.LoadListFromXMLElement(Config.s_couriers_xml).Elements()
+            .FirstOrDefault(c => (int?)c.Element("Id") == id);
+        return courierElem == null ? null : getCourier(courierElem);
     }
 
     public IEnumerable<Courier> ReadAll(Func<Courier, bool>? filter = null)

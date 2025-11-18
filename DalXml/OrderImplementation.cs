@@ -1,14 +1,32 @@
 ﻿namespace Dal;
 using DalApi;
 using DO;
+using System.Xml.Linq;
 
 internal class OrderImplementation : IOrder
 {
+    static Order getOrder(XElement o)
+    {
+        return new DO.Order()
+        {
+            Id = o.ToIntNullable("Id") ?? throw new DalFormatException("cant convert id"),
+            Status = o.ToEnumNullable<OrderStatus>("Status") ?? OrderStatus.Pending,
+            CustomerName = (string?)o.Element("CustomerName") ?? "",
+            CustomerAddress = (string?)o.Element("CustomerAddress") ?? "",
+            CustomerPhone = (string?)o.Element("CustomerPhone") ?? "",
+            OrderDate = o.ToDateTimeNullable("OrderDate") ?? DateTime.Now,
+            size = o.ToDoubleNullable("size"),
+            weight = o.ToDoubleNullable("weight"),
+            Latitude = o.ToDoubleNullable("Latitude"),
+            Longitude = o.ToDoubleNullable("Longitude"),
+            Fragility = o.ToEnumNullable<FragilityLevel>("Fragility"),
+            Description = (string?)o.Element("Description")
+        };
+    }
+
     public void Create(Order item)
     {
-        List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
-        orders.Add(item);
-        XmlTools.SaveListToXMLSerializer(orders, Config.s_orders_xml);
+        throw new NotImplementedException();
     }
 
     public void Delete(int id)
@@ -35,13 +53,9 @@ internal class OrderImplementation : IOrder
 
     public Order? Read(int id)
     {
-        List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
-        for (int i = 0; i < orders.Count; i++)
-        {
-            if (orders[i].Id == id)
-                return orders[i];
-        }
-        return null;
+        XElement? orderElem = XmlTools.LoadListFromXMLElement(Config.s_orders_xml).Elements()
+            .FirstOrDefault(o => (int?)o.Element("Id") == id);
+        return orderElem == null ? null : getOrder(orderElem);
     }
 
     public IEnumerable<Order> ReadAll(Func<Order, bool>? filter = null)
