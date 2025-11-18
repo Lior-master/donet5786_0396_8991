@@ -23,3 +23,9 @@ public class DalXMLFileLoadCreateException : Exception
 {
     public DalXMLFileLoadCreateException(string? message) : base(message) { }
 }
+
+[Serializable]
+public class DalFormatException : Exception
+{
+    public DalFormatException(string? message) : base(message) { }
+}

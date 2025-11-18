@@ -85,7 +85,7 @@ static class XMLTools
     public static int GetAndIncreaseConfigIntVal(string xmlFileName, string elemName)
     {
         XElement root = XMLTools.LoadListFromXMLElement(xmlFileName);
-        int nextId = root.ToIntNullable(elemName) ?? throw new FormatException($"can't convert:  {xmlFileName}, {elemName}");
+        int nextId = root.ToIntNullable(elemName) ?? throw new DalFormatException($"can't convert:  {xmlFileName}, {elemName}");
         root.Element(elemName)?.SetValue((nextId + 1).ToString());
         XMLTools.SaveListToXMLElement(root, xmlFileName);
         return nextId;
@@ -93,13 +93,13 @@ static class XMLTools
     public static int GetConfigIntVal(string xmlFileName, string elemName)
     {
         XElement root = XMLTools.LoadListFromXMLElement(xmlFileName);
-        int num = root.ToIntNullable(elemName) ?? throw new FormatException($"can't convert:  {xmlFileName}, {elemName}");
+        int num = root.ToIntNullable(elemName) ?? throw new DalFormatException($"can't convert:  {xmlFileName}, {elemName}");
         return num;
     }
     public static DateTime GetConfigDateVal(string xmlFileName, string elemName)
     {
         XElement root = XMLTools.LoadListFromXMLElement(xmlFileName);
-        DateTime dt = root.ToDateTimeNullable(elemName) ?? throw new FormatException($"can't convert:  {xmlFileName}, {elemName}");
+        DateTime dt = root.ToDateTimeNullable(elemName) ?? throw new DalFormatException($"can't convert:  {xmlFileName}, {elemName}");
         return dt;
     }
     public static void SetConfigIntVal(string xmlFileName, string elemName, int elemVal)
