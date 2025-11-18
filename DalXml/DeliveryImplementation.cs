@@ -23,6 +23,7 @@ internal class DeliveryImplementation : IDelivery
     public void Create(Delivery item)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
+        Delivery clone = item with { Id = Config.NextDeliveryId };
         deliveries.Add(item);
         XmlTools.SaveListToXMLSerializer(deliveries, Config.s_deliveries_xml);
         ;

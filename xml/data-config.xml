@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <config>
-  <NextOrderId>1000</NextOrderId>
-  <NextDeliveryId>5000</NextDeliveryId>
-  <Clock>19/11/2025 00:19:45</Clock>
+  <NextOrderId>1060</NextOrderId>
+  <NextDeliveryId>5050</NextDeliveryId>
+  <Clock>19/11/2025 01:19:31</Clock>
   <BossId>0</BossId>
   <BossPassword></BossPassword>
   <CarSpeed>40</CarSpeed>

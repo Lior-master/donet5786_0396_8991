@@ -27,7 +27,8 @@ internal class OrderImplementation : IOrder
     public void Create(Order item)
     {
         List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
-        orders.Add(item);
+        Order clone = item with { Id = Config.NextOrderId };
+        orders.Add(clone);
         XmlTools.SaveListToXMLSerializer(orders, Config.s_orders_xml);
     }
 
