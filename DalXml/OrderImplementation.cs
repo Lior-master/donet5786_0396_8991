@@ -28,7 +28,7 @@ internal class OrderImplementation : IOrder
     {
         List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
         orders.Add(item);
-        XmlTools.SaveListToXMLSerializer(orders, Config.s_couriers_xml);
+        XmlTools.SaveListToXMLSerializer(orders, Config.s_orders_xml);
     }
 
     public void Delete(int id)
