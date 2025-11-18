@@ -22,7 +22,10 @@ internal class DeliveryImplementation : IDelivery
 
     public void Create(Delivery item)
     {
-        throw new NotImplementedException();
+        List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
+        deliveries.Add(item);
+        XmlTools.SaveListToXMLSerializer(deliveries, Config.s_deliveries_xml);
+        ;
     }
 
     public void Delete(int id)

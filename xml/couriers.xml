@@ -1,3 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ArrayOfCourier>
-</ArrayOfCourier>
+<ArrayOfOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Order>
+    <Id>0</Id>
+    <Status>Returned</Status>
+    <CustomerName>Customer_60</CustomerName>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerPhone>+20000000060</CustomerPhone>
+    <OrderDate>2025-11-17T16:52:13.5891915+02:00</OrderDate>
+    <size xsi:nil="true" />
+    <weight xsi:nil="true" />
+    <Latitude xsi:nil="true" />
+    <Longitude xsi:nil="true" />
+    <Fragility xsi:nil="true" />
+  </Order>
+</ArrayOfOrder>

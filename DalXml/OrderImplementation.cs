@@ -26,7 +26,9 @@ internal class OrderImplementation : IOrder
 
     public void Create(Order item)
     {
-        throw new NotImplementedException();
+        List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
+        orders.Add(item);
+        XmlTools.SaveListToXMLSerializer(orders, Config.s_couriers_xml);
     }
 
     public void Delete(int id)
