@@ -6,7 +6,7 @@
 /// Use the primary constructor to create instances or the generated `with` expression to create modified copies.
 /// </summary>
 /// <param name="Id">Unique identifier of the order (database id or similar).</param>
-/// <param name="Type">Type of the order/delivery service. See <see cref="OrderType"/>.</param>
+/// <param name="Status">Status of the order/delivery service. See <see cref="OrderStatus"/>.</param>
 /// <param name="CustomerName">Full name of the customer.</param>
 /// <param name="CustomerAddress">Delivery address for the customer.</param>
 /// <param name="CustomerPhone">Contact phone number for the customer (stored as string; prefer E.164 format).</param>
@@ -15,11 +15,6 @@
 /// <param name="Longitude">Optional longitude (decimal degrees) of the delivery location. Null if not provided.</param>
 /// <param name="Fragility">Optional fragility level of the package. Null if not specified.</param>
 /// <param name="Description">Optional free-text description or delivery notes.</param>
-/// <remarks>
-/// - The record is immutable; to modify use `order with { Property = newValue }`.
-/// - Do not store sensitive information in the description or phone fields without appropriate protections.
-/// - Use UTC for dates where possible and document local/UTC expectations in consuming layers.
-/// </remarks>
 public record Order
 (
     int Id,
