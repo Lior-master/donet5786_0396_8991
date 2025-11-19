@@ -1,6 +1,6 @@
 ﻿namespace DalApi;
 using System.Xml.Linq;
-
+ 
 static class DalConfig
 {
     /// <summary>
@@ -31,10 +31,10 @@ static class DalConfig
                         ).ToDictionary(p => "" + p.Name, p => p.Item2);
     }
 }
-
+ 
 [Serializable]
 public class DalConfigException : Exception
 {
-    public DalConfigException(string msg) : base(msg) { }
-    public DalConfigException(string msg, Exception ex) : base(msg, ex) { }
+	public DalConfigException(string msg) : base(msg) { }
+	public DalConfigException(string msg, Exception ex) : base(msg, ex) { }
 }
