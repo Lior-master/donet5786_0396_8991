@@ -6,7 +6,7 @@ namespace DalTest;
 
 internal class Program
 {
-    static readonly IDal s_dal = new Dal.DalXml();
+    static readonly IDal s_dal = new DalXml();
 
     private enum Menu
     {

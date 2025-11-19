@@ -2,8 +2,11 @@
 
 namespace Dal;
 
-sealed public class DalXml : IDal
+sealed internal class DalXml : IDal
 {
+    public static IDal Instance { get;  } = new DalXml();
+
+    private DalXml() { }
     public IOrder Order { get; } = new OrderImplementation();
 
     public ICourier Courier { get; } = new CourierImplementation();
