@@ -141,10 +141,10 @@ public static class Initialization
 
     public static Adresses CompanyAdress = new Adresses("22 Hameyasdim St", 31.778449894212013, 35.18761502733661, 0.0, 0.0, 0.0);
 
-    public static void Do(IDal dal) 
+    public static void Do() 
 
     {
-        s_dal = dal ?? throw new DalNullReferenceException("DAL object can not be null!");
+        s_dal = DalApi.Factory.Get;
 
         Console.WriteLine("Reset Configaration values and List values...");
         s_dal.ResetDB();

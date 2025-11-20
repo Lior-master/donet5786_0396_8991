@@ -6,7 +6,7 @@ namespace DalTest;
 
 internal class Program
 {
-    static readonly IDal s_dal = new DalXml();
+    static readonly IDal s_dal = Factory.Get;
 
     private enum Menu
     {
@@ -44,7 +44,7 @@ internal class Program
                 {
                     case Menu.Initialize:
                         
-                        Initialization.Do(s_dal);
+                        Initialization.Do();
                         Console.WriteLine("Data initialized successfully!");
                         break;
 
