@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "xml", "xml", "{02EA681E-C7D
 		xml\orders.xml = xml\orders.xml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BL", "BL\BL.csproj", "{C6A28393-7F40-4172-A264-F7EF68C12541}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,10 @@ Global
 		{140DB248-0B50-46BB-93C4-DD3C7B7C6BEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{140DB248-0B50-46BB-93C4-DD3C7B7C6BEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{140DB248-0B50-46BB-93C4-DD3C7B7C6BEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6A28393-7F40-4172-A264-F7EF68C12541}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6A28393-7F40-4172-A264-F7EF68C12541}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6A28393-7F40-4172-A264-F7EF68C12541}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6A28393-7F40-4172-A264-F7EF68C12541}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
