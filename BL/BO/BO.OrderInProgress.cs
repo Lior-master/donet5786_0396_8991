@@ -1,22 +1,24 @@
 ﻿namespace BO;
 
-public class OrderInProgress
+namespace BO
 {
-    public int DeliveryId { get; set; }
-    public int OrderId { get; set; }
-    public int OrderStatus { get; set; } 
-    public double? Distance { get; set; }
-    public DateTime PickupTime { get; set; }
-    public DateTime? ArrivalTime { get; set; }
-    public ScheduleStatus ScheduleStatus { get; set; }
-    public OrderStatus OrderStatusEnum { get; set; }
-    public string Description { get; set; }
-    public string CustomerName { get; set; }
-    public string CustomerPhone { get; set; }
-    public string CustomerAddress { get; set; }
-    public DateTime OrderDate { get; set; }
-    public DateTime EstimatedArrivalTime { get; set; }
-    public DateTime MaxDeliveryTime { get; set; }
-    public TimeSpan WaitingTime { get; set; }
+    public class OrderInProgress
+    {
+        public int DeliveryId { get; init; }
+        public int OrderId { get; init; }
+        public int OrderStatus { get; init; } 
+        public double? Distance { get; init; }
+        public DateTime PickupTime { get; init; }
+        public DateTime? ArrivalTime { get; init; }
+        public ScheduleStatus ScheduleStatus { get; init; }
+        public OrderStatus OrderStatusEnum { get; init; }
+        public string Description { get; init; }
+        public string CustomerName { get; init; }
+        public string CustomerPhone { get; init; }
+        public string CustomerAddress { get; init; }
+        public DateTime OrderDate { get; init; }
+        public DateTime EstimatedArrivalTime { get; init; }
+        public DateTime MaxDeliveryTime { get; init; }
+        public TimeSpan WaitingTime { get; init; }
 
 }      
