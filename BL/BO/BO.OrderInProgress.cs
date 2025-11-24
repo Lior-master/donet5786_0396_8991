@@ -11,7 +11,7 @@ public class OrderInProgress
     public DateTime? ArrivalTime { get; init; }
     public ScheduleStatus ScheduleStatus { get; init; }
     public OrderStatus OrderStatusEnum { get; init; }
-    public string Description { get; init; }
+    public string? Description { get; init; }
     public string CustomerName { get; init; }
     public string CustomerPhone { get; init; }
     public string CustomerAddress { get; init; }

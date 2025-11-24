@@ -3,10 +3,10 @@
 public class DeliveryPerOrderInList
 {
     public int DeliveryId { get; init; }
-    public int CourierId { get; init; }
+    public int? CourierId { get; init; }
     public string Name { get; init; }
     public OrderType OrderType { get; init; }
     public DateTime PickupTime { get; init; }
-    public OrderStatus OrderStatus { get; init; }
-    public DateTime ArrivalTime { get; init; }
+    public OrderStatus? OrderStatus { get; init; }
+    public DateTime? ArrivalTime { get; init; }
 }
