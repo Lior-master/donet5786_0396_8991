@@ -1,7 +1,6 @@
-﻿
-namespace BO;
+﻿namespace BO;
 
-public class DeliverPerOrderInList
+public class DeliveryPerOrderInList
 {
     public int DeliveryId { get; init; }
     public int CourierId { get; init; }
