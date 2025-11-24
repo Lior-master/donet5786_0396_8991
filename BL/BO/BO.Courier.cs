@@ -53,7 +53,7 @@ public class Courier
     /// <summary>
     /// The order the courier is currently working on, or <c>null</c> when idle.
     /// </summary>
-    public BO.OrderInProgress? CurrentOrder { get; }
+    public OrderInProgress? CurrentOrder { get; }
 
     /// <summary>
     /// Maximum distance (in kilometers) the courier is willing or allowed to travel for a delivery.

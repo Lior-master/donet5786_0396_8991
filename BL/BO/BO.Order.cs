@@ -20,5 +20,5 @@ public class Order
     public OrderStatus Status { get; init; }
     public ScheduleStatus ScheduleStatus { get; init; }
     public TimeSpan ArrivalTimeEstimeted { get; init; }
-    public List<BO.DeliveryPerOrderInList>? DeliveriesPerOrder { get; init; }
+    public List<DeliveryPerOrderInList>? DeliveriesPerOrder { get; init; }
 }
