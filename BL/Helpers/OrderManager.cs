@@ -35,4 +35,13 @@ internal static class OrderManager
                     newStatus = OrderStatus.Pending;
                 }
 
+                if (newStatus == o.Status)
+                    return o;
+
+                var updated = o with { Status = newStatus };
+                s_dal.Order.Update(updated);
+                return updated;
+            })
+            .ToList();
+    }
 }
