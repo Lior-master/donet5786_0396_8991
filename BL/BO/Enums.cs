@@ -128,3 +128,10 @@ public enum ScheduleStatus
     /// <summary>Delivery has exceeded acceptable time thresholds and is considered late.</summary>
     Late
 }
+public enum TimeUnit
+{
+    Minute,
+    Hour,
+    Day,
+    Month
+}
