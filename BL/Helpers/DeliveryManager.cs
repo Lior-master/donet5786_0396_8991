@@ -10,7 +10,7 @@ internal static class DeliveryManager
 
     /// <summary>
     /// Called from AdminManager.UpdateClock after every clock update.
-    /// Updates deliveries whose pickup time has just become due.
+    /// Starts deliveries whose pickup time has just been reached.
     /// </summary>
     internal static void PeriodicDeliveriesUpdates(DateTime oldClock, DateTime newClock)
     {
@@ -19,10 +19,10 @@ internal static class DeliveryManager
             .Where(d => d.PickupTime > oldClock && d.PickupTime <= newClock)
             .Select(d =>
             {
-                var updated = d with { Status = OrderStatus.Pending };
+                var updated = d with { Status = OrderStatus.Processing };
 
                 s_dal.Delivery.Update(updated);
-                return updated;  
+                return updated;
             })
             .ToList();
     }
