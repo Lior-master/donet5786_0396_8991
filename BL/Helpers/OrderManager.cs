@@ -24,5 +24,22 @@ internal static class OrderManager
             Fragility = (BO.FragilityLevel?)doOrder.Fragility,
         };
     }
+    internal static BO.StudentInCourse GetDetailedCourseForStudent(int studentId, int courseId)
+    {
+        DO.Link? doLink = s_dal.Link.Read(l => l.StudentId == studentId && l.CourseId == courseId)
+            ?? throw new BO.BlDoesNotExistException($"Student with ID={studentId} does Not take Course with ID={courseId}");
+        DO.Course? doCourse = s_dal.Course.Read(courseId)
+     ?? throw new BO.BlDoesNotExistException($"Course with ID={courseId} does Not exist");
 
-}
+        return new BO.StudentInCourse()
+        {
+            StudentId = studentId,
+            Course = new Tuple<int, string, string>(doCourse.Id, doCourse.CourseNumber, doCourse.CourseName),
+            InYear = (BO.Year?)doCourse.InYear,
+            InSemester = (BO.SemesterNames?)doCourse.InSemester,
+            Grade = doLink.Grade,
+            Credits = doCourse.Credits
+        };
+
+
+    }
