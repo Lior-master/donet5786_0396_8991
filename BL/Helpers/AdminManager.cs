@@ -36,11 +36,9 @@ internal static class AdminManager //stage 4
         // - Go through all students to update properties that are affected by the clock update
         // - (students become not active after 5 years etc.)
 
-        //TO_DO: //stage 4
         CourierManager.PeriodicCouriersUpdates(oldClock, newClock);
         OrderManager.PeriodicOrdersUpdates(oldClock, newClock);
         DeliveryManager.PeriodicDeliveriesUpdates(oldClock, newClock);
-        //...
 
         //TO_DO: //stage 7
         //if (_periodicTask is null || _periodicTask.IsCompleted) //stage 7
