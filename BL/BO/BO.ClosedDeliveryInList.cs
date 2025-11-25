@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Represents a summary entry for a completed delivery shown in lists.
@@ -44,4 +46,7 @@ public class ClosedDeliveryInList
     /// Final outcome of the delivery attempt.
     /// </summary>
     public DeliveredStatus DeliveredStatus { get; init; }
+
+    public override string ToString() => this.ToStringProperty();
+
 }

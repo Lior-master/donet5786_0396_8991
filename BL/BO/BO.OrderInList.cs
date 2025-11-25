@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Lightweight view model for displaying orders in lists with scheduling and processing summary information.
@@ -49,4 +51,6 @@ public class OrderInList
     /// Number of couriers involved or available for this order.
     /// </summary>
     public int NumberOfCouriers { get; init; }
+
+    public override string ToString() => this.ToStringProperty();
 }

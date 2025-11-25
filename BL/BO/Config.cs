@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Configuration settings exposed to the presentation layer.
@@ -74,4 +76,6 @@ public class Config
     /// Maximum allowed distance in the system.
     /// </summary>
     public double MaxDistance { get; set; }
+
+    public override string ToString() => this.ToStringProperty();
 }

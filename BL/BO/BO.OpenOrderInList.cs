@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Lightweight view model representing an open order shown in lists and selection views.
@@ -59,4 +61,7 @@ public class OpenOrderInList
     /// Latest acceptable delivery time for the order.
     /// </summary>
     public DateTime MaxDeliveredTime { get; init; }
+
+    public override string ToString() => this.ToStringProperty();
+
 }

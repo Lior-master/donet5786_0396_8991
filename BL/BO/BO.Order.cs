@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Represents a customer order with its delivery and scheduling information.
@@ -23,7 +25,7 @@ public class Order
     /// <summary>
     /// Delivery address provided by the customer.
     /// </summary>
-    public string CustomerAdress { get; set; }
+    public string CustomerAddress { get; set; }
 
     /// <summary>
     /// Geographic latitude of the delivery address.
@@ -99,4 +101,6 @@ public class Order
     /// List of deliveries associated with this order, useful for displaying delivery history.
     /// </summary>
     public List<DeliveryPerOrderInList>? DeliveriesPerOrder { get; init; }
+
+    public override string ToString() => this.ToStringProperty();
 }

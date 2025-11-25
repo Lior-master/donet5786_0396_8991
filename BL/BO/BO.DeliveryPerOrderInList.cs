@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Lightweight view model representing a delivery entry associated with an order,
@@ -40,4 +42,6 @@ public class DeliveryPerOrderInList
     /// Time when the delivery arrived at the destination, or <c>null</c> if not yet arrived.
     /// </summary>
     public DateTime? ArrivalTime { get; init; }
+
+    public override string ToString() => this.ToStringProperty();
 }

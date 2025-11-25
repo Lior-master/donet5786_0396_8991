@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Represents a courier who performs deliveries.
@@ -60,4 +62,7 @@ public class Courier
     /// Nullable when no limit is specified.
     /// </summary>
     public double? MaxDistance { get; set; }
+
+    public override string ToString() => this.ToStringProperty();
+
 }

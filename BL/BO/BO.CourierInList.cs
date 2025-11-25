@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Lightweight view model for displaying couriers in lists.
@@ -44,4 +46,6 @@ public class CourierInList
     /// Identifier of the current order assigned to the courier, or <c>null</c> if idle.
     /// </summary>
     public int? ActualOrder { get; init; }
+
+    public override string ToString() => this.ToStringProperty();
 }

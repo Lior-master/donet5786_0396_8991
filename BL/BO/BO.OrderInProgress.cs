@@ -1,4 +1,6 @@
-﻿namespace BO;
+﻿using Helpers;
+
+namespace BO;
 
 /// <summary>
 /// Represents the live state of an order that is currently being delivered.
@@ -87,4 +89,6 @@ public class OrderInProgress
     /// Time the order has been waiting since pickup or since it was queued, as applicable.
     /// </summary>
     public TimeSpan WaitingTime { get; init; }
+
+    public override string ToString() => this.ToStringProperty();
 }
