@@ -1,6 +1,8 @@
 ﻿using DalApi;
 using DO;
 using System.Linq;
+// Add the following using directive if GeoManager is defined in another namespace
+// using <NamespaceWhereGeoManagerIsDefined>;
 
 namespace Helpers;
 
@@ -42,4 +44,109 @@ internal static class CourierManager
             })
             .ToList();
     }
+    internal static void Create(Courier courier)
+    {
+        s_dal.Courier.Create(courier);
+    }
+    internal static Courier Read(int id)
+    {
+        return s_dal.Courier.Read(id);
+    }
+    internal static IEnumerable<BO.CourierInList> ReadAll()
+    {
+        return s_dal.Courier.ReadAll();
+    }
+    internal static void Update(BO.Courier courier)
+    {
+        s_dal.Courier.Update(courier);
+    }
+    internal static void Delete(int id)
+    {
+        s_dal.Courier.Delete(id);
+    }
+    internal static IEnumerable<BO.OpenOrderInList> GetEligibleOrders(int courierId)
+    {
+        // If GeoManager is a static class in your project, ensure it is defined and accessible.
+        // If it is missing, you need to provide its implementation or clarify its location.
+        // If you have a file or namespace for GeoManager, add the appropriate using statement above.
+
+        return s_dal.Order.ReadAll()
+            .Where(o => o.Status == OrderStatus.Pending)
+            .Select(o => new OpenOrderInList
+            {
+                CourierId = courierId,
+                OrderId = o.Id,
+                OrderType = (BO.OrderType)o.Status,
+                Fragility = o.Fragility != null ? (BO.FragilityLevel?)o.Fragility : null,
+                CustomerAddress = o.CustomerAddress,
+                BirdDistance = GeoManager.CalculateBirdDistance(
+                    s_dal.Courier.Read(courierId).BAseLatitude,
+                    s_dal.Courier.Read(courierId).BaseLongitude,
+                    o.Latitude,
+                    o.Longitude),
+                Distance = GeoManager.CalculateDrivingDistance(
+                    s_dal.Courier.Read(courierId).BaseLatitude,
+                    s_dal.Courier.Read(courierId).BaseLongitude,
+                    o.Latitude,
+                    o.Longitude),
+                AddedTime = AdminManager.Now - o.OrderDate,
+                ScheduleStatus = ScheduleManager.GetScheduleStatus(o),
+                EstimatedDeliveryTime = DeliveryManager.EstimateDeliveryTime(
+                    courierId,
+                    o.Id),
+            });
+    }
+    internal static void TakeOrder(int courierId, int orderId)
+    {
+        var order = s_dal.Order.Read(orderId);
+        if (order.Status != OrderStatus.ReadyForDelivery)
+        {
+            throw new InvalidOperationException("Order is not ready for delivery.");
+        }
+        order = order with
+        {
+            Status = OrderStatus.OutForDelivery,
+            CourierId = courierId,
+            DepartureTime = AdminManager.Now
+        };
+        s_dal.Order.Update(order);
+    }
+    internal static OrderInProgress? GetCurrentOrder(int courierId)
+    {
+        var order = s_dal.Order.ReadAll()
+            .FirstOrDefault(o => o.CourierId == courierId && o.Status == OrderStatus.OutForDelivery);
+        if (order == null)
+            return null;
+        var customer = s_dal.Customer.Read(order.CustomerId);
+        return new OrderInProgress
+        {
+            Id = order.Id,
+            CustomerName = customer.Name,
+            CustomerAddress = customer.Address,
+            Weight = order.Weight,
+            Priority = order.Priority,
+            DepartureTime = order.DepartureTime.Value
+        };
+    }
+    internal static IEnumerable<ClosedDeliveryInList> GetHistory(int courierId)
+    {
+        return s_dal.Delivery.ReadAll()
+            .Where(d => d.CourierId == courierId && d.ArrivalTime != null)
+            .Select(d =>
+            {
+                var order = s_dal.Order.Read(d.OrderId);
+                var customer = s_dal.Customer.Read(order.CustomerId);
+                return new ClosedDeliveryInList
+                {
+                    OrderId = order.Id,
+                    CustomerName = customer.Name,
+                    Weight = order.Weight,
+                    Priority = order.Priority,
+                    DepartureTime = order.DepartureTime.Value,
+                    ArrivalTime = d.ArrivalTime.Value,
+                    DeliveredStatus = d.DeliveredStatus
+                };
+            });
+    }
+
 }
