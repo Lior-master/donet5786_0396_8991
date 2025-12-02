@@ -72,23 +72,15 @@ internal static class CourierManager
 
         return s_dal.Order.ReadAll()
             .Where(o => o.Status == OrderStatus.Pending)
-            .Select(o => new OpenOrderInList
+            .Select(o => new BO.OpenOrderInList
             {
                 CourierId = courierId,
                 OrderId = o.Id,
                 OrderType = (BO.OrderType)o.Status,
                 Fragility = o.Fragility != null ? (BO.FragilityLevel?)o.Fragility : null,
                 CustomerAddress = o.CustomerAddress,
-                BirdDistance = GeoManager.CalculateBirdDistance(
-                    s_dal.Courier.Read(courierId).BAseLatitude,
-                    s_dal.Courier.Read(courierId).BaseLongitude,
-                    o.Latitude,
-                    o.Longitude),
-                Distance = GeoManager.CalculateDrivingDistance(
-                    s_dal.Courier.Read(courierId).BaseLatitude,
-                    s_dal.Courier.Read(courierId).BaseLongitude,
-                    o.Latitude,
-                    o.Longitude),
+                BirdDistance = Tools.BirdDistance(s_dal.Config.Latitude, s_dal.Config.Longitude, o.Latitude, o.Longitude),
+                Distance = null,
                 AddedTime = AdminManager.Now - o.OrderDate,
                 ScheduleStatus = ScheduleManager.GetScheduleStatus(o),
                 EstimatedDeliveryTime = DeliveryManager.EstimateDeliveryTime(

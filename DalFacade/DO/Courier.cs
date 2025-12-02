@@ -36,6 +36,7 @@ public record Courier
     bool IsActive,
     DeliveryTransport Transport,
     DateTime StartDate,
+    
     double? MaxDistance = null
 )
 {
