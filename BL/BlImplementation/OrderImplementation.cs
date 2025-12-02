@@ -1,58 +1,38 @@
 ﻿using BLApi;
 using BO;
+using Helpers;
 
-namespace BlImplementation
+namespace BlImplementation;
+
+internal class OrderImplementation : IOrder
 {
-    internal class OrderImplementation : IOrder
-    {
-        public void AssignOrderToCourier(int courierId, int orderId)
-        {
-            throw new NotImplementedException();
-        }
+    public void AssignOrderToCourier(int courierId, int orderId)
+        => OrderManager.AssignOrderToCourier(courierId, orderId);
 
-        public int Create(Order order)
-        {
-            throw new NotImplementedException();
-        }
+    public int Create(Order order)
+        => OrderManager.Create(order);
 
-        public void Delete(int id)
-        {
-            throw new NotImplementedException();
-        }
+    public void Delete(int id)
+        => OrderManager.Delete(id);
 
-        public void FinishDelivery(int courierId, int orderId, DeliveredStatus status)
-        {
-            throw new NotImplementedException();
-        }
+    public void FinishDelivery(int courierId, int orderId, DeliveredStatus status)
+        => OrderManager.FinishDelivery(courierId, orderId, status);
 
-        public OrderInProgress? GetCurrentOrderForCourier(int courierId)
-        {
-            throw new NotImplementedException();
-        }
+    public OrderInProgress? GetCurrentOrderForCourier(int courierId)
+        => OrderManager.GetCurrentOrderForCourier(courierId);
 
-        public IEnumerable<ClosedDeliveryInList> GetDeliveryHistory(int courierId)
-        {
-            throw new NotImplementedException();
-        }
+    public IEnumerable<ClosedDeliveryInList> GetDeliveryHistory(int courierId)
+        => OrderManager.GetDeliveryHistory(courierId);
 
-        public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int courierId)
-        {
-            throw new NotImplementedException();
-        }
+    public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int courierId)
+        => OrderManager.GetOpenOrdersForCourier(courierId);
 
-        public Order Read(int id)
-        {
-            throw new NotImplementedException();
-        }
+    public Order Read(int id)
+        => OrderManager.Read(id);
 
-        public IEnumerable<OrderInList> ReadAll()
-        {
-            throw new NotImplementedException();
-        }
+    public IEnumerable<OrderInList> ReadAll()
+        => OrderManager.ReadAll();
 
-        public void Update(Order order)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    public void Update(Order order)
+        => OrderManager.Update(order);
 }
