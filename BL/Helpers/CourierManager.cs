@@ -82,7 +82,7 @@ internal static class CourierManager
                 BirdDistance = Tools.BirdDistance(s_dal.Config.Latitude, s_dal.Config.Longitude, o.Latitude, o.Longitude),
                 Distance = null,
                 AddedTime = AdminManager.Now - o.OrderDate,
-                ScheduleStatus = ScheduleManager.GetScheduleStatus(o),
+                ScheduleStatus = o.ScheduleStatus,
                 EstimatedDeliveryTime = DeliveryManager.EstimateDeliveryTime(
                     courierId,
                     o.Id),
@@ -91,13 +91,13 @@ internal static class CourierManager
     internal static void TakeOrder(int courierId, int orderId)
     {
         var order = s_dal.Order.Read(orderId);
-        if (order.Status != OrderStatus.ReadyForDelivery)
+        if (order.Status != OrderStatus.Pending)
         {
             throw new InvalidOperationException("Order is not ready for delivery.");
         }
         order = order with
         {
-            Status = OrderStatus.OutForDelivery,
+            Status = OrderStatus.Pending,
             CourierId = courierId,
             DepartureTime = AdminManager.Now
         };
