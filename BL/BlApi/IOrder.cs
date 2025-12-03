@@ -1,6 +1,7 @@
 ﻿namespace BlApi;
 
 using BO;
+using System.Runtime.InteropServices.ObjectiveC;
 
 public interface IOrder
 {
@@ -98,4 +99,10 @@ public interface IOrder
         int courierId,
         DeliveryStatus? deliveryType = null,
         OrderStatus? status = null);
+
+
+
+
+    IEnumerable<BO.Order> GetFilteredOrders(int requesterId);
+    IEnumerable<BO.OrderInList> orderInLists(int requesterId,Enum? filter,object? Object,Enum? sorter);
 }
