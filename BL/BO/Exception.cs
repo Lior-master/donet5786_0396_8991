@@ -20,3 +20,10 @@ public class BLNotFoundException : Exception
     public BLNotFoundException(string? message) : base(message) { }
     public BLNotFoundException(string message, Exception innerException) : base(message, innerException) { }
 }
+
+[Serializable]
+public class BLInvalidInputException : Exception
+{
+    public BLInvalidInputException(string? message) : base(message) { }
+    public BLInvalidInputException(string message, Exception innerException) : base(message, innerException) { }
+}

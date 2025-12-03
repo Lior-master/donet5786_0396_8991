@@ -1,15 +1,13 @@
-﻿namespace BLApi;
+﻿using BO;
+
+namespace BLApi;
 
 public interface ICourier
 {
-    void Create(BO.Courier courier);
-    BO.Courier Read(int id);
-    IEnumerable<BO.CourierInList> ReadAll();
-    void Update(BO.Courier courier);
-    void Delete(int id);
-
-    IEnumerable<BO.OpenOrderInList> GetEligibleOrders(int courierId);
-    void TakeOrder(int courierId, int orderId);
-    BO.OrderInProgress? CurrentOrder(int courierId);
-    IEnumerable<BO.ClosedDeliveryInList> GetHistory(int courierId);
+    BO.Courier Login(string username,string password);
+    IEnumerable<CourierInList> GetCouriersList(int? requesterId, bool? isActive, DeliveryTransport? status);
+    BO.Courier GetCourierDetails(int requesterId, int courierId);
+    void UpdateCourier(int requesterId, Courier updatedCourier);
+    void removeCourier(int requesterId, int courierId);
+    void addCourier(int requesterId, Courier newCourier);
 }

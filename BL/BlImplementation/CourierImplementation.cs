@@ -32,4 +32,15 @@ internal class CourierImplementation : ICourier
 
     public IEnumerable<ClosedDeliveryInList> GetHistory(int courierId)
         => CourierManager.GetHistory(courierId);
+
+
+
+
+
+    Courier ICourier.Login(string username, string password)
+        => CourierManager.Login(username, password);
+
+    public IEnumerable<CourierInList> GetCouriersList(int? requesterId, bool? isActive, DeliveryTransport? status)
+        => CourierManager.GetCouriersList(requesterId, isActive, status);
+
 }

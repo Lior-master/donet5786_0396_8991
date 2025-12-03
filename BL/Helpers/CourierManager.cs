@@ -44,6 +44,42 @@ internal static class CourierManager
             })
             .ToList();
     }
+
+    internal static BO.Courier Login(string username,string password)
+    {
+        if (!string.IsNullOrEmpty(username))
+        {
+            var courier = s_dal.Courier.ReadAll()
+                .FirstOrDefault(c => c.Name == username);
+            if (courier == null)
+            {
+                throw new BO.BLNotFoundException("User whith this username not found.");
+            }
+            if (courier.Password != password)
+            {
+                throw new BO.BLInvalidInputException("Wrong password.");
+            }
+            return new BO.Courier
+            {
+                Id = courier.Id,
+                Name = courier.Name,
+                Phone = courier.Phone,
+                Email = courier.Email,
+                IsActive = courier.IsActive,
+                StartDate = courier.StartDate,
+                Transport = (BO.DeliveryTransport)courier.Transport,
+                MaxDistance = courier.MaxDistance
+            };
+        }
+        else
+        {
+            throw new BO.BLInvalidInputException("Username cant be null");
+        }
+
+    }
+
+
+
     internal static void Create(Courier courier)
     {
         s_dal.Courier.Create(courier);
