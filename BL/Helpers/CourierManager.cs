@@ -141,9 +141,6 @@ internal static class CourierManager
         var requester = s_dal.Courier.Read(requesterId);
         if (requester == null)
             throw new BLNotFoundException("Requester ID does not exist.");
-        // Check if requester is an administrator or the courier himself
-        if (requester.Administrator != DO.Administrator.Director || requesterId != courierId )
-            throw new BLUnauthorizedException("Requester is not an administrator or the courier himself.");
 
         // 2. Read the requested courier
         var courierDO = s_dal.Courier.Read(courierId);
@@ -223,4 +220,49 @@ internal static class CourierManager
         };
     }
 
+    internal static void UpdateCourier(int requesterId, BO.Courier updatedCourier)
+    {
+        var requester = s_dal.Courier.Read(requesterId);
+        if (requester == null)
+            throw new BLNotFoundException("requesterId doesn't exist");
+        var existingCourier = s_dal.Courier.Read(updatedCourier.Id);
+        if (existingCourier == null)
+            throw new BLNotFoundException($"courierId with id : {updatedCourier.Id} doesn't exist");
+        existingCourier = existingCourier with
+        {
+            Name = updatedCourier.Name,
+            Phone = updatedCourier.Phone,
+            Email = updatedCourier.Email,
+            IsActive = updatedCourier.IsActive,
+            Transport = (DO.DeliveryTransport)updatedCourier.Transport
+        };
+    }
+
+    internal static void removeCourier(int requesterId, int courierId)
+    {
+        // Validate requester
+        var requester = s_dal.Courier.Read(requesterId);
+        if (requester == null)
+            throw new BLNotFoundException("Requester ID does not exist.");
+
+        // Validate courier
+        var courier = s_dal.Courier.Read(courierId);
+        if (courier == null)
+            throw new BLNotFoundException($"Courier ID {courierId} does not exist.");
+
+        // Load deliveries of this courier
+        var deliveries = s_dal.Delivery.ReadAll()
+                                       .Where(d => d.CourierId == courierId);
+
+        // Courier cannot be deleted if he EVER handled deliveries
+        if (deliveries.Any())
+            throw new BLInvalidOperationException("This courier has handled deliveries and cannot be deleted.");
+
+        // Courier cannot be deleted if he is currently handling a delivery
+        if (deliveries.Any(d => d.ArrivalTime == null))
+            throw new BLInvalidOperationException("This courier is currently handling a delivery and cannot be deleted.");
+
+        // Delete if all checks pass
+        s_dal.Courier.Delete(courierId);
+    }
 }

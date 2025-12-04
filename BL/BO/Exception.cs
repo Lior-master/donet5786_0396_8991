@@ -34,3 +34,10 @@ public class BLUnauthorizedException : Exception
     public BLUnauthorizedException(string? message) : base(message) { }
     public BLUnauthorizedException(string message, Exception innerException) : base(message, innerException) { }
 }
+
+[Serializable]
+public class BLInvalidOperationException : Exception
+{
+    public BLInvalidOperationException(string? message) : base(message) { }
+    public BLInvalidOperationException(string message, Exception innerException) : base(message, innerException) { }
+}

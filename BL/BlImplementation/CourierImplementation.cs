@@ -22,12 +22,8 @@ internal class CourierImplementation : ICourier
         => CourierManager.Login(username, password);
 
     public void removeCourier(int requesterId, int courierId)
-    {
-        throw new NotImplementedException();
-    }
+        => CourierManager.removeCourier(requesterId, courierId);
 
     public void UpdateCourier(int requesterId, Courier updatedCourier)
-    {
-        throw new NotImplementedException();
-    }
+        => CourierManager.UpdateCourier(requesterId, updatedCourier);
 }
