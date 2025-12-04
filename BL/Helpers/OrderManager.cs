@@ -11,7 +11,7 @@ internal static class OrderManager
     private static readonly IDal s_dal = Factory.Get;
     internal static IEnumerable<BO.Order> GetOrders(int requesterId)
     {
-        return s_dal.Order.Read(o => o.OrderId == requesterId);
+        return s_dal.Order.ReadAll();
     }
     internal static IEnumerable<BO.OrderInList> orderInLists(int requesterId,Enum? filter,object? Object,Enum? sorter)
     {
@@ -50,21 +50,50 @@ internal static class OrderManager
     {
         throw new NotImplementedException();
     }
-    internal static void UpdateOrderDetails(int requesterId,BO.Order order)
+    internal static void UpdateOrderDetails(int requesterId, BO.Order order)
     {
-        throw new NotImplementedException();
+        // Map BO.Order to DO.Order before passing to DAL
+        var doOrder = new DO.Order
+        {
+            Id = order.Id,
+            CustomerName = order.CustomerName,
+            CustomerAddress = order.CustomerAddress,
+            CustomerPhone = order.CustomerPhone,
+            OrderDate = order.OrderDate,
+            size = order.Volume,
+            weight = order.Weight,
+            Latitude = order.Latitude,
+            Longitude = order.Longitude,
+            Description = order.OrderDescription
+        };
+        s_dal.Order.Update(doOrder);
     }
     internal static void CancelOrder(int requesterId,int orderId)
     {
-        throw new NotImplementedException();
+        s_dal.Order.Delete(orderId);
+
     }
     internal static void RemoveOrder(int requesterId,int orderId)
     {
         throw new NotImplementedException();
     }
-    internal static int AddOrder(int requesterId,BO.Order order)
+    internal static void AddOrder(int requesterId, BO.Order order)
     {
-        throw new NotImplementedException();
+        // Map BO.Order to DO.Order before passing to DAL
+        var doOrder = new DO.Order
+        {
+            Id = order.Id,
+            CustomerName = order.CustomerName,
+            CustomerAddress = order.CustomerAddress,
+            CustomerPhone = order.CustomerPhone,
+            OrderDate = order.OrderDate,
+            size = order.Volume,
+            weight = order.Weight,
+            Latitude = order.Latitude,
+            Longitude = order.Longitude,
+            Description = order.OrderDescription
+        };
+        s_dal.Order.Create(doOrder);
     }
     internal static void FinishOrder(int requesterId,int courierId,int deliveryId)
     {
