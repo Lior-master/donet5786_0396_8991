@@ -5,7 +5,7 @@ using System.Runtime.InteropServices.ObjectiveC;
 
 public interface IOrder
 {
-    IEnumerable<BO.Order> GetFilteredOrders(int requesterId);
+    IEnumerable<BO.Order> GetOrders(int requesterId);
     IEnumerable<BO.OrderInList> orderInLists(int requesterId,Enum? filter,object? Object,Enum? sorter);
     BO.Order GetOrderDetails(int requesterId,int orderId);
     void UpdateOrderDetails(int requesterId,BO.Order order);
