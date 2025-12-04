@@ -135,4 +135,134 @@ internal static class CourierManager
         });
     }
 
+    internal static BO.Courier GetCourierDetails(int requesterId, int courierId)
+    {
+        // 1. Validate the requester exists
+        var requester = s_dal.Courier.Read(requesterId);
+        if (requester == null)
+            throw new BLNotFoundException("Requester ID does not exist.");
+
+        // 2. Read the requested courier
+        var courierDO = s_dal.Courier.Read(courierId);
+        if (courierDO == null)
+            throw new BLNotFoundException("Courier ID does not exist.");
+
+        // 3. Load all deliveries assigned to this courier
+        var courierDeliveries = s_dal.Delivery.ReadAll()
+                                              .Where(d => d.CourierId == courierId);
+
+        int onTime = 0;
+        int late = 0;
+
+        // Load system configuration (replace with your own config access method if needed)
+        var config = AdminManager.GetConfig();
+
+        // 4. Calculate delivery performance statistics
+        foreach (var d in courierDeliveries)
+        {
+            // Only completed deliveries can be evaluated
+            if (d.ArrivalTime == null || d.Distance == null)
+                continue;
+
+            // Compute expected delivery time using helper tools
+            DateTime expected = Tools.CalculateExpectedArrivalTime(d, config);
+
+            // Compare expected vs actual arrival time
+            if (Tools.IsDeliveryOnTime(d, expected))
+                onTime++;
+            else
+                late++;
+        }
+
+        // 5. Identify the active (unfinished) delivery, if any
+        var currentDelivery = courierDeliveries
+                              .FirstOrDefault(d => d.ArrivalTime == null);
+
+        BO.OrderInProgress? currentOrder = null;
+
+        // 6. If there is a delivery in progress, load its associated order
+        if (currentDelivery != null)
+        {
+            var orderDO = s_dal.Order.Read(currentDelivery.OrderId);
+
+            if (orderDO != null)
+            {
+                // Create a BO.OrderInProgress object to represent the active order
+                currentOrder = new BO.OrderInProgress
+                {
+                    OrderId = orderDO.Id,
+                    CustomerName = orderDO.CustomerName,
+                    CustomerAddress = orderDO.CustomerAddress,
+                    CustomerPhone = orderDO.CustomerPhone,
+                    PickupTime = currentDelivery.PickupTime,
+                    Distance = currentDelivery.Distance,
+                    OrderStatusEnum = (BO.OrderStatus)orderDO.Status
+                };
+            }
+        }
+
+        // 7. Construct and return the BO.Courier with all required details
+        return new BO.Courier
+        {
+            Id = courierDO.Id,
+            Name = courierDO.Name,
+            Phone = courierDO.Phone,
+            Email = courierDO.Email,
+            IsActive = courierDO.IsActive,
+            Transport = (BO.DeliveryTransport)courierDO.Transport,
+            StartDate = courierDO.StartDate,
+            MaxDistance = courierDO.MaxDistance,
+            Administator = (BO.Administrator)courierDO.Administrator,
+
+            NumberOfOnTimeDeliveries = onTime,
+            NumberOfLateDeliveries = late,
+            CurrentOrder = currentOrder
+        };
+    }
+
+    internal static void UpdateCourier(int requesterId, BO.Courier updatedCourier)
+    {
+        var requester = s_dal.Courier.Read(requesterId);
+        if (requester == null)
+            throw new BLNotFoundException("requesterId doesn't exist");
+        var existingCourier = s_dal.Courier.Read(updatedCourier.Id);
+        if (existingCourier == null)
+            throw new BLNotFoundException($"courierId with id : {updatedCourier.Id} doesn't exist");
+        existingCourier = existingCourier with
+        {
+            Name = updatedCourier.Name,
+            Phone = updatedCourier.Phone,
+            Email = updatedCourier.Email,
+            IsActive = updatedCourier.IsActive,
+            Transport = (DO.DeliveryTransport)updatedCourier.Transport
+        };
+    }
+
+    internal static void removeCourier(int requesterId, int courierId)
+    {
+        // Validate requester
+        var requester = s_dal.Courier.Read(requesterId);
+        if (requester == null)
+            throw new BLNotFoundException("Requester ID does not exist.");
+
+        // Validate courier
+        var courier = s_dal.Courier.Read(courierId);
+        if (courier == null)
+            throw new BLNotFoundException($"Courier ID {courierId} does not exist.");
+
+        // Load deliveries of this courier
+        var deliveries = s_dal.Delivery.ReadAll()
+                                       .Where(d => d.CourierId == courierId);
+
+        // Courier cannot be deleted if he EVER handled deliveries
+        if (deliveries.Any())
+            throw new BLInvalidOperationException("This courier has handled deliveries and cannot be deleted.");
+
+        // Courier cannot be deleted if he is currently handling a delivery
+        if (deliveries.Any(d => d.ArrivalTime == null))
+            throw new BLInvalidOperationException("This courier is currently handling a delivery and cannot be deleted.");
+
+        // Delete if all checks pass
+        s_dal.Courier.Delete(courierId);
+    }
 }

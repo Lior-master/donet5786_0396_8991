@@ -13,25 +13,17 @@ internal class CourierImplementation : ICourier
     }
 
     public Courier GetCourierDetails(int requesterId, int courierId)
-    {
-        throw new NotImplementedException();
-    }
+        => CourierManager.GetCourierDetails(requesterId, courierId);
 
     public IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, DeliveryTransport? status)
-    {
-        throw new NotImplementedException();
-    }
+        => CourierManager.GetCouriersList(requesterId, isActive, status);
 
-    public Courier Login(string username, string password)
+    public BO.Administrator Login(string username, string password)
         => CourierManager.Login(username, password);
 
     public void removeCourier(int requesterId, int courierId)
-    {
-        throw new NotImplementedException();
-    }
+        => CourierManager.removeCourier(requesterId, courierId);
 
     public void UpdateCourier(int requesterId, Courier updatedCourier)
-    {
-        throw new NotImplementedException();
-    }
+        => CourierManager.UpdateCourier(requesterId, updatedCourier);
 }

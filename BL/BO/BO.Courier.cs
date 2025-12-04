@@ -45,17 +45,17 @@ public class Courier
     /// <summary>
     /// Total number of deliveries completed on time.
     /// </summary>
-    public int NumberOfOnTimeDeliveries { get; }
+    public int NumberOfOnTimeDeliveries { get; init; }
 
     /// <summary>
     /// Total number of deliveries completed late.
     /// </summary>
-    public int NumberOfLateDeliveries { get; }
+    public int NumberOfLateDeliveries { get; init; }
 
     /// <summary>
     /// The order the courier is currently working on, or <c>null</c> when idle.
     /// </summary>
-    public OrderInProgress? CurrentOrder { get; }
+    public OrderInProgress? CurrentOrder { get; init; }
 
     /// <summary>
     /// Maximum distance (in kilometers) the courier is willing or allowed to travel for a delivery.
@@ -66,7 +66,7 @@ public class Courier
     /// <summary>
     /// Say if the courier is administrator or director
     /// </summary>
-    public Administator Administator { get; init; }
+    public Administrator Administator { get; init; }
 
     public override string ToString() => this.ToStringProperty();
 
