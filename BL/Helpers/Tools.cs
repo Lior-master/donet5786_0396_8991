@@ -1,5 +1,6 @@
 ﻿using BO;
 using System.IO;
+using System.Text.Json;
 
 namespace Helpers;
 
@@ -89,5 +90,96 @@ internal static class Tools
         return d.ArrivalTime <= expectedTime;
     }
 
+    private static readonly HttpClient client = new HttpClient();
+
+    /// <summary>
+    /// Converts a textual address into geographic coordinates (Latitude, Longitude)
+    /// using OpenStreetMap Nominatim API (no API key required).
+    /// </summary>
+    public static async Task<(double Latitude, double Longitude)> GetCoordinatesFromAddressAsync(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            throw new BLInvalidInputException("Address cannot be empty.");
+
+        // URL encode the address
+        string urlAddress = Uri.EscapeDataString(address);
+
+        string url = $"https://nominatim.openstreetmap.org/search?format=json&q={urlAddress}";
+
+        // Required by Nominatim
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("DotNetProject/1.0");
+
+        try
+        {
+            var response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            string json = await response.Content.ReadAsStringAsync();
+
+            // Parse the JSON array
+            using JsonDocument doc = JsonDocument.Parse(json);
+
+            var results = doc.RootElement;
+
+            if (results.GetArrayLength() == 0)
+                throw new BLNotFoundException("No coordinates found for this address.");
+
+            var first = results[0];
+
+            double lat = double.Parse(first.GetProperty("lat").GetString()!);
+            double lon = double.Parse(first.GetProperty("lon").GetString()!);
+
+            return (lat, lon);
+        }
+        catch (Exception ex)
+        {
+            throw new BLNotFoundException($"Failed to geocode address '{address}': {ex.Message}", ex);
+        }
+    }
+
+    public static DateTime CalculateEstimatedArrival(DateTime orderDate, double distanceKm, double speedKmH)
+    {
+        if (speedKmH <= 0)
+            throw new ArgumentException("Speed must be positive.");
+
+        double hours = distanceKm / speedKmH;
+        return orderDate.AddHours(hours);
+    }
+
+    public static ScheduleStatus CalculateScheduleStatus(
+    OrderStatus orderStatus,
+    DateTime orderDate,
+    DateTime? estimatedArrival,
+    DateTime? maxArrival,
+    DateTime? realArrival)
+    {
+        // If no estimates available → cannot determine schedule
+        if (estimatedArrival == null || maxArrival == null)
+            return ScheduleStatus.Unknown;
+
+        DateTime now = DateTime.Now;
+
+        // Case 1: Order was already delivered
+        if (orderStatus == OrderStatus.Delivered && realArrival != null)
+        {
+            if (realArrival <= estimatedArrival)
+                return ScheduleStatus.OnTime;
+            else
+                return ScheduleStatus.Late;
+        }
+
+        // Case 2: Order still active / not delivered
+
+        // Late if we already passed the maximum allowed arrival time
+        if (now > maxArrival)
+            return ScheduleStatus.Late;
+
+        // At risk if we passed the estimated arrival but not the max arrival
+        if (now > estimatedArrival)
+            return ScheduleStatus.InRisk;
+
+        // Otherwise: on time
+        return ScheduleStatus.OnTime;
+    }
 
 }

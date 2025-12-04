@@ -3,6 +3,7 @@
 using BlApi;
 using BO;
 using Helpers;
+using System;
 using System.Collections.Generic;
 
 
@@ -33,17 +34,17 @@ internal class OrderImplementation : IOrder
         throw new NotImplementedException();
     }
 
-    public IEnumerable<Order> GetFilteredOrders(int requesterId)
-    {
-        throw new NotImplementedException();
-    }
-
     public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, OrderType? filter, DeliveredStatus? sorter)
     {
         throw new NotImplementedException();
     }
 
     public Order GetOrderDetails(int requesterId, int orderId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<int> GetOrdersBySummary(int requesterId)
     {
         throw new NotImplementedException();
     }

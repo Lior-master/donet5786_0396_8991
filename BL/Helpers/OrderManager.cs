@@ -9,10 +9,29 @@ namespace Helpers;
 internal static class OrderManager
 {
     private static readonly IDal s_dal = Factory.Get;
-    internal static IEnumerable<BO.Order> GetOrders(int requesterId)
+    internal static IEnumerable<int> GetOrderSummary(int requesterId)
     {
-        return s_dal.Order.ReadAll();
+        // Validate requester
+        var requester = s_dal.Courier.Read(requesterId);
+        if (requester == null)
+            throw new BLNotFoundException("Requester does not exist.");
+
+        var orders = s_dal.Order.ReadAll();
+
+        int statusCount = Enum.GetValues(typeof(BO.OrderStatus)).Length;
+        int[] summary = new int[statusCount];
+
+        // Group orders by OrderStatus
+        var groups = orders.GroupBy(o => o.Status);
+
+        foreach (var g in groups)
+        {
+            summary[(int)g.Key] = g.Count();
+        }
+
+        return summary; // int[] is implicitly convertible to IEnumerable<int>
     }
+
     internal static IEnumerable<BO.OrderInList> orderInLists(int requesterId,Enum? filter,object? Object,Enum? sorter)
     {
         // 1. TODO : vérifier permissions pour requesterId

@@ -126,7 +126,11 @@ public enum ScheduleStatus
     InRisk,
 
     /// <summary>Delivery has exceeded acceptable time thresholds and is considered late.</summary>
-    Late
+    Late,
+
+    /// <summary>Schedule status cannot be determined due to lack of information.</summary>
+    Unknown
+
 }
 public enum TimeUnit
 {

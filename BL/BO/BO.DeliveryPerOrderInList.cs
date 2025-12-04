@@ -26,7 +26,7 @@ public class DeliveryPerOrderInList
     /// <summary>
     /// Type of the order associated with this delivery.
     /// </summary>
-    public OrderType OrderType { get; init; }
+    public DeliveryTransport transport { get; init; }
 
     /// <summary>
     /// Time when the courier picked up the order for delivery.

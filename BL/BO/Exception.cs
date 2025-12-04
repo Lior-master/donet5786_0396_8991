@@ -41,3 +41,10 @@ public class BLInvalidOperationException : Exception
     public BLInvalidOperationException(string? message) : base(message) { }
     public BLInvalidOperationException(string message, Exception innerException) : base(message, innerException) { }
 }
+
+[Serializable]
+public class BLFailedOperation : Exception
+{
+    public BLFailedOperation(string? message) : base(message) { }
+    public BLFailedOperation(string message, Exception innerException) : base(message, innerException) { }
+}
