@@ -17,15 +17,13 @@ internal class CourierImplementation : ICourier
         throw new NotImplementedException();
     }
 
-    public IEnumerable<CourierInList> GetCouriersList(int? requesterId, bool? isActive, DeliveryTransport? status)
+    public IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, DeliveryTransport? status)
     {
         throw new NotImplementedException();
     }
 
     public Courier Login(string username, string password)
-    {
-        throw new NotImplementedException();
-    }
+        => CourierManager.Login(username, password);
 
     public void removeCourier(int requesterId, int courierId)
     {

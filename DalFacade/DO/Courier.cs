@@ -36,7 +36,7 @@ public record Courier
     bool IsActive,
     DeliveryTransport Transport,
     DateTime StartDate,
-    
+    Administrator Administrator,
     double? MaxDistance = null
 )
 {

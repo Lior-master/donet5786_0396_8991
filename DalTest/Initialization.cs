@@ -61,7 +61,8 @@ public static class Initialization
                 IsActive: s_rand.Next(0, 5) % 2 == 0,
                 Transport: transport,
                 StartDate: DateTime.Now.AddDays(s_rand.Next(-365, 0)),
-                MaxDistance: maxDistance
+                MaxDistance: maxDistance,
+                Administrator : (Administrator)s_rand.Next(0, 2)
             );
 
             s_dal!.Courier.Create(courier);

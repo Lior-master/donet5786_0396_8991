@@ -1,4 +1,5 @@
-﻿using DalApi;
+﻿using BO;
+using DalApi;
 using DO;
 using System.Linq;
 // Add the following using directive if GeoManager is defined in another namespace
@@ -45,7 +46,7 @@ internal static class CourierManager
             .ToList();
     }
 
-    internal static BO.Courier Login(string username,string password)
+    internal static BO.Administrator Login(string username,string password)
     {
         if (!string.IsNullOrEmpty(username))
         {
@@ -59,17 +60,7 @@ internal static class CourierManager
             {
                 throw new BO.BLInvalidInputException("Wrong password.");
             }
-            return new BO.Courier
-            {
-                Id = courier.Id,
-                Name = courier.Name,
-                Phone = courier.Phone,
-                Email = courier.Email,
-                IsActive = courier.IsActive,
-                StartDate = courier.StartDate,
-                Transport = (BO.DeliveryTransport)courier.Transport,
-                MaxDistance = courier.MaxDistance
-            };
+            return (BO.Administrator) courier.Administrator;
         }
         else
         {
@@ -78,103 +69,70 @@ internal static class CourierManager
 
     }
 
+    internal static IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, BO.DeliveryTransport? status)
+    {
+        // Verify that the requester exists
+        var requester = s_dal.Courier.Read(requesterId);
+        if (requester == null)
+            throw new BLNotFoundException("requesterId doesn't exist");
 
+        // Read all couriers
+        IEnumerable<DO.Courier> couriers = s_dal.Courier.ReadAll();
 
-    internal static void Create(Courier courier)
-    {
-        s_dal.Courier.Create(courier);
-    }
-    internal static Courier Read(int id)
-    {
-        return s_dal.Courier.Read(id);
-    }
-    internal static IEnumerable<BO.CourierInList> ReadAll()
-    {
-        return s_dal.Courier.ReadAll();
-    }
-    internal static void Update(BO.Courier courier)
-    {
-        s_dal.Courier.Update(courier);
-    }
-    internal static void Delete(int id)
-    {
-        s_dal.Courier.Delete(id);
-    }
-    internal static IEnumerable<BO.OpenOrderInList> GetEligibleOrders(int courierId)
-    {
-        // If GeoManager is a static class in your project, ensure it is defined and accessible.
-        // If it is missing, you need to provide its implementation or clarify its location.
-        // If you have a file or namespace for GeoManager, add the appropriate using statement above.
+        // Filter by active/inactive status
+        if (isActive != null)
+            couriers = couriers.Where(c => c.IsActive == isActive);
 
-        return s_dal.Order.ReadAll()
-            .Where(o => o.Status == OrderStatus.Pending)
-            .Select(o => new BO.OpenOrderInList
+        // Filter by transport if requested
+        if (status != null)
+            couriers = couriers.Where(c => (BO.DeliveryTransport)c.Transport == status);
+
+        // Read all deliveries once
+        var allDeliveries = s_dal.Delivery.ReadAll();
+
+        return couriers.Select(c =>
+        {
+            // Deliveries associated with this courier
+            var courierDeliveries = allDeliveries.Where(d => d.CourierId == c.Id);
+
+            int onTime = 0;
+            int late = 0;
+
+            var config = AdminManager.GetConfig();
+
+            foreach (var d in courierDeliveries)
             {
-                CourierId = courierId,
-                OrderId = o.Id,
-                OrderType = (BO.OrderType)o.Status,
-                Fragility = o.Fragility != null ? (BO.FragilityLevel?)o.Fragility : null,
-                CustomerAddress = o.CustomerAddress,
-                BirdDistance = Tools.BirdDistance(s_dal.Config.Latitude, s_dal.Config.Longitude, o.Latitude, o.Longitude),
-                Distance = null,
-                AddedTime = AdminManager.Now - o.OrderDate,
-                ScheduleStatus = o.ScheduleStatus,
-                EstimatedDeliveryTime = DeliveryManager.EstimateDeliveryTime(
-                    courierId,
-                    o.Id),
-            });
-    }
-    internal static void TakeOrder(int courierId, int orderId)
-    {
-        var order = s_dal.Order.Read(orderId);
-        if (order.Status != OrderStatus.Pending)
-        {
-            throw new InvalidOperationException("Order is not ready for delivery.");
-        }
-        order = order with
-        {
-            Status = OrderStatus.Pending,
-            CourierId = courierId,
-            DepartureTime = AdminManager.Now
-        };
-        s_dal.Order.Update(order);
-    }
-    internal static OrderInProgress? GetCurrentOrder(int courierId)
-    {
-        var order = s_dal.Order.ReadAll()
-            .FirstOrDefault(o => o.CourierId == courierId && o.Status == OrderStatus.OutForDelivery);
-        if (order == null)
-            return null;
-        var customer = s_dal.Customer.Read(order.CustomerId);
-        return new OrderInProgress
-        {
-            Id = order.Id,
-            CustomerName = customer.Name,
-            CustomerAddress = customer.Address,
-            Weight = order.Weight,
-            Priority = order.Priority,
-            DepartureTime = order.DepartureTime.Value
-        };
-    }
-    internal static IEnumerable<ClosedDeliveryInList> GetHistory(int courierId)
-    {
-        return s_dal.Delivery.ReadAll()
-            .Where(d => d.CourierId == courierId && d.ArrivalTime != null)
-            .Select(d =>
+                // Unfinished delivery -> ignore for stats
+                if (d.ArrivalTime == null || d.Distance == null)
+                    continue;
+
+                // Calculate expected arrival time
+                DateTime expected = Tools.CalculateExpectedArrivalTime(d, config);
+
+                // Check if the delivery is on time or late
+                if (Tools.IsDeliveryOnTime(d, expected))
+                    onTime++;
+                else
+                    late++;
+            }
+
+            return new CourierInList
             {
-                var order = s_dal.Order.Read(d.OrderId);
-                var customer = s_dal.Customer.Read(order.CustomerId);
-                return new ClosedDeliveryInList
-                {
-                    OrderId = order.Id,
-                    CustomerName = customer.Name,
-                    Weight = order.Weight,
-                    Priority = order.Priority,
-                    DepartureTime = order.DepartureTime.Value,
-                    ArrivalTime = d.ArrivalTime.Value,
-                    DeliveredStatus = d.DeliveredStatus
-                };
-            });
+                Id = c.Id,
+                Name = c.Name,
+                IsActive = c.IsActive,
+                Transport = (BO.DeliveryTransport)c.Transport,
+                StartDate = c.StartDate,
+
+                NumberOfOnTimeDeliveries = onTime,
+                NumberOfLateDeliveries = late,
+
+                // Ongoing delivery: the one where ArrivalTime == null
+                ActualOrder = courierDeliveries
+                              .FirstOrDefault(d => d.ArrivalTime == null)?
+                              .OrderId
+            };
+        });
     }
 
 }

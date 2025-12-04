@@ -63,6 +63,11 @@ public class Courier
     /// </summary>
     public double? MaxDistance { get; set; }
 
+    /// <summary>
+    /// Say if the courier is administrator or director
+    /// </summary>
+    public Administator Administator { get; init; }
+
     public override string ToString() => this.ToStringProperty();
 
 }

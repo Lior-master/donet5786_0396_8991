@@ -135,3 +135,10 @@ public enum TimeUnit
     Day,
     Month
 }
+
+public enum Administrator
+{
+    Director,
+    Courier,
+    Customer
+}

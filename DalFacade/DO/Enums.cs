@@ -128,3 +128,13 @@ public enum ScheduleStatus
     /// <summary>Delivery has exceeded acceptable time thresholds and is considered late.</summary>
     Late
 }
+
+/// <summary>
+/// say type of administrator
+/// </summary>
+public enum Administrator
+{
+    Director,
+    Courier,
+    Customer
+}
