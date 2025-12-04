@@ -1,38 +1,65 @@
-﻿using BLApi;
+﻿namespace BlImplementation;
+
+using BlApi;
 using BO;
 using Helpers;
+using System.Collections.Generic;
 
-namespace BlImplementation;
 
 internal class OrderImplementation : IOrder
 {
-    public void AssignOrderToCourier(int courierId, int orderId)
-        => OrderManager.AssignOrderToCourier(courierId, orderId);
+    public void AddOrder(int requesterId, Order order)
+    {
+        throw new NotImplementedException();
+    }
 
-    public int Create(Order order)
-        => OrderManager.Create(order);
+    public void AssignOrderToCourier(int requesterId, int orderId, int courierId)
+    {
+        throw new NotImplementedException();
+    }
 
-    public void Delete(int id)
-        => OrderManager.Delete(id);
+    public void CancelOrder(int requesterId, int orderId)
+    {
+        throw new NotImplementedException();
+    }
 
-    public void FinishDelivery(int courierId, int orderId, DeliveredStatus status)
-        => OrderManager.FinishDelivery(courierId, orderId, status);
+    public void FinishOrder(int requesterId, int courierId, int deliveryId)
+    {
+        throw new NotImplementedException();
+    }
 
-    public OrderInProgress? GetCurrentOrderForCourier(int courierId)
-        => OrderManager.GetCurrentOrderForCourier(courierId);
+    public IEnumerable<ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
+    {
+        throw new NotImplementedException();
+    }
 
-    public IEnumerable<ClosedDeliveryInList> GetDeliveryHistory(int courierId)
-        => OrderManager.GetDeliveryHistory(courierId);
+    public IEnumerable<Order> GetFilteredOrders(int requesterId)
+    {
+        throw new NotImplementedException();
+    }
 
-    public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int courierId)
-        => OrderManager.GetOpenOrdersForCourier(courierId);
+    public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, OrderType? filter, DeliveredStatus? sorter)
+    {
+        throw new NotImplementedException();
+    }
 
-    public Order Read(int id)
-        => OrderManager.Read(id);
+    public Order GetOrderDetails(int requesterId, int orderId)
+    {
+        throw new NotImplementedException();
+    }
 
-    public IEnumerable<OrderInList> ReadAll()
-        => OrderManager.ReadAll();
+    public IEnumerable<OrderInList> orderInLists(int requesterId, Enum? filter, object? Object, Enum? sorter)
+    {
+        throw new NotImplementedException();
+    }
 
-    public void Update(Order order)
-        => OrderManager.Update(order);
+    public void RemoveOrder(int requesterId, int orderId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void UpdateOrderDetails(int requesterId, Order order)
+    {
+        throw new NotImplementedException();
+    }
 }

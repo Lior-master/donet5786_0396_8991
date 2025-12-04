@@ -17,7 +17,7 @@ internal class AdminImplementation : IAdmin
 
     public void ForwardClock(TimeUnit unit)
     {
-        // On avance l'horloge selon l'unité demandée
+        // we forward the clock
         DateTime newTime = unit switch
         {
             TimeUnit.Minute => AdminManager.Now.AddMinutes(1),

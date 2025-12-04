@@ -3,44 +3,37 @@
 using BLApi;
 using BO;
 using Helpers;
+using System.Collections.Generic;
 
 internal class CourierImplementation : ICourier
 {
-    public void Create(Courier courier)
-        => CourierManager.Create(courier);
+    public void addCourier(int requesterId, Courier newCourier)
+    {
+        throw new NotImplementedException();
+    }
 
-    public Courier Read(int id)
-        => CourierManager.Read(id);
-
-    public IEnumerable<CourierInList> ReadAll()
-        => CourierManager.ReadAll();
-
-    public void Update(Courier courier)
-        => CourierManager.Update(courier);
-
-    public void Delete(int id)
-        => CourierManager.Delete(id);
-
-    public IEnumerable<OpenOrderInList> GetEligibleOrders(int courierId)
-        => CourierManager.GetEligibleOrders(courierId);
-
-    public void TakeOrder(int courierId, int orderId)
-        => CourierManager.TakeOrder(courierId, orderId);
-
-    public OrderInProgress? CurrentOrder(int courierId)
-        => CourierManager.GetCurrentOrder(courierId);
-
-    public IEnumerable<ClosedDeliveryInList> GetHistory(int courierId)
-        => CourierManager.GetHistory(courierId);
-
-
-
-
-
-    Courier ICourier.Login(string username, string password)
-        => CourierManager.Login(username, password);
+    public Courier GetCourierDetails(int requesterId, int courierId)
+    {
+        throw new NotImplementedException();
+    }
 
     public IEnumerable<CourierInList> GetCouriersList(int? requesterId, bool? isActive, DeliveryTransport? status)
-        => CourierManager.GetCouriersList(requesterId, isActive, status);
+    {
+        throw new NotImplementedException();
+    }
 
+    public Courier Login(string username, string password)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void removeCourier(int requesterId, int courierId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void UpdateCourier(int requesterId, Courier updatedCourier)
+    {
+        throw new NotImplementedException();
+    }
 }
