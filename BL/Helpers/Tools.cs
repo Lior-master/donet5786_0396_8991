@@ -87,24 +87,10 @@ internal static class Tools
         };
     }
 
-    internal static void UpdateCourierActivity(DO.Courier courier, TimeSpan inactivityThreshold)
+    public static void UpdateCourierActivity(DO.Courier courier, TimeSpan inactivityThreshold)
     {
         if (DateTime.Now - courier.StartDate > inactivityThreshold)
             courier.IsActive = false;
-    }
-
-
-    public static DateTime CalculateExpectedArrivalTime(DO.Delivery d, BO.Config config)
-    {
-        if (d.Distance == null)
-            throw new BLInvalidInputException("Cannot calculate expected time without distance");
-
-        double speed = GetSpeed(d.Transport, config);
-
-        // distance / speed = time in hours
-        double hours = d.Distance.Value / speed;
-
-        return d.PickupTime.AddHours(hours);
     }
 
     public static bool IsDeliveryOnTime(DO.Delivery d, DateTime expectedTime)
