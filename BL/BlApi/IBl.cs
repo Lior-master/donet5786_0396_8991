@@ -3,7 +3,7 @@
 namespace BlApi;
 public interface IBl
 {
-    ICourier Student { get; }
-    IOrder Course { get; }
+    ICourier Courier { get; }
+    IOrder Order { get; }
     IAdmin Admin { get; }
 }

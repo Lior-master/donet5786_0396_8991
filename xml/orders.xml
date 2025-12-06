@@ -2,11 +2,11 @@
 <ArrayOfOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Order>
     <Id>1000</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_1</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000001</CustomerPhone>
-    <OrderDate>2025-11-19T16:48:11.4259219+02:00</OrderDate>
+    <OrderDate>2025-12-05T01:29:01.0953933+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -15,11 +15,11 @@
   </Order>
   <Order>
     <Id>1001</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_2</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000002</CustomerPhone>
-    <OrderDate>2025-11-20T12:48:11.429775+02:00</OrderDate>
+    <OrderDate>2025-12-06T23:29:01.1007018+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -28,11 +28,11 @@
   </Order>
   <Order>
     <Id>1002</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_3</CustomerName>
-    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
+    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
     <CustomerPhone>+20000000003</CustomerPhone>
-    <OrderDate>2025-11-20T14:48:11.4460355+02:00</OrderDate>
+    <OrderDate>2025-12-05T03:29:01.1218967+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -41,11 +41,11 @@
   </Order>
   <Order>
     <Id>1003</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_4</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000004</CustomerPhone>
-    <OrderDate>2025-11-19T12:48:11.4599642+02:00</OrderDate>
+    <OrderDate>2025-12-06T18:29:01.1456648+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -54,11 +54,11 @@
   </Order>
   <Order>
     <Id>1004</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_5</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000005</CustomerPhone>
-    <OrderDate>2025-11-19T14:48:11.4767963+02:00</OrderDate>
+    <OrderDate>2025-12-06T04:29:01.1714808+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -67,11 +67,11 @@
   </Order>
   <Order>
     <Id>1005</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_6</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000006</CustomerPhone>
-    <OrderDate>2025-11-20T03:48:11.4909061+02:00</OrderDate>
+    <OrderDate>2025-12-06T16:29:01.1938132+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -80,11 +80,11 @@
   </Order>
   <Order>
     <Id>1006</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_7</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000007</CustomerPhone>
-    <OrderDate>2025-11-19T09:48:11.5129398+02:00</OrderDate>
+    <OrderDate>2025-12-05T11:29:01.2166884+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -93,11 +93,11 @@
   </Order>
   <Order>
     <Id>1007</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_8</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000008</CustomerPhone>
-    <OrderDate>2025-11-19T00:48:11.5350916+02:00</OrderDate>
+    <OrderDate>2025-12-05T23:29:01.2403037+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -106,11 +106,11 @@
   </Order>
   <Order>
     <Id>1008</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_9</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000009</CustomerPhone>
-    <OrderDate>2025-11-19T22:48:11.5582487+02:00</OrderDate>
+    <OrderDate>2025-12-06T12:29:01.2633801+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -119,11 +119,11 @@
   </Order>
   <Order>
     <Id>1009</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_10</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
     <CustomerPhone>+20000000010</CustomerPhone>
-    <OrderDate>2025-11-20T06:48:11.5796425+02:00</OrderDate>
+    <OrderDate>2025-12-05T17:29:01.2804163+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -132,11 +132,11 @@
   </Order>
   <Order>
     <Id>1010</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_11</CustomerName>
-    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000011</CustomerPhone>
-    <OrderDate>2025-11-19T16:48:11.6068732+02:00</OrderDate>
+    <OrderDate>2025-12-06T08:29:01.3031405+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -145,11 +145,11 @@
   </Order>
   <Order>
     <Id>1011</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_12</CustomerName>
-    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
+    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
     <CustomerPhone>+20000000012</CustomerPhone>
-    <OrderDate>2025-11-20T17:48:11.6340827+02:00</OrderDate>
+    <OrderDate>2025-12-06T12:29:01.3271278+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -158,11 +158,11 @@
   </Order>
   <Order>
     <Id>1012</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_13</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
     <CustomerPhone>+20000000013</CustomerPhone>
-    <OrderDate>2025-11-20T11:48:11.6522192+02:00</OrderDate>
+    <OrderDate>2025-12-06T00:29:01.3482985+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -171,11 +171,11 @@
   </Order>
   <Order>
     <Id>1013</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_14</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000014</CustomerPhone>
-    <OrderDate>2025-11-20T17:48:11.6714457+02:00</OrderDate>
+    <OrderDate>2025-12-06T05:29:01.3685434+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -184,11 +184,11 @@
   </Order>
   <Order>
     <Id>1014</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_15</CustomerName>
     <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000015</CustomerPhone>
-    <OrderDate>2025-11-19T19:48:11.6918126+02:00</OrderDate>
+    <OrderDate>2025-12-05T22:29:01.3844915+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -197,11 +197,11 @@
   </Order>
   <Order>
     <Id>1015</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_16</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000016</CustomerPhone>
-    <OrderDate>2025-11-19T16:48:11.709125+02:00</OrderDate>
+    <OrderDate>2025-12-05T14:29:01.4052921+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -210,11 +210,11 @@
   </Order>
   <Order>
     <Id>1016</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_17</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
     <CustomerPhone>+20000000017</CustomerPhone>
-    <OrderDate>2025-11-20T15:48:11.7289629+02:00</OrderDate>
+    <OrderDate>2025-12-06T16:29:01.4225802+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -223,11 +223,11 @@
   </Order>
   <Order>
     <Id>1017</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_18</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000018</CustomerPhone>
-    <OrderDate>2025-11-19T12:48:11.7477828+02:00</OrderDate>
+    <OrderDate>2025-12-06T06:29:01.445576+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -236,11 +236,11 @@
   </Order>
   <Order>
     <Id>1018</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_19</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000019</CustomerPhone>
-    <OrderDate>2025-11-20T15:48:11.7655031+02:00</OrderDate>
+    <OrderDate>2025-12-06T18:29:01.4649863+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -249,11 +249,11 @@
   </Order>
   <Order>
     <Id>1019</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_20</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000020</CustomerPhone>
-    <OrderDate>2025-11-19T14:48:11.783853+02:00</OrderDate>
+    <OrderDate>2025-12-05T19:29:01.4829563+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -262,11 +262,11 @@
   </Order>
   <Order>
     <Id>1020</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_21</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000021</CustomerPhone>
-    <OrderDate>2025-11-19T19:48:11.7967033+02:00</OrderDate>
+    <OrderDate>2025-12-05T05:29:01.5017403+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -275,11 +275,11 @@
   </Order>
   <Order>
     <Id>1021</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_22</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000022</CustomerPhone>
-    <OrderDate>2025-11-19T16:48:11.8190232+02:00</OrderDate>
+    <OrderDate>2025-12-05T16:29:01.5215618+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -288,11 +288,11 @@
   </Order>
   <Order>
     <Id>1022</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_23</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000023</CustomerPhone>
-    <OrderDate>2025-11-20T19:48:11.8360838+02:00</OrderDate>
+    <OrderDate>2025-12-06T04:29:01.5454742+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -301,11 +301,11 @@
   </Order>
   <Order>
     <Id>1023</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_24</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000024</CustomerPhone>
-    <OrderDate>2025-11-19T23:48:11.8497885+02:00</OrderDate>
+    <OrderDate>2025-12-06T00:29:01.5644877+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -314,11 +314,11 @@
   </Order>
   <Order>
     <Id>1024</Id>
-    <Status>Pending</Status>
+    <Type>FastFood</Type>
     <CustomerName>Customer_25</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000025</CustomerPhone>
-    <OrderDate>2025-11-19T14:48:11.8718106+02:00</OrderDate>
+    <OrderDate>2025-12-06T18:29:01.5860377+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -327,11 +327,11 @@
   </Order>
   <Order>
     <Id>1025</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_26</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000026</CustomerPhone>
-    <OrderDate>2025-11-19T17:48:11.8914639+02:00</OrderDate>
+    <OrderDate>2025-12-06T08:29:01.603944+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -340,11 +340,11 @@
   </Order>
   <Order>
     <Id>1026</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_27</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000027</CustomerPhone>
-    <OrderDate>2025-11-19T11:48:11.9078342+02:00</OrderDate>
+    <OrderDate>2025-12-05T10:29:01.619877+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -353,11 +353,11 @@
   </Order>
   <Order>
     <Id>1027</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_28</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000028</CustomerPhone>
-    <OrderDate>2025-11-19T19:48:11.9294227+02:00</OrderDate>
+    <OrderDate>2025-12-06T18:29:01.6364413+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -366,11 +366,11 @@
   </Order>
   <Order>
     <Id>1028</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_29</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000029</CustomerPhone>
-    <OrderDate>2025-11-20T09:48:11.9528426+02:00</OrderDate>
+    <OrderDate>2025-12-05T16:29:01.6522778+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -379,11 +379,11 @@
   </Order>
   <Order>
     <Id>1029</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_30</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000030</CustomerPhone>
-    <OrderDate>2025-11-19T06:48:11.9650878+02:00</OrderDate>
+    <OrderDate>2025-12-05T14:29:01.6762669+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -392,11 +392,11 @@
   </Order>
   <Order>
     <Id>1030</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_31</CustomerName>
-    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000031</CustomerPhone>
-    <OrderDate>2025-11-19T09:48:11.97885+02:00</OrderDate>
+    <OrderDate>2025-12-05T13:29:01.6972829+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -405,11 +405,11 @@
   </Order>
   <Order>
     <Id>1031</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_32</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000032</CustomerPhone>
-    <OrderDate>2025-11-19T16:48:11.9967041+02:00</OrderDate>
+    <OrderDate>2025-12-06T23:29:01.7185529+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -418,11 +418,11 @@
   </Order>
   <Order>
     <Id>1032</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_33</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000033</CustomerPhone>
-    <OrderDate>2025-11-19T18:48:12.0109937+02:00</OrderDate>
+    <OrderDate>2025-12-06T16:29:01.7395049+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -431,11 +431,11 @@
   </Order>
   <Order>
     <Id>1033</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_34</CustomerName>
     <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000034</CustomerPhone>
-    <OrderDate>2025-11-20T12:48:12.0279279+02:00</OrderDate>
+    <OrderDate>2025-12-06T13:29:01.7596334+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -444,11 +444,11 @@
   </Order>
   <Order>
     <Id>1034</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_35</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000035</CustomerPhone>
-    <OrderDate>2025-11-20T14:48:12.0418329+02:00</OrderDate>
+    <OrderDate>2025-12-06T05:29:01.7825877+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -457,11 +457,11 @@
   </Order>
   <Order>
     <Id>1035</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_36</CustomerName>
-    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000036</CustomerPhone>
-    <OrderDate>2025-11-19T00:48:12.0599223+02:00</OrderDate>
+    <OrderDate>2025-12-06T21:29:01.8023508+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -470,11 +470,11 @@
   </Order>
   <Order>
     <Id>1036</Id>
-    <Status>Processing</Status>
+    <Type>Pizza</Type>
     <CustomerName>Customer_37</CustomerName>
-    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
+    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000037</CustomerPhone>
-    <OrderDate>2025-11-20T06:48:12.0777042+02:00</OrderDate>
+    <OrderDate>2025-12-05T06:29:01.8193802+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -483,11 +483,11 @@
   </Order>
   <Order>
     <Id>1037</Id>
-    <Status>Delivered</Status>
+    <Type>Dessert</Type>
     <CustomerName>Customer_38</CustomerName>
     <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000038</CustomerPhone>
-    <OrderDate>2025-11-19T01:48:12.0961256+02:00</OrderDate>
+    <OrderDate>2025-12-05T10:29:01.8427045+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -496,11 +496,11 @@
   </Order>
   <Order>
     <Id>1038</Id>
-    <Status>Canceled</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_39</CustomerName>
     <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000039</CustomerPhone>
-    <OrderDate>2025-11-19T07:48:12.1131189+02:00</OrderDate>
+    <OrderDate>2025-12-06T15:29:01.8623371+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -509,11 +509,11 @@
   </Order>
   <Order>
     <Id>1039</Id>
-    <Status>Delivered</Status>
+    <Type>Dessert</Type>
     <CustomerName>Customer_40</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000040</CustomerPhone>
-    <OrderDate>2025-11-20T16:48:12.1273941+02:00</OrderDate>
+    <OrderDate>2025-12-05T07:29:01.8864526+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -522,11 +522,11 @@
   </Order>
   <Order>
     <Id>1040</Id>
-    <Status>Delivered</Status>
+    <Type>Shawarma</Type>
     <CustomerName>Customer_41</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000041</CustomerPhone>
-    <OrderDate>2025-11-19T21:48:12.1474606+02:00</OrderDate>
+    <OrderDate>2025-12-05T09:29:01.9053815+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -535,11 +535,11 @@
   </Order>
   <Order>
     <Id>1041</Id>
-    <Status>Canceled</Status>
+    <Type>Shawarma</Type>
     <CustomerName>Customer_42</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000042</CustomerPhone>
-    <OrderDate>2025-11-19T08:48:12.1655974+02:00</OrderDate>
+    <OrderDate>2025-12-06T09:29:01.9244684+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -548,11 +548,11 @@
   </Order>
   <Order>
     <Id>1042</Id>
-    <Status>Returned</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_43</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000043</CustomerPhone>
-    <OrderDate>2025-11-19T13:48:12.1840766+02:00</OrderDate>
+    <OrderDate>2025-12-06T18:29:01.9456505+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -561,11 +561,11 @@
   </Order>
   <Order>
     <Id>1043</Id>
-    <Status>Delivered</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_44</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000044</CustomerPhone>
-    <OrderDate>2025-11-20T09:48:12.2049205+02:00</OrderDate>
+    <OrderDate>2025-12-06T15:29:01.965831+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -574,11 +574,11 @@
   </Order>
   <Order>
     <Id>1044</Id>
-    <Status>Delivered</Status>
+    <Type>Dessert</Type>
     <CustomerName>Customer_45</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000045</CustomerPhone>
-    <OrderDate>2025-11-19T14:48:12.2236643+02:00</OrderDate>
+    <OrderDate>2025-12-06T01:29:01.9936677+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -587,11 +587,11 @@
   </Order>
   <Order>
     <Id>1045</Id>
-    <Status>Delivered</Status>
+    <Type>Shawarma</Type>
     <CustomerName>Customer_46</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000046</CustomerPhone>
-    <OrderDate>2025-11-19T20:48:12.2412332+02:00</OrderDate>
+    <OrderDate>2025-12-06T00:29:02.0197355+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -600,11 +600,11 @@
   </Order>
   <Order>
     <Id>1046</Id>
-    <Status>Delivered</Status>
+    <Type>Shawarma</Type>
     <CustomerName>Customer_47</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
     <CustomerPhone>+20000000047</CustomerPhone>
-    <OrderDate>2025-11-19T23:48:12.2620956+02:00</OrderDate>
+    <OrderDate>2025-12-05T08:29:02.0415851+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -613,11 +613,11 @@
   </Order>
   <Order>
     <Id>1047</Id>
-    <Status>Canceled</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_48</CustomerName>
     <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000048</CustomerPhone>
-    <OrderDate>2025-11-19T00:48:12.279001+02:00</OrderDate>
+    <OrderDate>2025-12-05T23:29:02.0628265+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -626,11 +626,11 @@
   </Order>
   <Order>
     <Id>1048</Id>
-    <Status>Returned</Status>
+    <Type>Dessert</Type>
     <CustomerName>Customer_49</CustomerName>
     <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000049</CustomerPhone>
-    <OrderDate>2025-11-20T07:48:12.2963973+02:00</OrderDate>
+    <OrderDate>2025-12-05T22:29:02.0873957+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -639,11 +639,11 @@
   </Order>
   <Order>
     <Id>1049</Id>
-    <Status>Returned</Status>
+    <Type>Dessert</Type>
     <CustomerName>Customer_50</CustomerName>
     <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000050</CustomerPhone>
-    <OrderDate>2025-11-19T13:48:12.3184667+02:00</OrderDate>
+    <OrderDate>2025-12-06T04:29:02.1023725+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -652,11 +652,11 @@
   </Order>
   <Order>
     <Id>1050</Id>
-    <Status>Canceled</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_51</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
     <CustomerPhone>+20000000051</CustomerPhone>
-    <OrderDate>2025-11-19T01:48:12.3328582+02:00</OrderDate>
+    <OrderDate>2025-12-06T21:29:02.1237323+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -665,11 +665,11 @@
   </Order>
   <Order>
     <Id>1051</Id>
-    <Status>Delivered</Status>
+    <Type>Shawarma</Type>
     <CustomerName>Customer_52</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
     <CustomerPhone>+20000000052</CustomerPhone>
-    <OrderDate>2025-11-20T06:48:12.3596889+02:00</OrderDate>
+    <OrderDate>2025-12-05T04:29:02.1416246+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -678,11 +678,11 @@
   </Order>
   <Order>
     <Id>1052</Id>
-    <Status>Returned</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_53</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
     <CustomerPhone>+20000000053</CustomerPhone>
-    <OrderDate>2025-11-19T04:48:12.378727+02:00</OrderDate>
+    <OrderDate>2025-12-06T13:29:02.1645882+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -691,11 +691,11 @@
   </Order>
   <Order>
     <Id>1053</Id>
-    <Status>Returned</Status>
+    <Type>Dessert</Type>
     <CustomerName>Customer_54</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000054</CustomerPhone>
-    <OrderDate>2025-11-19T22:48:12.3983747+02:00</OrderDate>
+    <OrderDate>2025-12-05T09:29:02.1837067+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -704,11 +704,11 @@
   </Order>
   <Order>
     <Id>1054</Id>
-    <Status>Canceled</Status>
+    <Type>Shawarma</Type>
     <CustomerName>Customer_55</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000055</CustomerPhone>
-    <OrderDate>2025-11-19T23:48:12.4172964+02:00</OrderDate>
+    <OrderDate>2025-12-06T17:29:02.2031916+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -717,11 +717,11 @@
   </Order>
   <Order>
     <Id>1055</Id>
-    <Status>Delivered</Status>
+    <Type>Dessert</Type>
     <CustomerName>Customer_56</CustomerName>
-    <CustomerAddress>2 Kadish Luz St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000056</CustomerPhone>
-    <OrderDate>2025-11-20T14:48:12.4315867+02:00</OrderDate>
+    <OrderDate>2025-12-06T18:29:02.2248827+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -730,11 +730,11 @@
   </Order>
   <Order>
     <Id>1056</Id>
-    <Status>Delivered</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_57</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000057</CustomerPhone>
-    <OrderDate>2025-11-19T11:48:12.4600013+02:00</OrderDate>
+    <OrderDate>2025-12-06T00:29:02.2479663+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -743,11 +743,11 @@
   </Order>
   <Order>
     <Id>1057</Id>
-    <Status>Canceled</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_58</CustomerName>
-    <CustomerAddress>24 Ouziel St</CustomerAddress>
+    <CustomerAddress>30 Barouh Duvdevani St</CustomerAddress>
     <CustomerPhone>+20000000058</CustomerPhone>
-    <OrderDate>2025-11-20T15:48:12.4746337+02:00</OrderDate>
+    <OrderDate>2025-12-06T08:29:02.2599998+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -756,11 +756,11 @@
   </Order>
   <Order>
     <Id>1058</Id>
-    <Status>Returned</Status>
+    <Type>Suchi</Type>
     <CustomerName>Customer_59</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000059</CustomerPhone>
-    <OrderDate>2025-11-20T12:48:12.4900235+02:00</OrderDate>
+    <OrderDate>2025-12-05T18:29:02.2765255+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
@@ -769,11 +769,11 @@
   </Order>
   <Order>
     <Id>1059</Id>
-    <Status>Delivered</Status>
+    <Type>Dessert</Type>
     <CustomerName>Customer_60</CustomerName>
-    <CustomerAddress>42 Bayit Vagan St</CustomerAddress>
+    <CustomerAddress>24 Ouziel St</CustomerAddress>
     <CustomerPhone>+20000000060</CustomerPhone>
-    <OrderDate>2025-11-19T22:48:12.5071745+02:00</OrderDate>
+    <OrderDate>2025-12-06T03:29:02.2903837+02:00</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
     <Latitude xsi:nil="true" />
