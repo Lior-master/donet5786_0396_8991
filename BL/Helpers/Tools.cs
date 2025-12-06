@@ -87,10 +87,12 @@ internal static class Tools
         };
     }
 
-    public static void UpdateCourierActivity(DO.Courier courier, TimeSpan inactivityThreshold)
+    public static DO.Courier UpdateCourierActivity(DO.Courier courier, TimeSpan inactivityThreshold)
     {
         if (DateTime.Now - courier.StartDate > inactivityThreshold)
-            courier.IsActive = false;
+            return courier with { IsActive = false };
+
+        return courier;
     }
 
     public static bool IsDeliveryOnTime(DO.Delivery d, DateTime expectedTime)

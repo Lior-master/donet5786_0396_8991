@@ -90,6 +90,17 @@ internal static class CourierManager
         // Read all deliveries once
         var allDeliveries = s_dal.Delivery.ReadAll();
 
+        var config = AdminManager.GetConfig();
+
+        double GetSpeed(DO.DeliveryTransport transport)
+            => transport switch
+            {
+                DO.DeliveryTransport.Motorcycle => config.MotorcycleSpeed,
+                DO.DeliveryTransport.Bike => config.BikeSpeed,
+                DO.DeliveryTransport.Foot => config.WalkingSpeed,
+                _ => config.CarSpeed,
+            };
+
         return couriers.Select(c =>
         {
             // Deliveries associated with this courier
@@ -98,16 +109,15 @@ internal static class CourierManager
             int onTime = 0;
             int late = 0;
 
-            var config = AdminManager.GetConfig();
-
             foreach (var d in courierDeliveries)
             {
-                // Unfinished delivery -> ignore for stats
+                // Unfinished delivery or missing distance -> ignore for stats
                 if (d.ArrivalTime == null || d.Distance == null)
                     continue;
 
-                // Calculate expected arrival time
-                DateTime expected = Tools.CalculateExpectedArrivalTime(d, config);
+                // Calculate expected arrival time from pickup using stored distance and transport speed
+                double speed = GetSpeed(d.Transport);
+                DateTime expected = d.PickupTime.AddHours(d.Distance.Value / (speed > 0 ? speed : config.CarSpeed));
 
                 // Check if the delivery is on time or late
                 if (Tools.IsDeliveryOnTime(d, expected))
@@ -157,6 +167,15 @@ internal static class CourierManager
         // Load system configuration (replace with your own config access method if needed)
         var config = AdminManager.GetConfig();
 
+        double GetSpeed(DO.DeliveryTransport transport)
+            => transport switch
+            {
+                DO.DeliveryTransport.Motorcycle => config.MotorcycleSpeed,
+                DO.DeliveryTransport.Bike => config.BikeSpeed,
+                DO.DeliveryTransport.Foot => config.WalkingSpeed,
+                _ => config.CarSpeed,
+            };
+
         // 4. Calculate delivery performance statistics
         foreach (var d in courierDeliveries)
         {
@@ -164,8 +183,9 @@ internal static class CourierManager
             if (d.ArrivalTime == null || d.Distance == null)
                 continue;
 
-            // Compute expected delivery time using helper tools
-            DateTime expected = Tools.CalculateExpectedArrivalTime(d, config);
+            // Compute expected delivery time from pickup + distance / speed
+            double speed = GetSpeed(d.Transport);
+            DateTime expected = d.PickupTime.AddHours(d.Distance.Value / (speed > 0 ? speed : config.CarSpeed));
 
             // Compare expected vs actual arrival time
             if (Tools.IsDeliveryOnTime(d, expected))
@@ -187,6 +207,10 @@ internal static class CourierManager
 
             if (orderDO != null)
             {
+                // compute order status from deliveries for this order (correct mapping)
+                var deliveriesForOrder = s_dal.Delivery.ReadAll(d => d.OrderId == orderDO.Id).ToList();
+                var ordStatus = Tools.CalculateOrderStatus(deliveriesForOrder);
+
                 // Create a BO.OrderInProgress object to represent the active order
                 currentOrder = new BO.OrderInProgress
                 {
@@ -196,7 +220,7 @@ internal static class CourierManager
                     CustomerPhone = orderDO.CustomerPhone,
                     PickupTime = currentDelivery.PickupTime,
                     Distance = currentDelivery.Distance,
-                    OrderStatusEnum = (BO.OrderStatus)orderDO.Status
+                    OrderStatusEnum = ordStatus
                 };
             }
         }

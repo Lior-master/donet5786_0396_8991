@@ -10,57 +10,35 @@ using System.Collections.Generic;
 internal class OrderImplementation : IOrder
 {
     public void AddOrder(int requesterId, Order order)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.AddOrder(requesterId, order);
 
     public void AssignOrderToCourier(int requesterId, int orderId, int courierId)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.AssignOrderToCourier(requesterId, orderId, courierId);
 
     public void CancelOrder(int requesterId, int orderId)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.CancelOrder(requesterId, orderId);
 
     public void FinishOrder(int requesterId, int courierId, int deliveryId)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.FinishOrder(requesterId, courierId, deliveryId);
 
     public IEnumerable<ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.GetClosedDeliveriesForCourier(requesterId, courierId, filter, sorter);
 
     public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, OrderType? filter, DeliveredStatus? sorter)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.GetOpenOrdersForCourier(requesterId, courierId, filter, sorter);
 
     public Order GetOrderDetails(int requesterId, int orderId)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.GetOrderDetails(requesterId, orderId);
 
     public IEnumerable<int> GetOrdersBySummary(int requesterId)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.GetOrderSummary(requesterId);
 
     public IEnumerable<OrderInList> orderInLists(int requesterId, Enum? filter, object? Object, Enum? sorter)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.orderInLists(requesterId, filter, Object, sorter);
 
     public void RemoveOrder(int requesterId, int orderId)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.RemoveOrder(requesterId, orderId);
 
     public void UpdateOrderDetails(int requesterId, Order order)
-    {
-        throw new NotImplementedException();
-    }
+        => OrderManager.UpdateOrderDetails(requesterId, order);
 }

@@ -22,7 +22,7 @@ public class OrderInProgress
     /// Numeric representation of the order status.
     /// This value can be used when a numeric code is required (for example when interacting with lower-level DAL).
     /// </summary>
-    public int OrderStatus { get; init; } 
+    public OrderStatus OrderStatus { get; init; } 
 
     /// <summary>
     /// Calculated or measured route distance for the delivery, in kilometers when available.

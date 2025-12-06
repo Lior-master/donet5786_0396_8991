@@ -10,27 +10,157 @@ namespace Helpers;
 internal static class OrderManager
 {
     private static readonly IDal s_dal = Factory.Get;
+
+    internal static void PeriodicOrdersUpdates(DateTime oldClock, DateTime newClock)
+    {
+        // Read config values once
+        TimeSpan maxDeliveryTime = s_dal.Config.MaxTimeDelivery;
+        TimeSpan riskRange = s_dal.Config.RiskRange;
+
+        // Read all deliveries once to avoid multiple DAL calls
+        var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
+
+        // Iterate over a snapshot of orders
+        foreach (var o in s_dal.Order.ReadAll().ToList())
+        {
+            // deliveries for this order
+            var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
+
+            // 1) Start deliveries whose pickup time was reached (Status == null -> Processing)
+            foreach (var d in orderDeliveries.Where(d => d.Status == null && d.PickupTime > oldClock && d.PickupTime <= newClock))
+            {
+                var upd = d with { Status = DO.OrderStatus.Processing };
+                s_dal.Delivery.Update(upd);
+            }
+
+            // 2) Cancel processing deliveries that exceed maxDeliveryTime (best-effort)
+            //    We use order.OrderDate as the reference for allowed delivery window.
+            foreach (var d in orderDeliveries.Where(d => d.Status == DO.OrderStatus.Processing && d.ArrivalTime == null))
+            {
+                if (newClock - o.OrderDate > maxDeliveryTime)
+                {
+                    var upd = d with
+                    {
+                        Status = DO.OrderStatus.Canceled,
+                        ArrivalTime = newClock // mark finished so it won't be considered open anymore
+                    };
+                    s_dal.Delivery.Update(upd);
+                }
+            }
+
+            // 3) Compute in-memory order status (BO) using deliveries + time-based escalation
+            //    We DO NOT persist this on DO.Order (user requested no change to DO.Order).
+            var deliveryBasedStatus = Tools.CalculateOrderStatus(orderDeliveries); // BO.OrderStatus
+            TimeSpan elapsed = newClock - o.OrderDate;
+            BO.OrderStatus timeBasedStatus = BO.OrderStatus.Pending;
+
+            if (elapsed > maxDeliveryTime)
+            {
+                timeBasedStatus = BO.OrderStatus.Canceled;
+            }
+            else if (elapsed >= (maxDeliveryTime - riskRange))
+            {
+                if (deliveryBasedStatus == BO.OrderStatus.Pending)
+                    timeBasedStatus = BO.OrderStatus.Processing;
+                else
+                    timeBasedStatus = deliveryBasedStatus;
+            }
+            else
+            {
+                timeBasedStatus = BO.OrderStatus.Pending;
+            }
+
+            BO.OrderStatus finalStatus;
+            // terminal statuses from deliveries take precedence
+            if (deliveryBasedStatus == BO.OrderStatus.Delivered
+                || deliveryBasedStatus == BO.OrderStatus.Returned
+                || deliveryBasedStatus == BO.OrderStatus.Canceled)
+            {
+                finalStatus = deliveryBasedStatus;
+            }
+            else
+            {
+                // otherwise use the time-based computed status
+                finalStatus = timeBasedStatus;
+            }
+
+            // 4) No persistence to DO.Order (by design). If you need the DAL to store order status
+            //    instead, we must add a property to DO.Order or store a sentinel delivery — you asked not to.
+            //    We keep the computed `finalStatus` available for in-memory decisions or eventing if required.
+        }
+    }
     internal static IEnumerable<int> GetOrderSummary(int requesterId)
     {
         // Validate requester
-        var requester = s_dal.Courier.Read(requesterId);
-        if (requester == null)
-            throw new BLNotFoundException("Requester does not exist.");
-
-        var orders = s_dal.Order.ReadAll();
+        try
+        {
+            var requester = s_dal.Courier.Read(requesterId);
+        }
+        catch
+        {
+            throw new BLNotFoundException($"Requester with id {requesterId} does not exist.");
+        }
+        // Read data once
+        var orders = s_dal.Order.ReadAll().ToList();
+        var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
+        var config = AdminManager.GetConfig();
 
         int statusCount = Enum.GetValues(typeof(BO.OrderStatus)).Length;
-        int[] summary = new int[statusCount];
+        int scheduleCount = Enum.GetValues(typeof(BO.ScheduleStatus)).Length;
+        // Flattened matrix: index = statusIndex * scheduleCount + scheduleIndex
+        int[] summary = new int[statusCount * scheduleCount];
 
-        // Group orders by OrderStatus
-        var groups = orders.GroupBy(o => o.Status);
+        // Project each order to its computed (OrderStatus, ScheduleStatus) then GroupBy as requested
+        var projections = orders.Select(o =>
+        {
+            var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
+            var lastDelivery = orderDeliveries.OrderByDescending(d => d.PickupTime).FirstOrDefault();
+            DateTime? realArrival = lastDelivery?.ArrivalTime;
+
+            // compute coordinates (best-effort, keep 0,0 on failure)
+            double lat = o.Latitude ?? 0;
+            double lon = o.Longitude ?? 0;
+            if (lat == 0 && lon == 0)
+            {
+                try
+                {
+                    var coords = Tools.GetCoordinatesFromAddressAsync(o.CustomerAddress).GetAwaiter().GetResult();
+                    lat = coords.Latitude;
+                    lon = coords.Longitude;
+                }
+                catch { }
+            }
+
+            double distance = Tools.BirdDistance(
+                config.CompanyLatitude,
+                config.CompanyLongitude,
+                lat,
+                lon
+            );
+
+            DateTime? estArrival = distance > 0
+                ? Tools.CalculateEstimatedArrival(o.OrderDate, distance, config.CarSpeed)
+                : null;
+
+            DateTime? maxArrival = estArrival?.Add(config.RiskRange);
+
+            var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
+            var scheduleStatus = Tools.CalculateScheduleStatus(orderStatus, o.OrderDate, estArrival, maxArrival, realArrival);
+
+            return new { Status = orderStatus, Schedule = scheduleStatus };
+        });
+
+        var groups = projections.GroupBy(p => new { p.Status, p.Schedule });
 
         foreach (var g in groups)
         {
-            summary[(int)g.Key] = g.Count();
+            int sIdx = (int)g.Key.Status;
+            int schIdx = (int)g.Key.Schedule;
+            int idx = sIdx * scheduleCount + schIdx;
+            summary[idx] = g.Count();
         }
 
-        return summary; // int[] is implicitly convertible to IEnumerable<int>
+        return summary;
     }
 
     internal static IEnumerable<BO.OrderInList> orderInLists(int requesterId,Enum? filter,object? Object,Enum? sorter)
@@ -62,9 +192,9 @@ internal static class OrderManager
                     lat = coords.Latitude;
                     lon = coords.Longitude;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // keep 0,0 on failure
+                    throw new BLFailedOperation(ex.Message);
                 }
             }
 
@@ -139,6 +269,7 @@ internal static class OrderManager
         return list;
     }
 
+    // a choisir entre les deux methodes dessus dessous
     internal static IEnumerable<BO.OrderInList> GetOrdersList(int requesterId, BO.OrderStatus? statusFilter, object? sortParameter)
     {
         var requester = s_dal.Courier.Read(requesterId);
@@ -432,7 +563,7 @@ internal static class OrderManager
         s_dal.Delivery.Create(delivery);
     }
 
-    internal static IEnumerable<BO.ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId,int courierId,OrderType? filter,Enum? sorter)
+    internal static IEnumerable<BO.ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId,int courierId,BO.OrderType? filter,Enum? sorter)
     {
         var requester = s_dal.Courier.Read(requesterId);
         if (requester == null)
@@ -452,7 +583,7 @@ internal static class OrderManager
                 OrderId = d.OrderId,
                 OrderType = o != null ? (BO.OrderType)o.Type : BO.OrderType.FastFood,
                 CustomerAdress = o?.CustomerAddress ?? string.Empty,
-                DeliveryTransport = d.Transport,
+                DeliveryTransport = (BO.DeliveryTransport)d.Transport,
                 ActualDistance = d.Distance,
                 DeliveryTotalTime = d.ArrivalTime!.Value - d.PickupTime,
                 DeliveredStatus = d.Status switch
@@ -483,7 +614,7 @@ internal static class OrderManager
         return list;
     }
 
-    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId,int courierId, OrderType? filter,DeliveredStatus? sorter)
+    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId,int courierId, BO.OrderType? filter,BO.DeliveredStatus? sorter)
     {
         var requester = s_dal.Courier.Read(requesterId);
         if (requester == null)
@@ -526,7 +657,7 @@ internal static class OrderManager
                 CustomerAddress = o?.CustomerAddress ?? string.Empty,
                 BirdDistance = bird,
                 Distance = d.Distance,
-                AddedTime = o != null ? (DateTime?) (DateTime.Now - o.OrderDate) : null,
+                AddedTime = (o != null) ? (TimeSpan?) (DateTime.Now - o.OrderDate) : null,
                 ScheduleStatus = Tools.CalculateScheduleStatus(Tools.CalculateOrderStatus(new List<DO.Delivery> { d }), o?.OrderDate ?? DateTime.Now, estArrival, estArrival?.Add(config.RiskRange), d.ArrivalTime),
                 EstimatedDeliveryTime = estTimeSpan,
                 MaxDeliveredTime = maxDelivered

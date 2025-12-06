@@ -73,6 +73,7 @@ internal class Program
                         Console.Write("Enter Id: ");
                         int ID = int.Parse(Console.ReadLine() ?? "0");
 
+                        // Administrator is an enum in DO; pass the enum value directly.
                         Courier newCourier = new Courier(
                             Id: ID,
                             Name: name ?? "Unknown",
@@ -82,6 +83,7 @@ internal class Program
                             IsActive: true,
                             Transport: DeliveryTransport.Bike,
                             StartDate: DateTime.Now,
+                            Administrator: Administrator.Courier,
                             MaxDistance: 10
                         );
 

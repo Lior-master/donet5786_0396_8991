@@ -10,7 +10,7 @@ internal class OrderImplementation : IOrder
         return new DO.Order()
         {
             Id = o.ToIntNullable("Id") ?? throw new DalFormatException("cant convert id"),
-            Status = o.ToEnumNullable<OrderStatus>("Status") ?? OrderStatus.Pending,
+            Type = o.ToEnumNullable<OrderType>("Type") ?? OrderType.FastFood,
             CustomerName = (string?)o.Element("CustomerName") ?? "",
             CustomerAddress = (string?)o.Element("CustomerAddress") ?? "",
             CustomerPhone = (string?)o.Element("CustomerPhone") ?? "",
