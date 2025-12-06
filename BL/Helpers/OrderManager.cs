@@ -34,9 +34,16 @@ internal static class OrderManager
 
     internal static IEnumerable<BO.OrderInList> orderInLists(int requesterId,Enum? filter,object? Object,Enum? sorter)
     {
-        // 1. TODO : vérifier permissions pour requesterId
+        // 1. Validation of requesterId
+        try
+        {
+            var requester = s_dal.Courier.Read(requesterId);
+        }
+        catch (Exception ex)
+        {
+            throw new BLNotFoundException("Requester does not exist." , ex);
+        }
 
-        // 2. Lire toutes les commandes DO
         var doOrders = s_dal.Order.ReadAll();
 
         // 3. TODO : convertir DO.Order → BO.OrderInList
@@ -61,6 +68,83 @@ internal static class OrderManager
         {
             // TODO : appliquer le tri selon 'sorter'
         }
+
+        return list;
+    }
+
+    internal static IEnumerable<BO.OrderInList> GetOrdersList(int requesterId, BO.OrderStatus? statusFilter, object? sortParameter)
+    {
+        var requester = s_dal.Courier.Read(requesterId);
+        if (requester == null)
+            throw new BLNotFoundException("Requester does not exist.");
+
+        var config = AdminManager.GetConfig();
+        var ordersDO = s_dal.Order.ReadAll().ToList();
+        var deliveriesDO = s_dal.Delivery.ReadAll().ToList();
+
+        var list = ordersDO.Select(order =>
+        {
+            var orderDeliveries = deliveriesDO
+                .Where(d => d.OrderId == order.Id)
+                .ToList();
+
+            var lastDelivery = orderDeliveries
+                .OrderByDescending(d => d.PickupTime)
+                .FirstOrDefault();
+
+            int? deliveryId = lastDelivery?.Id;
+
+            // Coordinates
+            double lat = order.Latitude ?? 0;
+            double lon = order.Longitude ?? 0;
+
+            if (lat == 0 && lon == 0)
+            {
+                var coords = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).Result;
+                lat = coords.Latitude;
+                lon = coords.Longitude;
+            }
+
+            double distance = Tools.BirdDistance(
+                config.CompanyLatitude,
+                config.CompanyLongitude,
+                lat,
+                lon
+            );
+
+            DateTime? estArrival = distance > 0
+                ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, config.CarSpeed)
+                : null;
+
+            DateTime? maxArrival = estArrival?.Add(config.RiskRange);
+            DateTime? realArrival = lastDelivery?.ArrivalTime;
+
+            // REAL ORDER STATUS computed from deliveries
+            var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
+
+            // REAL ScheduleStatus
+            var schedule = Tools.CalculateScheduleStatus(
+                orderStatus,
+                order.OrderDate,
+                estArrival,
+                maxArrival,
+                realArrival
+            );
+
+            return new BO.OrderInList
+            {
+                DeliveryId = deliveryId,
+                OrderId = order.Id,
+                Type = (BO.OrderType)order.Type,
+                Distance = distance,
+                Status = orderStatus,
+                ScheduleStatus = schedule,
+                OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : DateTime.Now - order.OrderDate,
+                TreatmentEndTime = lastDelivery != null ? lastDelivery.PickupTime - order.OrderDate : TimeSpan.Zero,
+                NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
+            };
+
+        }).ToList();
 
         return list;
     }

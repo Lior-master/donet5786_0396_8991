@@ -26,35 +26,54 @@ internal static class Tools
         sb.AppendLine("}");
         return sb.ToString();
     }
-    
 
-    // Accept nullable parameters and return null if any parameter is null.
-    public static double BirdDistance(double? lat1, double? lon1, double? lat2, double? lon2)
+    public static double BirdDistance(double lat1, double lon1, double lat2, double lon2)
     {
-        if (!lat1.HasValue || !lon1.HasValue || !lat2.HasValue || !lon2.HasValue)
-            return -1;
+        const double R = 6371;
+        double dLat = (lat2 - lat1) * Math.PI / 180;
+        double dLon = (lon2 - lon1) * Math.PI / 180;
 
-        const double R = 6371; // earth radius in kilometers
+        double a =
+            Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+            Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
+            Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
 
-        double dLat = ToRadians(lat2.Value - lat1.Value);
-        double dLon = ToRadians(lon2.Value - lon1.Value);
-
-        double la1 = ToRadians(lat1.Value);
-        double la2 = ToRadians(lat2.Value);
-
-        double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                   Math.Cos(la1) * Math.Cos(la2) *
-                   Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-
-        double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-
-        return R * c; // Distance in kilometers
+        return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
 
-    private static double ToRadians(double angle)
+    public static BO.OrderStatus CalculateOrderStatus(List<DO.Delivery> deliveries)
     {
-        return angle * Math.PI / 180.0;
+        if (deliveries == null || deliveries.Count == 0)
+            return BO.OrderStatus.Pending;
+
+        var last = deliveries.OrderByDescending(d => d.PickupTime).First();
+
+        return last.Status switch
+        {
+            DO.OrderStatus.Pending => BO.OrderStatus.Pending,
+            DO.OrderStatus.Processing => BO.OrderStatus.Processing,
+            DO.OrderStatus.Delivered => BO.OrderStatus.Delivered,
+            DO.OrderStatus.Canceled => BO.OrderStatus.Canceled,
+            DO.OrderStatus.Returned => BO.OrderStatus.Returned,
+            _ => BO.OrderStatus.Pending
+        };
     }
+
+    public static async Task<double> CalculateRouteDistanceAsync(double lat1, double lon1, double lat2, double lon2)
+    {
+        using var client = new HttpClient();
+        string url = $"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false";
+
+        var response = await client.GetStringAsync(url);
+        var data = System.Text.Json.JsonSerializer.Deserialize<dynamic>(response);
+
+        if (data == null || data.routes == null)
+            throw new Exception("Routing service error");
+
+        double meters = data.routes[0].distance;
+        return meters / 1000.0;
+    }
+
 
     public static double GetSpeed(DO.DeliveryTransport transport, BO.Config config)
     {
@@ -67,6 +86,13 @@ internal static class Tools
             _ => config.CarSpeed
         };
     }
+
+    internal static void UpdateCourierActivity(DO.Courier courier, TimeSpan inactivityThreshold)
+    {
+        if (DateTime.Now - courier.StartDate > inactivityThreshold)
+            courier.IsActive = false;
+    }
+
 
     public static DateTime CalculateExpectedArrivalTime(DO.Delivery d, BO.Config config)
     {
@@ -96,45 +122,21 @@ internal static class Tools
     /// Converts a textual address into geographic coordinates (Latitude, Longitude)
     /// using OpenStreetMap Nominatim API (no API key required).
     /// </summary>
-    public static async Task<(double Latitude, double Longitude)> GetCoordinatesFromAddressAsync(string address)
+    public static async Task<(double Latitude, double Longitude)>  GetCoordinatesFromAddressAsync(string address)
     {
-        if (string.IsNullOrWhiteSpace(address))
-            throw new BLInvalidInputException("Address cannot be empty.");
+        using var client = new HttpClient();
+        string url = $"https://nominatim.openstreetmap.org/search?format=json&q={Uri.EscapeDataString(address)}";
 
-        // URL encode the address
-        string urlAddress = Uri.EscapeDataString(address);
+        var response = await client.GetStringAsync(url);
+        var results = System.Text.Json.JsonSerializer.Deserialize<List<dynamic>>(response);
 
-        string url = $"https://nominatim.openstreetmap.org/search?format=json&q={urlAddress}";
+        if (results == null || results.Count == 0)
+            throw new Exception("Address not found");
 
-        // Required by Nominatim
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("DotNetProject/1.0");
+        double lat = double.Parse((string)results[0].lat);
+        double lon = double.Parse((string)results[0].lon);
 
-        try
-        {
-            var response = await client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            string json = await response.Content.ReadAsStringAsync();
-
-            // Parse the JSON array
-            using JsonDocument doc = JsonDocument.Parse(json);
-
-            var results = doc.RootElement;
-
-            if (results.GetArrayLength() == 0)
-                throw new BLNotFoundException("No coordinates found for this address.");
-
-            var first = results[0];
-
-            double lat = double.Parse(first.GetProperty("lat").GetString()!);
-            double lon = double.Parse(first.GetProperty("lon").GetString()!);
-
-            return (lat, lon);
-        }
-        catch (Exception ex)
-        {
-            throw new BLNotFoundException($"Failed to geocode address '{address}': {ex.Message}", ex);
-        }
+        return (lat, lon);
     }
 
     public static DateTime CalculateEstimatedArrival(DateTime orderDate, double distanceKm, double speedKmH)
@@ -146,40 +148,30 @@ internal static class Tools
         return orderDate.AddHours(hours);
     }
 
-    public static ScheduleStatus CalculateScheduleStatus(
-    OrderStatus orderStatus,
-    DateTime orderDate,
-    DateTime? estimatedArrival,
-    DateTime? maxArrival,
-    DateTime? realArrival)
+    public static BO.ScheduleStatus CalculateScheduleStatus(
+        BO.OrderStatus status,
+        DateTime orderDate,
+        DateTime? estimatedArrival,
+        DateTime? maxArrival,
+        DateTime? realArrival)
     {
-        // If no estimates available → cannot determine schedule
         if (estimatedArrival == null || maxArrival == null)
-            return ScheduleStatus.Unknown;
+            return BO.ScheduleStatus.OnTime;
+
+        if (status == BO.OrderStatus.Delivered && realArrival != null)
+            return realArrival <= estimatedArrival
+                ? BO.ScheduleStatus.OnTime
+                : BO.ScheduleStatus.Late;
 
         DateTime now = DateTime.Now;
 
-        // Case 1: Order was already delivered
-        if (orderStatus == OrderStatus.Delivered && realArrival != null)
-        {
-            if (realArrival <= estimatedArrival)
-                return ScheduleStatus.OnTime;
-            else
-                return ScheduleStatus.Late;
-        }
-
-        // Case 2: Order still active / not delivered
-
-        // Late if we already passed the maximum allowed arrival time
         if (now > maxArrival)
-            return ScheduleStatus.Late;
+            return BO.ScheduleStatus.Late;
 
-        // At risk if we passed the estimated arrival but not the max arrival
         if (now > estimatedArrival)
-            return ScheduleStatus.InRisk;
+            return BO.ScheduleStatus.InRisk;
 
-        // Otherwise: on time
-        return ScheduleStatus.OnTime;
+        return BO.ScheduleStatus.OnTime;
     }
 
 }

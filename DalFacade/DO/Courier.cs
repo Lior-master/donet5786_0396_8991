@@ -52,5 +52,5 @@ public record Courier
     /// - StartDate = <see cref="DateTime.Now"/> (consider using UTC in callers)
     /// - MaxDistance = null
     /// </remarks>
-    public Courier() : this(0, string.Empty, string.Empty, string.Empty, string.Empty, false, DeliveryTransport.Car, DateTime.Now) { }
+    public Courier() : this(0, string.Empty, string.Empty, string.Empty, string.Empty, false, DeliveryTransport.Car, DateTime.Now,Administrator.Courier) { }
 }

@@ -73,13 +73,13 @@ public static class Initialization
     {
         for (int i = 0; i < 60; i++)
         {
-            OrderStatus status;
+            OrderType Type;
             if (i < 25)
-                status = OrderStatus.Pending;
+                Type = OrderType.FastFood;
             else if (i < 37)
-                status = OrderStatus.Processing;
+                Type = OrderType.Pizza;
             else
-                status = (OrderStatus)s_rand.Next(2, 5);
+                Type = (OrderType)s_rand.Next(2, 5);
 
             Order order = new Order
             (
@@ -87,7 +87,7 @@ public static class Initialization
                 CustomerName: $"Customer_{i + 1}",
                 CustomerAddress: addresses[s_rand.Next(0,5)].Street,
                 CustomerPhone: $"+200000000{i + 1:D2}",
-                Status: status,
+                Type: Type,
                 OrderDate: DateTime.Now.AddHours(-s_rand.Next(0, 48))
             );
             s_dal!.Order.Create(order);

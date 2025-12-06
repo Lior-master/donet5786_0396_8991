@@ -65,17 +65,11 @@ public enum DeliveryTransport
 /// </summary>
 public enum OrderType
 {
-    /// <summary>Standard delivery (regular timeframes).</summary>
-    Standard,
-
-    /// <summary>Express delivery (reduced delivery time).</summary>
-    Express,
-
-    /// <summary>Scheduled delivery at a specific time window.</summary>
-    Scheduled,
-
-    /// <summary>Customer pickup from a designated location.</summary>
-    Pickup
+    FastFood,
+    Pizza,
+    Suchi,
+    Shawarma,
+    Dessert
 }
 
 /// <summary>
