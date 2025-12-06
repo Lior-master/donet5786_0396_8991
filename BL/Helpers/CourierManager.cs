@@ -260,19 +260,52 @@ internal static class CourierManager
             var existingCourier = s_dal.Courier.Read(updatedCourier.Id);
             if (existingCourier == null)
                 throw new BLNotFoundException($"courierId with id : {updatedCourier.Id} doesn't exist");
+
             existingCourier = existingCourier with
             {
                 Name = updatedCourier.Name,
                 Phone = updatedCourier.Phone,
                 Email = updatedCourier.Email,
                 IsActive = updatedCourier.IsActive,
-                Transport = (DO.DeliveryTransport)updatedCourier.Transport
+                Transport = (DO.DeliveryTransport)updatedCourier.Transport,
+                Administrator = (DO.Administrator)updatedCourier.Administator,
+                // MaxDistance may be nullable on both sides
+                MaxDistance = updatedCourier.MaxDistance
             };
+
             s_dal.Courier.Update(existingCourier);
         }
         catch (Exception ex)
         {
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
+            if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
+            if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
+            if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
+            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
+            throw new BO.BLFailedOperation(ex.Message, ex);
+        }
+    }
+
+    // new helper to promote a courier to Director (authorization checked)
+    internal static void PromoteCourierToDirector(int requesterId, int courierId)
+    {
+        try
+        {
+            var requester = s_dal.Courier.Read(requesterId);
+            if (requester == null)
+                throw new BLNotFoundException("Requester ID does not exist.");
+
+            if (requester.Administrator != DO.Administrator.Director)
+                throw new BLUnauthorizedException("Only a Director can promote another courier.");
+
+            var courier = s_dal.Courier.Read(courierId) ?? throw new BLNotFoundException($"Courier {courierId} not found.");
+
+            var updated = courier with { Administrator = DO.Administrator.Director };
+            s_dal.Courier.Update(updated);
+        }
+        catch (Exception ex)
+        {
+            if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException || ex is BO.BLUnauthorizedException) throw;
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
             if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);

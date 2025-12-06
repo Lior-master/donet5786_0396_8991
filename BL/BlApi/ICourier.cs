@@ -10,4 +10,5 @@ public interface ICourier
     void UpdateCourier(int requesterId, Courier updatedCourier);
     void removeCourier(int requesterId, int courierId);
     void addCourier(int requesterId, Courier newCourier);
+    void PromoteToDirector(int requesterId, int courierId);
 }

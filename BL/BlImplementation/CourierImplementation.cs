@@ -26,4 +26,7 @@ internal class CourierImplementation : ICourier
 
     public void UpdateCourier(int requesterId, Courier updatedCourier)
         => CourierManager.UpdateCourier(requesterId, updatedCourier);
+
+    public void PromoteToDirector(int requesterId, int courierId)
+        => CourierManager.PromoteCourierToDirector(requesterId, courierId);
 }
