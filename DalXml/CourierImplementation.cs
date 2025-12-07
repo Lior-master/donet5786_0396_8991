@@ -16,7 +16,10 @@ internal class CourierImplementation : ICourier
             Password = (string?)c.Element("Password") ?? "",
             IsActive = (bool?)c.Element("IsActive") ?? false,
             Transport = c.ToEnumNullable<DeliveryTransport>("Transport") ?? DeliveryTransport.Car,
-            StartDate = c.ToDateTimeNullable("StartDate") ?? DateTime.Now
+            StartDate = c.ToDateTimeNullable("StartDate") ?? DateTime.Now,
+            Administrator = c.ToEnumNullable<Administrator>("Administrator") ?? Administrator.Courier,
+            MaxDistance = c.ToDoubleNullable("MaxDistance")
+
         };
     }
     public void Create(Courier item)
