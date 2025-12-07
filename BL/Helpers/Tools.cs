@@ -1,6 +1,9 @@
 ﻿using BO;
+using System.Globalization;
 using System.IO;
+using System.Net.Http;
 using System.Text.Json;
+
 
 namespace Helpers;
 
@@ -62,15 +65,26 @@ internal static class Tools
     public static async Task<double> CalculateRouteDistanceAsync(double lat1, double lon1, double lat2, double lon2)
     {
         using var client = new HttpClient();
-        string url = $"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false";
 
-        var response = await client.GetStringAsync(url);
-        var data = System.Text.Json.JsonSerializer.Deserialize<dynamic>(response);
+        // OBLIGATOIRE : sinon OSRM renvoie 403
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; MyDotNetApp/1.0)");
 
-        if (data == null || data.routes == null)
-            throw new Exception("Routing service error");
+        string url =
+            $"https://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false";
 
-        double meters = data.routes[0].distance;
+        var response = await client.GetAsync(url);
+
+        // Diagnostic si un jour ça recasse
+        Console.WriteLine("StatusCode = " + (int)response.StatusCode);
+
+        response.EnsureSuccessStatusCode();
+
+        string json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+
+        var route = doc.RootElement.GetProperty("routes")[0];
+        double meters = route.GetProperty("distance").GetDouble();
+
         return meters / 1000.0;
     }
 
@@ -106,26 +120,45 @@ internal static class Tools
 
     private static readonly HttpClient client = new HttpClient();
 
+    static Tools()
+    {
+        // User-Agent OBLIGATOIRE pour Nominatim
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(
+            "DotNetDeliveryProject/1.0 (your-email@something.com)");
+    }
+
     /// <summary>
     /// Converts a textual address into geographic coordinates (Latitude, Longitude)
     /// using OpenStreetMap Nominatim API (no API key required).
     /// </summary>
-    public static async Task<(double Latitude, double Longitude)>  GetCoordinatesFromAddressAsync(string address)
+    public static async Task<(double Latitude, double Longitude)> GetCoordinatesFromAddressAsync(string address)
     {
-        using var client = new HttpClient();
-        string url = $"https://nominatim.openstreetmap.org/search?format=json&q={Uri.EscapeDataString(address)}";
+        // on réutilise le HttpClient statique + User-Agent déjà configuré
+        string url =
+            $"https://nominatim.openstreetmap.org/search?format=json&limit=1&q={Uri.EscapeDataString(address)}";
 
-        var response = await client.GetStringAsync(url);
-        var results = System.Text.Json.JsonSerializer.Deserialize<List<dynamic>>(response);
+        using var response = await client.GetAsync(url);
 
-        if (results == null || results.Count == 0)
+        // si 403 / 500 etc -> HttpRequestException avec le message que tu voyais
+        response.EnsureSuccessStatusCode();
+
+        string json = await response.Content.ReadAsStringAsync();
+
+        using var doc = JsonDocument.Parse(json);
+        var results = doc.RootElement;
+
+        if (results.GetArrayLength() == 0)
             throw new Exception("Address not found");
 
-        double lat = double.Parse((string)results[0].lat);
-        double lon = double.Parse((string)results[0].lon);
+        var first = results[0];
+
+        // important : utiliser InvariantCulture pour les nombres avec point
+        double lat = double.Parse(first.GetProperty("lat").GetString(), CultureInfo.InvariantCulture);
+        double lon = double.Parse(first.GetProperty("lon").GetString(), CultureInfo.InvariantCulture);
 
         return (lat, lon);
     }
+
 
     public static DateTime CalculateEstimatedArrival(DateTime orderDate, double distanceKm, double speedKmH)
     {
