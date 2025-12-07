@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using BlApi;
 using BO;
 
@@ -22,29 +24,50 @@ internal class Program
             Console.WriteLine("1. Test Orders");
             Console.WriteLine("2. Test Couriers");
             Console.WriteLine("3. Test Deliveries");
-            Console.WriteLine("4. Set Director ID");
+            Console.WriteLine("4. Test Admin / Config");
+            Console.WriteLine("5. Other Order/Courier helpers");
+            Console.WriteLine("6. Set Director ID");
+            Console.WriteLine("7. Reinitialize data (quick)"); // NEW: quick init option
             Console.WriteLine("0. Exit");
             Console.Write("Choose: ");
 
             if (!int.TryParse(Console.ReadLine(), out int mainChoice))
                 continue;
 
-            switch (mainChoice)
+            try
             {
-                case 1:
-                    TestOrders();
-                    break;
-                case 2:
-                    TestCouriers();
-                    break;
-                case 3:
-                    TestDeliveries();
-                    break;
-                case 4:
-                    SetDirectorId();
-                    break;
-                case 0:
-                    return;
+                switch (mainChoice)
+                {
+                    case 1:
+                        TestOrders();
+                        break;
+                    case 2:
+                        TestCouriers();
+                        break;
+                    case 3:
+                        TestDeliveries();
+                        break;
+                    case 4:
+                        TestAdmin();
+                        break;
+                    case 5:
+                        TestHelpers();
+                        break;
+                    case 6:
+                        SetDirectorId();
+                        break;
+                    case 7:
+                        QuickInitializeData();
+                        break;
+                    case 0:
+                        return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR: " + ex.Message);
+                Console.WriteLine("Press Enter...");
+                Console.ReadLine();
             }
         }
     }
@@ -59,6 +82,12 @@ internal class Program
         Console.WriteLine("=== TEST ORDERS ===");
         Console.WriteLine("1. Get Order Details");
         Console.WriteLine("2. List All Orders");
+        Console.WriteLine("3. Add Order");
+        Console.WriteLine("4. Update Order");
+        Console.WriteLine("5. Cancel Order");
+        Console.WriteLine("6. Remove Order");
+        Console.WriteLine("7. Get Orders Summary");
+        Console.WriteLine("8. Get Orders (orderInLists)");
         Console.WriteLine("0. Back");
         Console.Write("Choose: ");
 
@@ -74,6 +103,24 @@ internal class Program
                     break;
                 case 2:
                     ListOrders();
+                    break;
+                case 3:
+                    AddOrder();
+                    break;
+                case 4:
+                    UpdateOrder();
+                    break;
+                case 5:
+                    CancelOrder();
+                    break;
+                case 6:
+                    RemoveOrder();
+                    break;
+                case 7:
+                    GetOrdersBySummary();
+                    break;
+                case 8:
+                    ListOrders(); // same as orderInLists sample
                     break;
                 case 0:
                     return;
@@ -115,6 +162,71 @@ internal class Program
         Console.ReadLine();
     }
 
+    private static void AddOrder()
+    {
+        Console.WriteLine("Enter minimal order fields (press Enter to accept default):");
+        var order = new BO.Order();
+        Console.Write("Customer Name: ");
+        var name = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(name)) order.CustomerName = name;
+        Console.Write("Customer Address: ");
+        var addr = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(addr)) order.CustomerAddress = addr;
+        Console.Write("Customer Phone: ");
+        var phone = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(phone)) order.CustomerPhone = phone;
+
+        s_bl.Order.AddOrder(TestRequesterId, order);
+        Console.WriteLine("Order added. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void UpdateOrder()
+    {
+        Console.Write("Order ID to update: ");
+        if (!int.TryParse(Console.ReadLine(), out int id)) return;
+
+        var current = s_bl.Order.GetOrderDetails(TestRequesterId, id);
+        Console.WriteLine("Current: " + current);
+        Console.Write("New Customer Name (blank = keep): ");
+        var name = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(name)) current.CustomerName = name;
+        Console.Write("New Address (blank = keep): ");
+        var addr = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(addr)) current.CustomerAddress = addr;
+
+        s_bl.Order.UpdateOrderDetails(TestRequesterId, current);
+        Console.WriteLine("Order updated. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void CancelOrder()
+    {
+        Console.Write("Order ID to cancel: ");
+        if (!int.TryParse(Console.ReadLine(), out int id)) return;
+        s_bl.Order.CancelOrder(TestRequesterId, id);
+        Console.WriteLine("Order canceled. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void RemoveOrder()
+    {
+        Console.Write("Order ID to remove: ");
+        if (!int.TryParse(Console.ReadLine(), out int id)) return;
+        s_bl.Order.RemoveOrder(TestRequesterId, id);
+        Console.WriteLine("Order removed. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void GetOrdersBySummary()
+    {
+        var summary = s_bl.Order.GetOrdersBySummary(TestRequesterId);
+        Console.WriteLine("Orders by summary:");
+        foreach (var v in summary) Console.WriteLine(v);
+        Console.WriteLine("Press Enter...");
+        Console.ReadLine();
+    }
+
     /* ============================================
        COURIERS
        ============================================ */
@@ -125,6 +237,11 @@ internal class Program
         Console.WriteLine("=== TEST COURIERS ===");
         Console.WriteLine("1. Get Courier Details");
         Console.WriteLine("2. List All Couriers");
+        Console.WriteLine("3. Add Courier");
+        Console.WriteLine("4. Update Courier");
+        Console.WriteLine("5. Remove Courier");
+        Console.WriteLine("6. Promote To Director");
+        Console.WriteLine("7. Login (username/password)");
         Console.WriteLine("0. Back");
         Console.Write("Choose: ");
 
@@ -140,6 +257,21 @@ internal class Program
                     break;
                 case 2:
                     ListCouriers();
+                    break;
+                case 3:
+                    AddCourier();
+                    break;
+                case 4:
+                    UpdateCourier();
+                    break;
+                case 5:
+                    RemoveCourier();
+                    break;
+                case 6:
+                    PromoteCourier();
+                    break;
+                case 7:
+                    LoginCourier();
                     break;
                 case 0:
                     return;
@@ -179,6 +311,79 @@ internal class Program
         Console.ReadLine();
     }
 
+    private static void AddCourier()
+    {
+        Console.WriteLine("Enter courier fields (press Enter to accept default):");
+        var c = new BO.Courier();
+        Console.Write("Name: ");
+        var name = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(name)) c.Name = name;
+        Console.Write("Phone: ");
+        var phone = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(phone)) c.Phone = phone;
+        Console.Write("Email: ");
+        var email = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(email)) c.Email = email;
+        Console.Write("Password: ");
+        var pwd = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(pwd)) c.Password = pwd;
+        Console.Write("IsActive (y/n): ");
+        var a = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(a) && (a.StartsWith("y", StringComparison.OrdinalIgnoreCase))) c.IsActive = true;
+
+        s_bl.Courier.addCourier(TestRequesterId, c);
+        Console.WriteLine("Courier added. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void UpdateCourier()
+    {
+        Console.Write("Courier ID to update: ");
+        if (!int.TryParse(Console.ReadLine(), out int id)) return;
+        var cur = s_bl.Courier.GetCourierDetails(TestRequesterId, id);
+        Console.WriteLine("Current: " + cur);
+        Console.Write("New Name (blank = keep): ");
+        var name = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(name)) cur.Name = name;
+        Console.Write("New Phone (blank = keep): ");
+        var phone = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(phone)) cur.Phone = phone;
+
+        s_bl.Courier.UpdateCourier(TestRequesterId, cur);
+        Console.WriteLine("Courier updated. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void RemoveCourier()
+    {
+        Console.Write("Courier ID to remove: ");
+        if (!int.TryParse(Console.ReadLine(), out int id)) return;
+        s_bl.Courier.removeCourier(TestRequesterId, id);
+        Console.WriteLine("Courier removed. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void PromoteCourier()
+    {
+        Console.Write("Courier ID to promote: ");
+        if (!int.TryParse(Console.ReadLine(), out int id)) return;
+        s_bl.Courier.PromoteToDirector(TestRequesterId, id);
+        Console.WriteLine("Courier promoted. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void LoginCourier()
+    {
+        Console.Write("Username: ");
+        var u = Console.ReadLine() ?? string.Empty;
+        Console.Write("Password: ");
+        var p = Console.ReadLine() ?? string.Empty;
+        var admin = s_bl.Courier.Login(u, p);
+        Console.WriteLine("Login result: " + admin);
+        Console.WriteLine("Press Enter...");
+        Console.ReadLine();
+    }
+
     /* ============================================
        DELIVERIES (simple test)
        ============================================ */
@@ -189,6 +394,8 @@ internal class Program
         Console.WriteLine("=== TEST DELIVERIES ===");
         Console.WriteLine("1. Assign Order To Courier");
         Console.WriteLine("2. Finish Delivery");
+        Console.WriteLine("3. Get Open Orders For Courier");
+        Console.WriteLine("4. Get Closed Deliveries For Courier");
         Console.WriteLine("0. Back");
         Console.Write("Choose: ");
 
@@ -204,6 +411,12 @@ internal class Program
                     break;
                 case 2:
                     FinishDelivery();
+                    break;
+                case 3:
+                    GetOpenOrdersForCourier();
+                    break;
+                case 4:
+                    GetClosedDeliveriesForCourier();
                     break;
                 case 0:
                     return;
@@ -249,6 +462,178 @@ internal class Program
         Console.ReadLine();
     }
 
+    private static void GetOpenOrdersForCourier()
+    {
+        Console.Write("Courier ID: ");
+        if (!int.TryParse(Console.ReadLine(), out int courierId)) return;
+        var open = s_bl.Order.GetOpenOrdersForCourier(TestRequesterId, courierId, null, null);
+        foreach (var o in open) Console.WriteLine(o);
+        Console.WriteLine("Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void GetClosedDeliveriesForCourier()
+    {
+        Console.Write("Courier ID: ");
+        if (!int.TryParse(Console.ReadLine(), out int courierId)) return;
+        var closed = s_bl.Order.GetClosedDeliveriesForCourier(TestRequesterId, courierId, null, null);
+        foreach (var c in closed) Console.WriteLine(c);
+        Console.WriteLine("Press Enter...");
+        Console.ReadLine();
+    }
+
+    /* ============================================
+       ADMIN / CONFIG
+       ============================================ */
+
+    private static void TestAdmin()
+    {
+        Console.Clear();
+        Console.WriteLine("=== TEST ADMIN / CONFIG ===");
+        Console.WriteLine("1. Get Config");
+        Console.WriteLine("2. Set Config");
+        Console.WriteLine("3. Initialize DB");
+        Console.WriteLine("4. Reset DB");
+        Console.WriteLine("5. Get Clock");
+        Console.WriteLine("6. Forward Clock");
+        Console.WriteLine("0. Back");
+        Console.Write("Choose: ");
+
+        if (!int.TryParse(Console.ReadLine(), out int choice))
+            return;
+
+        try
+        {
+            switch (choice)
+            {
+                case 1:
+                    ShowConfig();
+                    break;
+                case 2:
+                    SetConfig();
+                    break;
+                case 3:
+                    s_bl.Admin.InitializeDB();
+                    Console.WriteLine("DB Initialized. Press Enter...");
+                    Console.ReadLine();
+                    break;
+                case 4:
+                    s_bl.Admin.ResetDB();
+                    Console.WriteLine("DB Reset. Press Enter...");
+                    Console.ReadLine();
+                    break;
+                case 5:
+                    Console.WriteLine("Clock: " + s_bl.Admin.GetClock());
+                    Console.WriteLine("Press Enter...");
+                    Console.ReadLine();
+                    break;
+                case 6:
+                    ForwardClock();
+                    break;
+                case 0:
+                    return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR: " + ex.Message);
+            Console.WriteLine("Press Enter...");
+            Console.ReadLine();
+        }
+    }
+
+    private static void ShowConfig()
+    {
+        var cfg = s_bl.Admin.GetConfig();
+        Console.WriteLine(cfg);
+        Console.WriteLine("Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void SetConfig()
+    {
+        var cfg = s_bl.Admin.GetConfig() ?? new BO.Config();
+        Console.WriteLine("Current config: " + cfg);
+        Console.Write("CarSpeed (blank = keep): ");
+        var s = Console.ReadLine();
+        if (double.TryParse(s, out double car)) cfg.CarSpeed = car;
+        Console.Write("MotorcycleSpeed (blank = keep): ");
+        s = Console.ReadLine();
+        if (double.TryParse(s, out double mc)) cfg.MotorcycleSpeed = mc;
+        Console.Write("BikeSpeed (blank = keep): ");
+        s = Console.ReadLine();
+        if (double.TryParse(s, out double b)) cfg.BikeSpeed = b;
+        Console.Write("WalkingSpeed (blank = keep): ");
+        s = Console.ReadLine();
+        if (double.TryParse(s, out double w)) cfg.WalkingSpeed = w;
+        Console.Write("MaxDeliveryTime (minutes, blank = keep): ");
+        s = Console.ReadLine();
+        if (double.TryParse(s, out double m)) cfg.MaxDeliveryTime = TimeSpan.FromMinutes(m);
+
+        s_bl.Admin.SetConfig(cfg);
+        Console.WriteLine("Config set. Press Enter...");
+        Console.ReadLine();
+    }
+
+    private static void ForwardClock()
+    {
+        Console.Write("Enter TimeUnit enum name (e.g. Minute, Hour, Day): ");
+        var input = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(input)) return;
+        if (Enum.TryParse(typeof(BO.TimeUnit), input, true, out var unit))
+        {
+            s_bl.Admin.ForwardClock((BO.TimeUnit)unit);
+            Console.WriteLine("Clock forwarded. Press Enter...");
+        }
+        else
+        {
+            Console.WriteLine("Unknown TimeUnit. Press Enter...");
+        }
+        Console.ReadLine();
+    }
+
+    /* ============================================
+       OTHER HELPERS / TESTS
+       ============================================ */
+
+    private static void TestHelpers()
+    {
+        Console.Clear();
+        Console.WriteLine("=== HELPERS ===");
+        Console.WriteLine("1. Set Director ID");
+        Console.WriteLine("2. Get Open Orders for courier");
+        Console.WriteLine("3. Get Closed Deliveries for courier");
+        Console.WriteLine("0. Back");
+        Console.Write("Choose: ");
+
+        if (!int.TryParse(Console.ReadLine(), out int choice))
+            return;
+
+        try
+        {
+            switch (choice)
+            {
+                case 1:
+                    SetDirectorId();
+                    break;
+                case 2:
+                    GetOpenOrdersForCourier();
+                    break;
+                case 3:
+                    GetClosedDeliveriesForCourier();
+                    break;
+                case 0:
+                    return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR: " + ex.Message);
+            Console.WriteLine("Press Enter...");
+            Console.ReadLine();
+        }
+    }
+
     private static void SetDirectorId()
     {
         Console.Write("Enter Director ID: ");
@@ -270,6 +655,35 @@ internal class Program
         {
             Console.WriteLine($"Failed to set Director ID: {ex.Message}");
             Console.WriteLine("If the ID does not exist in DB, initialize data or add courier with that ID.");
+        }
+        Console.ReadLine();
+    }
+
+    /// <summary>
+    /// Quick helper to reinitialize the DB from the main menu (asks for confirmation).
+    /// Uses the BL Admin InitializeDB method (same as TestAdmin option).
+    /// </summary>
+    private static void QuickInitializeData()
+    {
+        Console.Write("Are you sure you want to reinitialize all data? This will overwrite existing data (y/n): ");
+        var ans = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(ans) || !ans.Trim().StartsWith("y", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("Initialization cancelled. Press Enter...");
+            Console.ReadLine();
+            return;
+        }
+
+        try
+        {
+            s_bl.Admin.ResetDB();
+            s_bl.Admin.InitializeDB();
+            Console.WriteLine("Data reinitialized successfully. Press Enter...");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Initialization failed: " + ex.Message);
+            Console.WriteLine("Press Enter...");
         }
         Console.ReadLine();
     }

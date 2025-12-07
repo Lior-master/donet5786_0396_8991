@@ -111,21 +111,37 @@ public static class Initialization
     {
         // Get all existing orders and couriers
         var orders = s_dal!.Order.ReadAll().ToList();
-        var couriers = s_dal!.Courier.ReadAll().ToList();
+        var allCouriers = s_dal!.Courier.ReadAll().ToList();
+        var deliveriesSnapshot = s_dal!.Delivery.ReadAll().ToList();
 
-        if (orders.Count == 0 || couriers.Count == 0)
+        // Filter: active, not Director, and with no open (ArrivalTime == null) deliveries
+        var availableCouriers = allCouriers
+            .Where(c => c.IsActive && c.Administrator != Administrator.Director
+                        && !deliveriesSnapshot.Any(d => d.CourierId == c.Id && d.ArrivalTime == null))
+            .ToList();
+
+        if (orders.Count == 0 || availableCouriers.Count == 0)
         {
-            Console.WriteLine("No orders or couriers to create deliveries.");
+            Console.WriteLine("No orders or available couriers to create deliveries.");
             return;
         }
 
-        for (int i = 0; i < 50 && i < orders.Count; i++)
+        // create up to 50 deliveries but avoid assigning more than one open delivery per courier
+        int attempts = 0;
+        int created = 0;
+        while (created < 50 && created < orders.Count && availableCouriers.Count > 0 && attempts < 1000)
         {
-            // Pick a random order
-            Order order = orders[s_rand.Next(0, orders.Count)];
+            attempts++;
 
-            // Pick a random courier compatible with the order
-            Courier courier = couriers[s_rand.Next(0, couriers.Count)];
+            // Pick a random order that doesn't already have a processing delivery (best-effort)
+            var order = orders[s_rand.Next(orders.Count)];
+
+            // ensure order isn't already assigned in an open delivery
+            bool orderHasOpenDelivery = deliveriesSnapshot.Any(d => d.OrderId == order.Id && d.ArrivalTime == null);
+            if (orderHasOpenDelivery) continue;
+
+            // Pick a random available courier
+            var courier = availableCouriers[s_rand.Next(availableCouriers.Count)];
 
             // Random pickup time (past 24h)
             DateTime pickup = DateTime.Now.AddMinutes(-s_rand.Next(0, 1440));
@@ -141,6 +157,12 @@ public static class Initialization
             );
 
             s_dal!.Delivery.Create(delivery);
+
+            // update snapshots: add delivery and remove courier from available pool so they won't get another open delivery
+            deliveriesSnapshot.Add(delivery);
+            availableCouriers.RemoveAll(c => c.Id == courier.Id);
+
+            created++;
         }
     }
 
