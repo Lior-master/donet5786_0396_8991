@@ -639,6 +639,14 @@ internal static class OrderManager
             var courier = s_dal.Courier.Read(courierId) ?? throw new BLNotFoundException($"Courier {courierId} not found.");
             var order = s_dal.Order.Read(orderId) ?? throw new BLNotFoundException($"Order {orderId} not found.");
 
+            // NEW: verify courier is active
+            if (!courier.IsActive)
+                throw new BO.BLInvalidOperationException($"Cannot assign order {orderId} to courier {courierId}: courier is not active.");
+
+            // NEW: verify courier is not Director
+            if (courier.Administrator == DO.Administrator.Director)
+                throw new BO.BLInvalidOperationException($"Cannot assign order {orderId} to courier {courierId}: courier is a Director.");
+
             // create a new delivery assigned to courier
             var delivery = new DO.Delivery
             {
