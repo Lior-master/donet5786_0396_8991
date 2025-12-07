@@ -59,7 +59,6 @@ internal class Program
         Console.WriteLine("=== TEST ORDERS ===");
         Console.WriteLine("1. Get Order Details");
         Console.WriteLine("2. List All Orders");
-        Console.WriteLine("3. Initialize Data");
         Console.WriteLine("0. Back");
         Console.Write("Choose: ");
 
