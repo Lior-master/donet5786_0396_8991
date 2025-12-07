@@ -8,9 +8,7 @@ using System.Collections.Generic;
 internal class CourierImplementation : ICourier
 {
     public void addCourier(int requesterId, Courier newCourier)
-    {
-        throw new NotImplementedException();
-    }
+        => CourierManager.addCourier(requesterId, newCourier);
 
     public Courier GetCourierDetails(int requesterId, int courierId)
         => CourierManager.GetCourierDetails(requesterId, courierId);

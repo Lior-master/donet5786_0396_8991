@@ -28,6 +28,11 @@ public class Courier
     public string Email { get; set; }
 
     /// <summary>
+    /// password for the courier's account.
+    ///</summary>
+    public string Password { get; set; }
+
+    /// <summary>
     /// Indicates whether the courier is currently active and available for assignments.
     /// </summary>
     public bool IsActive { get; set; }

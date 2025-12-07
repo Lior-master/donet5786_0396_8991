@@ -807,5 +807,4 @@ internal static class OrderManager
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
     }
-
 }

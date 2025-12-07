@@ -38,6 +38,19 @@ public static class Initialization
 
     private static void createCouriers()
     {
+        s_dal!.Courier.Create(new Courier(
+            Id: 347657991,
+            Name: "Boss",
+            Phone: "+111111111",
+            Email: "boss@company.com",
+            Password: "admin",
+            IsActive: true,
+            Transport: DeliveryTransport.Car,
+            StartDate: DateTime.Now,
+            MaxDistance: 999,
+            Administrator: Administrator.Director
+        ));
+
         for (int i = 0; i < 25; i++)
         {
             var transport = (DeliveryTransport)s_rand.Next(0, 4);

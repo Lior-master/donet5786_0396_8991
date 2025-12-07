@@ -84,82 +84,82 @@ internal static class AdminManager //stage 4
         bool configChanged = false; // stage 5
 
         if (s_dal.Config.BossId != configuration.BossId)
-{
-    s_dal.Config.BossId = configuration.BossId;
-    configChanged = true;
-}
+        {
+            s_dal.Config.BossId = configuration.BossId;
+            configChanged = true;
+        }
 
-if (s_dal.Config.BossPassword != configuration.BossPassword)
-{
-    s_dal.Config.BossPassword = configuration.BossPassword;
-    configChanged = true;
-}
+        if (s_dal.Config.BossPassword != configuration.BossPassword)
+        {
+            s_dal.Config.BossPassword = configuration.BossPassword;
+            configChanged = true;
+        }
 
-if (s_dal.Config.CarSpeed != configuration.CarSpeed)
-{
-    s_dal.Config.CarSpeed = configuration.CarSpeed;
-    configChanged = true;
-}
+        if (s_dal.Config.CarSpeed != configuration.CarSpeed)
+        {
+            s_dal.Config.CarSpeed = configuration.CarSpeed;
+            configChanged = true;
+        }
 
-if (s_dal.Config.MotorcycleSpeed != configuration.MotorcycleSpeed)
-{
-    s_dal.Config.MotorcycleSpeed = configuration.MotorcycleSpeed;
-    configChanged = true;
-}
+        if (s_dal.Config.MotorcycleSpeed != configuration.MotorcycleSpeed)
+        {
+            s_dal.Config.MotorcycleSpeed = configuration.MotorcycleSpeed;
+            configChanged = true;
+        }
 
-if (s_dal.Config.BikeSpeed != configuration.BikeSpeed)
-{
-    s_dal.Config.BikeSpeed = configuration.BikeSpeed;
-    configChanged = true;
-}
+        if (s_dal.Config.BikeSpeed != configuration.BikeSpeed)
+        {
+            s_dal.Config.BikeSpeed = configuration.BikeSpeed;
+            configChanged = true;
+        }
 
-if (s_dal.Config.WalkingSpeed != configuration.WalkingSpeed)
-{
-    s_dal.Config.WalkingSpeed = configuration.WalkingSpeed;
-    configChanged = true;
-}
+        if (s_dal.Config.WalkingSpeed != configuration.WalkingSpeed)
+        {
+            s_dal.Config.WalkingSpeed = configuration.WalkingSpeed;
+            configChanged = true;
+        }
 
-if (s_dal.Config.MaxTimeDelivery != configuration.MaxDeliveryTime)
-{
-    s_dal.Config.MaxTimeDelivery = configuration.MaxDeliveryTime;
-    configChanged = true;
-}
+        if (s_dal.Config.MaxTimeDelivery != configuration.MaxDeliveryTime)
+        {
+            s_dal.Config.MaxTimeDelivery = configuration.MaxDeliveryTime;
+            configChanged = true;
+        }
 
-if (s_dal.Config.RiskRange != configuration.RiskRange)
-{
-    s_dal.Config.RiskRange = configuration.RiskRange;
-    configChanged = true;
-}
+        if (s_dal.Config.RiskRange != configuration.RiskRange)
+        {
+            s_dal.Config.RiskRange = configuration.RiskRange;
+            configChanged = true;
+        }
 
-if (s_dal.Config.Inactivity != configuration.InactivityThreshold)
-{
-    s_dal.Config.Inactivity = configuration.InactivityThreshold;
-    configChanged = true;
-}
+        if (s_dal.Config.Inactivity != configuration.InactivityThreshold)
+        {
+            s_dal.Config.Inactivity = configuration.InactivityThreshold;
+            configChanged = true;
+        }
 
-if (s_dal.Config.CompanyAdress != configuration.CompanyAddress)
-{
-    s_dal.Config.CompanyAdress = configuration.CompanyAddress;
-    configChanged = true;
-}
+        if (s_dal.Config.CompanyAdress != configuration.CompanyAddress)
+        {
+            s_dal.Config.CompanyAdress = configuration.CompanyAddress;
+            configChanged = true;
+        }
 
-if (s_dal.Config.Latitude != configuration.CompanyLatitude)
-{
-    s_dal.Config.Latitude = configuration.CompanyLatitude;
-    configChanged = true;
-}
+        if (s_dal.Config.Latitude != configuration.CompanyLatitude)
+        {
+            s_dal.Config.Latitude = configuration.CompanyLatitude;
+            configChanged = true;
+        }
 
-if (s_dal.Config.Longitude != configuration.CompanyLongitude)
-{
-    s_dal.Config.Longitude = configuration.CompanyLongitude;
-    configChanged = true;
-}
+        if (s_dal.Config.Longitude != configuration.CompanyLongitude)
+        {
+            s_dal.Config.Longitude = configuration.CompanyLongitude;
+            configChanged = true;
+        }
 
-if (s_dal.Config.MaxDistance != configuration.MaxDistance)
-{
-    s_dal.Config.MaxDistance = configuration.MaxDistance;
-    configChanged = true;
-}
+        if (s_dal.Config.MaxDistance != configuration.MaxDistance)
+        {
+            s_dal.Config.MaxDistance = configuration.MaxDistance;
+            configChanged = true;
+        }
 
         if (configChanged) // stage 5
             ConfigUpdatedObservers?.Invoke(); // stage 5

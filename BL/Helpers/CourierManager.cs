@@ -9,6 +9,44 @@ internal static class CourierManager
 {
     private static readonly IDal s_dal = Factory.Get;
 
+    internal static void addCourier(int requesterId, BO.Courier newCourier)
+    {
+        try
+        {
+            try
+            {
+                var requester = s_dal.Courier.Read(requesterId);
+
+            }
+            catch (Exception)
+            {
+                throw new BLNotFoundException("requesterId doesn't exist");
+            }
+            DO.Courier courierDO = new()
+            {
+                Id = 0, // assuming Id is auto-generated
+                Name = newCourier.Name,
+                Phone = newCourier.Phone,
+                Email = newCourier.Email,
+                IsActive = newCourier.IsActive,
+                Transport = (DO.DeliveryTransport)newCourier.Transport,
+                StartDate = newCourier.StartDate,
+                MaxDistance = newCourier.MaxDistance,
+                Administrator = (DO.Administrator)newCourier.Administator,
+                Password = newCourier.Password
+            };
+            s_dal.Courier.Create(courierDO);
+        }
+        catch (Exception ex)
+        {
+            if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
+            if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
+            if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
+            if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
+            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
+            throw new BO.BLFailedOperation(ex.Message, ex);
+        }
+    }
     internal static void PeriodicCouriersUpdates(DateTime oldClock, DateTime newClock)
     {
         try
