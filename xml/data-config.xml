@@ -2,13 +2,13 @@
 <config>
   <NextOrderId>1060</NextOrderId>
   <NextDeliveryId>5016</NextDeliveryId>
-  <Clock>07/12/2025 18:49:27</Clock>
+  <Clock>07/12/2025 19:23:56</Clock>
   <BossId>347657991</BossId>
   <BossPassword>admin</BossPassword>
-  <CarSpeed>40</CarSpeed>
+  <CarSpeed>45</CarSpeed>
   <MotorcycleSpeed>50</MotorcycleSpeed>
   <BikeSpeed>20</BikeSpeed>
-  <WalkingSpeed>5</WalkingSpeed>
+  <WalkingSpeed>7</WalkingSpeed>
   <!-- MaxTimeDelivery is stored as hours -->
   <MaxTimeDelivery>1</MaxTimeDelivery>
   <!-- RiskRange is stored as minutes -->

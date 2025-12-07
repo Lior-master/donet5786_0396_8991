@@ -569,6 +569,12 @@ internal class Program
         Console.Write("MaxDeliveryTime (minutes, blank = keep): ");
         s = Console.ReadLine();
         if (double.TryParse(s, out double m)) cfg.MaxDeliveryTime = TimeSpan.FromMinutes(m);
+        Console.Write("InactivityThreshold (days, blank = keep): ");
+        s = Console.ReadLine();
+        if(double.TryParse(s, out double d)) cfg.InactivityThreshold = TimeSpan.FromDays(d);
+        Console.Write("MaxDistance (km, blank = keep): ");
+        s = Console.ReadLine();
+        if (double.TryParse(s, out double md)) cfg.MaxDistance = md;
 
         s_bl.Admin.SetConfig(cfg);
         Console.WriteLine("Config set. Press Enter...");
@@ -577,18 +583,56 @@ internal class Program
 
     private static void ForwardClock()
     {
-        Console.Write("Enter TimeUnit enum name (e.g. Minute, Hour, Day): ");
-        var input = Console.ReadLine();
-        if (string.IsNullOrWhiteSpace(input)) return;
-        if (Enum.TryParse(typeof(BO.TimeUnit), input, true, out var unit))
+        Console.Write("Years to advance (0 to skip): ");
+        _ = int.TryParse(Console.ReadLine(), out int years);
+
+        Console.Write("Months to advance (0 to skip): ");
+        _ = int.TryParse(Console.ReadLine(), out int months);
+
+        Console.Write("Days to advance (0 to skip): ");
+        _ = int.TryParse(Console.ReadLine(), out int days);
+
+        Console.Write("Hours to advance (0 to skip): ");
+        _ = int.TryParse(Console.ReadLine(), out int hours);
+
+        Console.Write("Minutes to advance (0 to skip): ");
+        _ = int.TryParse(Console.ReadLine(), out int minutes);
+
+        int totalMonths = years * 12 + months;
+
+        Console.WriteLine($"Will advance clock by: {years} year(s), {months} month(s), {days} day(s), {hours} hour(s), {minutes} minute(s). Confirm (y/n): ");
+        var ans = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(ans) || !ans.Trim().StartsWith("y", StringComparison.OrdinalIgnoreCase))
         {
-            s_bl.Admin.ForwardClock((BO.TimeUnit)unit);
-            Console.WriteLine("Clock forwarded. Press Enter...");
+            Console.WriteLine("Forward cancelled. Press Enter...");
+            Console.ReadLine();
+            return;
         }
-        else
+
+        try
         {
-            Console.WriteLine("Unknown TimeUnit. Press Enter...");
+            // Use the BL Admin method which advances by one unit per call.
+            // Years -> converted to months (AddMonths)
+            for (int i = 0; i < totalMonths; i++)
+                s_bl.Admin.ForwardClock(BO.TimeUnit.Month);
+
+            for (int i = 0; i < days; i++)
+                s_bl.Admin.ForwardClock(BO.TimeUnit.Day);
+
+            for (int i = 0; i < hours; i++)
+                s_bl.Admin.ForwardClock(BO.TimeUnit.Hour);
+
+            for (int i = 0; i < minutes; i++)
+                s_bl.Admin.ForwardClock(BO.TimeUnit.Minute);
+
+            Console.WriteLine("Clock forwarded. New clock: " + s_bl.Admin.GetClock());
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Forward failed: " + ex.Message);
+        }
+
+        Console.WriteLine("Press Enter...");
         Console.ReadLine();
     }
 
@@ -646,10 +690,16 @@ internal class Program
 
         try
         {
-            // quick validation: call a BL method that checks requester existence
+            // validate that the courier exists
             var _ = s_bl.Courier.GetCouriersList(id, null, null);
+
+            // Persist boss id in config so XML is updated
+            var cfg = s_bl.Admin.GetConfig() ?? new BO.Config();
+            cfg.BossId = id;
+            s_bl.Admin.SetConfig(cfg);
+
             TestRequesterId = id;
-            Console.WriteLine($"Director ID set to {id}. Press Enter...");
+            Console.WriteLine($"Director ID set to {id} and persisted. Press Enter...");
         }
         catch (Exception ex)
         {
