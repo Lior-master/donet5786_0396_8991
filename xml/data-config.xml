@@ -2,9 +2,9 @@
 <config>
   <NextOrderId>1060</NextOrderId>
   <NextDeliveryId>5050</NextDeliveryId>
-  <Clock>07/12/2025 17:51:08</Clock>
-  <BossId>0</BossId>
-  <BossPassword></BossPassword>
+  <Clock>07/12/2025 18:04:31</Clock>
+  <BossId>347657991</BossId>
+  <BossPassword>admin</BossPassword>
   <CarSpeed>40</CarSpeed>
   <MotorcycleSpeed>50</MotorcycleSpeed>
   <BikeSpeed>20</BikeSpeed>
@@ -15,8 +15,8 @@
   <RiskRange>30</RiskRange>
   <!-- Inactivity is stored as days -->
   <Inactivity>30</Inactivity>
-  <CompanyAddress></CompanyAddress>
-  <Latitude></Latitude>
-  <Longitude></Longitude>
-  <MaxDistance></MaxDistance>
+  <CompanyAddress>22 Hameyasdim St</CompanyAddress>
+  <Latitude>31,778449894212013</Latitude>
+  <Longitude>35,18761502733661</Longitude>
+  <MaxDistance>25</MaxDistance>
 </config>

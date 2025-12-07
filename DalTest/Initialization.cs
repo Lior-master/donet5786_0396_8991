@@ -144,7 +144,7 @@ public static class Initialization
         }
     }
 
-    private static Adresses[] addresses = new Adresses[]
+    public static Adresses[] addresses = new Adresses[]
     {
         new Adresses("2 Kadish Luz St", 31.759170644410922, 35.18416389561243, 2.2, 2.6, 3.3),
         new Adresses("21 Vaad Haleumi St",31.76503763226389, 35.19018701095478, 1.5, 12.0, 3.7),

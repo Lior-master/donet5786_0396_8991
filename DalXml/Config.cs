@@ -109,14 +109,14 @@ internal static class Config
         NextDeliveryId = 5000;
         NextOrderId = 1000;
         Clock = DateTime.Now;
-        BossId = 0;
-        BossPassword = "";
+        BossId = 347657991;
+        BossPassword = "admin";
         MaxTimeDelivery = TimeSpan.FromHours(1);
         RiskRange = TimeSpan.FromMinutes(30);
         Inactivity = TimeSpan.FromDays(30);
-        CompanyAddress = null;
-        Latitude = null;
-        Longitude = null;
-        MaxDistance = null;
+        CompanyAddress = "22 Hameyasdim St";
+        Latitude = 31.778449894212013;
+        Longitude = 35.18761502733661;
+        MaxDistance = 25;
     }
 }
