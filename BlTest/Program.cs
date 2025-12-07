@@ -314,25 +314,75 @@ internal class Program
     private static void AddCourier()
     {
         Console.WriteLine("Enter courier fields (press Enter to accept default):");
-        var c = new BO.Courier();
+
         Console.Write("Name: ");
         var name = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(name)) c.Name = name;
+
         Console.Write("Phone: ");
         var phone = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(phone)) c.Phone = phone;
+
         Console.Write("Email: ");
         var email = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(email)) c.Email = email;
+
         Console.Write("Password: ");
         var pwd = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(pwd)) c.Password = pwd;
+
         Console.Write("IsActive (y/n): ");
         var a = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(a) && (a.StartsWith("y", StringComparison.OrdinalIgnoreCase))) c.IsActive = true;
+        bool isActive = !string.IsNullOrWhiteSpace(a) && a.StartsWith("y", StringComparison.OrdinalIgnoreCase);
+
+        Console.Write("ID (leave blank for auto): ");
+        var idInput = Console.ReadLine();
+        int? id = null;
+        if (!string.IsNullOrWhiteSpace(idInput))
+        {
+            if (int.TryParse(idInput, out int parsed))
+                id = parsed;
+            else
+                Console.WriteLine("Invalid ID format, will generate an id automatically.");
+        }
+
+        // Demande du moyen de transport
+        var transports = Enum.GetValues(typeof(DeliveryTransport)).Cast<DeliveryTransport>().ToArray();
+        Console.WriteLine("Select transport (leave blank for default Motorcycle):");
+        for (int i = 0; i < transports.Length; i++)
+            Console.WriteLine($"  {i}. {transports[i]}");
+
+        DeliveryTransport transport = DeliveryTransport.Motorcycle;
+        Console.Write("Transport index: ");
+        var tInput = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(tInput))
+        {
+            if (int.TryParse(tInput, out int tIdx) && tIdx >= 0 && tIdx < transports.Length)
+                transport = transports[tIdx];
+            else
+                Console.WriteLine("Invalid transport selection, using default Motorcycle.");
+        }
+
+        // If no id provided, generate a non-zero id locally (test tool). 
+        // If you prefer DAL to generate ids, update DAL.Create to assign an id when input id == 0.
+        if (!id.HasValue)
+        {
+            // Generate a reasonably large positive id
+            id = Math.Abs(Guid.NewGuid().GetHashCode()) % 90000000 + 100000;
+        }
+
+        // Construire l'objet BO.Courier seulement après avoir tout collecté
+        BO.Courier c = new BO.Courier
+        {
+            Id = id.Value,
+            Name = string.IsNullOrWhiteSpace(name) ? string.Empty : name,
+            Phone = string.IsNullOrWhiteSpace(phone) ? string.Empty : phone,
+            Email = string.IsNullOrWhiteSpace(email) ? string.Empty : email,
+            Password = string.IsNullOrWhiteSpace(pwd) ? string.Empty : pwd,
+            IsActive = isActive,
+            Transport = transport,
+            Administrator = Administrator.Courier,
+            StartDate = DateTime.Now
+        };
 
         s_bl.Courier.addCourier(TestRequesterId, c);
-        Console.WriteLine("Courier added. Press Enter...");
+        Console.WriteLine($"Courier added (Id = {c.Id}). Press Enter...");
         Console.ReadLine();
     }
 
@@ -569,6 +619,9 @@ internal class Program
         Console.Write("MaxDeliveryTime (minutes, blank = keep): ");
         s = Console.ReadLine();
         if (double.TryParse(s, out double m)) cfg.MaxDeliveryTime = TimeSpan.FromMinutes(m);
+        Console.Write("RiskRange (minutes, blank = keep): ");
+        s = Console.ReadLine();
+        if(double.TryParse(s, out double rr)) cfg.RiskRange = TimeSpan.FromMinutes(rr);
         Console.Write("InactivityThreshold (days, blank = keep): ");
         s = Console.ReadLine();
         if(double.TryParse(s, out double d)) cfg.InactivityThreshold = TimeSpan.FromDays(d);

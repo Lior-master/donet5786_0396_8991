@@ -71,7 +71,7 @@ public class Courier
     /// <summary>
     /// Say if the courier is administrator or director
     /// </summary>
-    public Administrator Administator { get; init; }
+    public Administrator Administrator { get; init; }
 
     public override string ToString() => this.ToStringProperty();
 

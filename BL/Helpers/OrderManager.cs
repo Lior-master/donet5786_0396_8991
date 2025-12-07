@@ -130,8 +130,13 @@ internal static class OrderManager
                     lon
                 );
 
+                // choose speed based on last delivery transport if available, else fallback to car speed
+                double speed = config.CarSpeed;
+                if (lastDelivery != null)
+                    speed = Tools.GetSpeed(lastDelivery.Transport, config);
+
                 DateTime? estArrival = distance > 0
-                    ? Tools.CalculateEstimatedArrival(o.OrderDate, distance, config.CarSpeed)
+                    ? Tools.CalculateEstimatedArrival(o.OrderDate, distance, speed)
                     : null;
 
                 DateTime? maxArrival = estArrival?.Add(config.RiskRange);
@@ -178,6 +183,8 @@ internal static class OrderManager
             var deliveriesDO = s_dal.Delivery.ReadAll().ToList();
             var config = AdminManager.GetConfig();
 
+            var now = AdminManager.Now;
+
             var list = doOrders.Select(order =>
             {
                 var orderDeliveries = deliveriesDO.Where(d => d.OrderId == order.Id).ToList();
@@ -207,8 +214,13 @@ internal static class OrderManager
                     lon
                 );
 
+                // pick speed depending on lastDelivery transport if available, otherwise default
+                double speed = config.CarSpeed;
+                if (lastDelivery != null)
+                    speed = Tools.GetSpeed(lastDelivery.Transport, config);
+
                 DateTime? estArrival = distance > 0
-                    ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, config.CarSpeed)
+                    ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, speed)
                     : null;
 
                 DateTime? maxArrival = estArrival?.Add(config.RiskRange);
@@ -232,7 +244,7 @@ internal static class OrderManager
                     Distance = distance,
                     Status = orderStatus,
                     ScheduleStatus = schedule,
-                    OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : DateTime.Now - order.OrderDate,
+                    OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : now - order.OrderDate,
                     TreatmentEndTime = lastDelivery != null ? lastDelivery.PickupTime - order.OrderDate : TimeSpan.Zero,
                     NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
                 };
@@ -277,7 +289,7 @@ internal static class OrderManager
         }
     }
 
-    // a choisir entre les deux methodes dessus dessous
+    // GetOrdersList similar changes (use AdminManager.Now)
     internal static IEnumerable<BO.OrderInList> GetOrdersList(int requesterId, BO.OrderStatus? statusFilter, object? sortParameter)
     {
         try
@@ -289,6 +301,8 @@ internal static class OrderManager
             var config = AdminManager.GetConfig();
             var ordersDO = s_dal.Order.ReadAll().ToList();
             var deliveriesDO = s_dal.Delivery.ReadAll().ToList();
+
+            var now = AdminManager.Now;
 
             var list = ordersDO.Select(order =>
             {
@@ -319,8 +333,12 @@ internal static class OrderManager
                     lon
                 );
 
+                double speed = config.CarSpeed;
+                if (lastDelivery != null)
+                    speed = Tools.GetSpeed(lastDelivery.Transport, config);
+
                 DateTime? estArrival = distance > 0
-                    ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, config.CarSpeed)
+                    ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, speed)
                     : null;
 
                 DateTime? maxArrival = estArrival?.Add(config.RiskRange);
@@ -344,7 +362,7 @@ internal static class OrderManager
                     Distance = distance,
                     Status = orderStatus,
                     ScheduleStatus = schedule,
-                    OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : DateTime.Now - order.OrderDate,
+                    OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : now - order.OrderDate,
                     TreatmentEndTime = lastDelivery != null ? lastDelivery.PickupTime - order.OrderDate : TimeSpan.Zero,
                     NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
                 };
@@ -401,7 +419,11 @@ internal static class OrderManager
 
             double distance = Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
 
-            DateTime? estArrival = distance > 0 ? (DateTime?)Tools.CalculateEstimatedArrival(doOrder.OrderDate, distance, config.CarSpeed) : null;
+            double speed = config.CarSpeed;
+            if (lastDelivery != null)
+                speed = Tools.GetSpeed(lastDelivery.Transport, config);
+
+            DateTime? estArrival = distance > 0 ? (DateTime?)Tools.CalculateEstimatedArrival(doOrder.OrderDate, distance, speed) : null;
             DateTime? maxArrival = estArrival?.Add(config.RiskRange);
             DateTime? realArrival = lastDelivery?.ArrivalTime;
 
@@ -567,6 +589,7 @@ internal static class OrderManager
         }
     }
 
+    // FinishOrder: use AdminManager.Now instead of DateTime.Now when marking arrival
     internal static void FinishOrder(int requesterId, int courierId, int deliveryId)
     {
         try
@@ -601,7 +624,7 @@ internal static class OrderManager
             // update delivery
             var updated = delivery with
             {
-                ArrivalTime = DateTime.Now,
+                ArrivalTime = AdminManager.Now,
                 Distance = distance,
                 Status = DO.OrderStatus.Delivered
             };
@@ -767,9 +790,17 @@ internal static class OrderManager
                 }
                 double bird = Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
 
-                DateTime? estArrival = o != null ? Tools.CalculateEstimatedArrival(o.OrderDate, bird, config.CarSpeed) : (DateTime?)null;
-                TimeSpan estTimeSpan = estArrival != null ? estArrival.Value - (o?.OrderDate ?? DateTime.Now) : TimeSpan.Zero;
-                DateTime maxDelivered = estArrival?.Add(config.RiskRange) ?? DateTime.Now;
+                // Use delivery pickup time + delivery transport speed for ETA when available
+                DateTime? estArrival = null;
+                TimeSpan estTimeSpan = TimeSpan.Zero;
+                if (o != null)
+                {
+                    double speed = Tools.GetSpeed(d.Transport, config);
+                    estArrival = Tools.CalculateEstimatedArrival(d.PickupTime, bird, speed);
+                    estTimeSpan = estArrival != null ? estArrival.Value - d.PickupTime : TimeSpan.Zero;
+                }
+
+                DateTime maxDelivered = estArrival?.Add(config.RiskRange) ?? AdminManager.Now;
 
                 return new BO.OpenOrderInList
                 {
@@ -780,8 +811,8 @@ internal static class OrderManager
                     CustomerAddress = o?.CustomerAddress ?? string.Empty,
                     BirdDistance = bird,
                     Distance = d.Distance,
-                    AddedTime = (o != null) ? (TimeSpan?)(DateTime.Now - o.OrderDate) : null,
-                    ScheduleStatus = Tools.CalculateScheduleStatus(Tools.CalculateOrderStatus(new List<DO.Delivery> { d }), o?.OrderDate ?? DateTime.Now, estArrival, estArrival?.Add(config.RiskRange), d.ArrivalTime),
+                    AddedTime = (o != null) ? (TimeSpan?)(AdminManager.Now - o.OrderDate) : null,
+                    ScheduleStatus = Tools.CalculateScheduleStatus(Tools.CalculateOrderStatus(new List<DO.Delivery> { d }), o?.OrderDate ?? AdminManager.Now, estArrival, estArrival?.Add(config.RiskRange), d.ArrivalTime),
                     EstimatedDeliveryTime = estTimeSpan,
                     MaxDeliveredTime = maxDelivered
                 };

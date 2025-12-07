@@ -2,6 +2,8 @@
 using DalApi;
 using DO;
 using System.Linq;
+using System;
+using System.Collections.Generic;
 
 namespace Helpers;
 
@@ -22,17 +24,36 @@ internal static class CourierManager
             {
                 throw new BLNotFoundException("requesterId doesn't exist");
             }
+
+            // Ensure StartDate is valid (avoid DateTime.MinValue)
+            DateTime startDate = newCourier.StartDate == default ? AdminManager.Now : newCourier.StartDate;
+
+            // If caller did not provide an Id (0), generate one on BL side to avoid persisting Id == 0.
+            // This avoids UI showing Id = 0 when DAL doesn't auto-generate an id.
+            int idToUse = newCourier.Id;
+            if (idToUse == 0)
+            {
+                // build set of existing ids to avoid collision
+                var existing = new HashSet<int>(s_dal.Courier.ReadAll().Select(c => c.Id));
+                int candidate;
+                do
+                {
+                    candidate = (Math.Abs(Guid.NewGuid().GetHashCode()) % 90000000) + 100000;
+                } while (existing.Contains(candidate));
+                idToUse = candidate;
+            }
+
             DO.Courier courierDO = new()
             {
-                Id = 0, // assuming Id is auto-generated
+                Id = idToUse,
                 Name = newCourier.Name,
                 Phone = newCourier.Phone,
                 Email = newCourier.Email,
                 IsActive = newCourier.IsActive,
                 Transport = (DO.DeliveryTransport)newCourier.Transport,
-                StartDate = newCourier.StartDate,
+                StartDate = startDate,
                 MaxDistance = newCourier.MaxDistance,
-                Administrator = (DO.Administrator)newCourier.Administator,
+                Administrator = (DO.Administrator)newCourier.Administrator,
                 Password = newCourier.Password
             };
             s_dal.Courier.Create(courierDO);
@@ -271,7 +292,7 @@ internal static class CourierManager
                 Transport = (BO.DeliveryTransport)courierDO.Transport,
                 StartDate = courierDO.StartDate,
                 MaxDistance = courierDO.MaxDistance,
-                Administator = (BO.Administrator)courierDO.Administrator,
+                Administrator = (BO.Administrator)courierDO.Administrator,
                 NumberOfOnTimeDeliveries = onTime,
                 NumberOfLateDeliveries = late,
                 CurrentOrder = currentOrder
@@ -306,7 +327,7 @@ internal static class CourierManager
                 Email = updatedCourier.Email,
                 IsActive = updatedCourier.IsActive,
                 Transport = (DO.DeliveryTransport)updatedCourier.Transport,
-                Administrator = (DO.Administrator)updatedCourier.Administator,
+                Administrator = (DO.Administrator)updatedCourier.Administrator,
                 // MaxDistance may be nullable on both sides
                 MaxDistance = updatedCourier.MaxDistance
             };
@@ -334,7 +355,7 @@ internal static class CourierManager
                 throw new BLNotFoundException("Requester ID does not exist.");
 
             if (requester.Administrator != DO.Administrator.Director)
-                throw new BLUnauthorizedException("Only a Director can promote another courier.");
+                throw new BO.BLUnauthorizedException("Only a Director can promote another courier.");
 
             var courier = s_dal.Courier.Read(courierId) ?? throw new BLNotFoundException($"Courier {courierId} not found.");
 

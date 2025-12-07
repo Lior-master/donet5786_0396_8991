@@ -103,7 +103,8 @@ internal static class Tools
 
     public static DO.Courier UpdateCourierActivity(DO.Courier courier, TimeSpan inactivityThreshold)
     {
-        if (DateTime.Now - courier.StartDate > inactivityThreshold)
+        // Use central app clock (AdminManager.Now) instead of DateTime.Now so simulator / tests are consistent.
+        if (AdminManager.Now - courier.StartDate > inactivityThreshold)
             return courier with { IsActive = false };
 
         return courier;
@@ -153,8 +154,15 @@ internal static class Tools
         var first = results[0];
 
         // important : utiliser InvariantCulture pour les nombres avec point
-        double lat = double.Parse(first.GetProperty("lat").GetString(), CultureInfo.InvariantCulture);
-        double lon = double.Parse(first.GetProperty("lon").GetString(), CultureInfo.InvariantCulture);
+        // avoid possible null reference: throw a clear exception if missing
+        string? latStr = first.GetProperty("lat").GetString();
+        string? lonStr = first.GetProperty("lon").GetString();
+
+        if (string.IsNullOrWhiteSpace(latStr) || string.IsNullOrWhiteSpace(lonStr))
+            throw new Exception("Coordinates missing in geocoding result");
+
+        double lat = double.Parse(latStr, CultureInfo.InvariantCulture);
+        double lon = double.Parse(lonStr, CultureInfo.InvariantCulture);
 
         return (lat, lon);
     }
@@ -184,7 +192,8 @@ internal static class Tools
                 ? BO.ScheduleStatus.OnTime
                 : BO.ScheduleStatus.Late;
 
-        DateTime now = DateTime.Now;
+        // Use central app clock for consistency
+        DateTime now = AdminManager.Now;
 
         if (now > maxArrival)
             return BO.ScheduleStatus.Late;

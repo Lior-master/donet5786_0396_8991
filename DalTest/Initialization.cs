@@ -94,14 +94,18 @@ public static class Initialization
             else
                 Type = (OrderType)s_rand.Next(2, 5);
 
+            var adress = addresses[s_rand.Next(0,5)];
             Order order = new Order
             (
                 Id: 0,
                 CustomerName: $"Customer_{i + 1}",
-                CustomerAddress: addresses[s_rand.Next(0,5)].Street,
+                CustomerAddress: adress.Street,
                 CustomerPhone: $"+200000000{i + 1:D2}",
                 Type: Type,
-                OrderDate: DateTime.Now.AddHours(-s_rand.Next(0, 48))
+                // use DAL clock to keep all dates consistent with BL clock
+                OrderDate: s_dal.Config.Clock.AddMinutes(-s_rand.Next(0, 48)),
+                Latitude: adress.Latitude,
+                Longitude: adress.Longitude
             );
             s_dal!.Order.Create(order);
         }
@@ -144,7 +148,11 @@ public static class Initialization
             var courier = availableCouriers[s_rand.Next(availableCouriers.Count)];
 
             // Random pickup time (past 24h)
-            DateTime pickup = DateTime.Now.AddMinutes(-s_rand.Next(0, 1440));
+            DateTime pickup;
+            // choose pickup >= order.OrderDate and up to some minutes after
+            pickup = (order.OrderDate <= s_dal.Config.Clock)
+                ? order.OrderDate.AddMinutes(s_rand.Next(1, 120)) // between 1 and 120 min after order
+                : s_dal.Config.Clock; // fallback
 
             // Create delivery
             Delivery delivery = new Delivery
@@ -178,12 +186,33 @@ public static class Initialization
     public static Adresses CompanyAdress = new Adresses("22 Hameyasdim St", 31.778449894212013, 35.18761502733661, 0.0, 0.0, 0.0);
 
     public static void Do() 
-
     {
         s_dal = DalApi.Factory.Get;
 
         Console.WriteLine("Reset Configaration values and List values...");
         s_dal.ResetDB();
+
+        // Initialize config to consistent values so BL AdminManager.Now is sane
+        try
+        {
+            // set company address and coordinates (avoid (0,0))
+            s_dal.Config.CompanyAdress = CompanyAdress.Street;
+            s_dal.Config.Latitude = CompanyAdress.Latitude;
+            s_dal.Config.Longitude = CompanyAdress.Longitude;
+
+            // set the central clock to the current system time
+            s_dal.Config.Clock = DateTime.Now;
+
+            // optionally ensure sensible defaults for time/range/speeds if ResetDB left them empty
+            if (s_dal.Config.MaxTimeDelivery == TimeSpan.Zero)
+                s_dal.Config.MaxTimeDelivery = TimeSpan.FromMinutes(60);
+            if (s_dal.Config.RiskRange == TimeSpan.Zero)
+                s_dal.Config.RiskRange = TimeSpan.FromMinutes(10);
+        }
+        catch
+        {
+            // best-effort, never crash init
+        }
 
         Console.WriteLine("Initializing Delivery list...");
         createCouriers();
