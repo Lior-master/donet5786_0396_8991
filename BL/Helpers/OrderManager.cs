@@ -12,6 +12,7 @@ internal static class OrderManager
     private static readonly IDal s_dal = Factory.Get;
 
     internal static ObserverManager Observers = new();
+    
     internal static void PeriodicOrdersUpdates(DateTime oldClock, DateTime newClock)
     {
         try
@@ -22,11 +23,13 @@ internal static class OrderManager
 
             // Read all deliveries once to avoid multiple DAL calls
             var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
+            bool deliveriesUpdated = false;
+            var updatedOrders = new HashSet<int>(); // Track which orders were affected
 
             // Iterate over a snapshot of orders
             foreach (var o in s_dal.Order.ReadAll().ToList())
             {
-                // deliveries for this order
+                // Deliveries for this order
                 var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
 
                 // 1) Start deliveries whose pickup time was reached (Status == null -> Processing)
@@ -34,7 +37,8 @@ internal static class OrderManager
                 {
                     var upd = d with { Status = DO.OrderStatus.Processing };
                     s_dal.Delivery.Update(upd);
-
+                    deliveriesUpdated = true;
+                    updatedOrders.Add(d.OrderId); // Track the affected order
                 }
 
                 // 2) Cancel processing deliveries that exceed maxDeliveryTime (best-effort)
@@ -46,9 +50,11 @@ internal static class OrderManager
                         var upd = d with
                         {
                             Status = DO.OrderStatus.Canceled,
-                            ArrivalTime = newClock // mark finished so it won't be considered open anymore
+                            ArrivalTime = newClock // Mark finished so it won't be considered open anymore
                         };
                         s_dal.Delivery.Update(upd);
+                        deliveriesUpdated = true;
+                        updatedOrders.Add(d.OrderId); // Track the affected order
                     }
                 }
 
@@ -77,6 +83,18 @@ internal static class OrderManager
                 }
 
                 // 4) No persistence to DO.Order (by design).
+            }
+
+            // Notify observers if any deliveries were updated
+            if (deliveriesUpdated)
+            {
+                // Notify each affected order individually
+                foreach (var orderId in updatedOrders)
+                {
+                    Observers.NotifyItemUpdated(orderId);
+                }
+                // Notify that the list has been updated
+                Observers.NotifyListUpdated();
             }
         }
         catch (Exception ex)
@@ -132,7 +150,7 @@ internal static class OrderManager
                     lon
                 );
 
-                // choose speed based on last delivery transport if available, else fallback to car speed
+                // Choose speed based on last delivery transport if available, else fallback to car speed
                 double speed = config.CarSpeed;
                 if (lastDelivery != null)
                     speed = Tools.GetSpeed(lastDelivery.Transport, config);
@@ -176,7 +194,7 @@ internal static class OrderManager
     {
         try
         {
-            // 1. Validation of requesterId
+            // Validation of requesterId
             var requester = s_dal.Courier.Read(requesterId);
             if (requester == null)
                 throw new BLNotFoundException("Requester does not exist.");
@@ -216,7 +234,7 @@ internal static class OrderManager
                     lon
                 );
 
-                // pick speed depending on lastDelivery transport if available, otherwise default
+                // Pick speed depending on lastDelivery transport if available, otherwise default
                 double speed = config.CarSpeed;
                 if (lastDelivery != null)
                     speed = Tools.GetSpeed(lastDelivery.Transport, config);
@@ -387,21 +405,21 @@ internal static class OrderManager
     {
         try
         {
-            // validate requester
+            // Validate requester
             var requester = s_dal.Courier.Read(requesterId);
             if (requester == null)
                 throw new BLNotFoundException("Requester does not exist.");
 
-            // read order
+            // Read order
             var doOrder = s_dal.Order.Read(orderId) ?? throw new BLNotFoundException($"Order with id {orderId} not found.");
 
-            // get deliveries for this order
+            // Get deliveries for this order
             var deliveries = s_dal.Delivery.ReadAll(d => d.OrderId == orderId).ToList();
             var lastDelivery = deliveries.OrderByDescending(d => d.PickupTime).FirstOrDefault();
 
             var config = AdminManager.GetConfig();
 
-            // coordinates (use geocoding if missing)
+            // Coordinates (use geocoding if missing)
             double lat = doOrder.Latitude ?? 0;
             double lon = doOrder.Longitude ?? 0;
             if (lat == 0 && lon == 0)
@@ -414,7 +432,7 @@ internal static class OrderManager
                 }
                 catch
                 {
-                    // fallback to 0,0 if geocoding fails
+                    // Fallback to 0,0 if geocoding fails
                 }
             }
 
@@ -433,7 +451,7 @@ internal static class OrderManager
 
             TimeSpan arrivalEstDuration = estArrival != null ? estArrival.Value - doOrder.OrderDate : TimeSpan.Zero;
 
-            // map deliveries to BO.DeliveryPerOrderInList
+            // Map deliveries to BO.DeliveryPerOrderInList
             var deliveriesPerOrder = deliveries.Select(d =>
             {
                 var courier = s_dal.Courier.Read(d.CourierId);
@@ -448,7 +466,7 @@ internal static class OrderManager
                 };
             }).ToList();
 
-            // build BO.Order
+            // Build BO.Order
             return new BO.Order
             {
                 Id = doOrder.Id,
@@ -502,6 +520,10 @@ internal static class OrderManager
                 Description = order.OrderDescription
             };
             s_dal.Order.Update(doOrder);
+            
+            // Notifications for order modification
+            Observers.NotifyItemUpdated(order.Id);
+            Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -519,6 +541,10 @@ internal static class OrderManager
         try
         {
             s_dal.Order.Delete(orderId);
+            
+            // Notifications for order cancellation/deletion
+            Observers.NotifyItemUpdated(orderId);
+            Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -535,18 +561,22 @@ internal static class OrderManager
     {
         try
         {
-            // validate requester
+            // Validate requester
             var requester = s_dal.Courier.Read(requesterId);
             if (requester == null)
                 throw new BLNotFoundException("Requester does not exist.");
 
-            // delete associated deliveries first
+            // Delete associated deliveries first
             var deliveries = s_dal.Delivery.ReadAll(d => d.OrderId == orderId).ToList();
             foreach (var d in deliveries)
                 s_dal.Delivery.Delete(d.Id);
 
-            // then delete order
+            // Then delete order
             s_dal.Order.Delete(orderId);
+            
+            // Notifications for order removal
+            Observers.NotifyItemUpdated(orderId);
+            Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -557,9 +587,6 @@ internal static class OrderManager
             if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
-        Observers.NotifyItemUpdated(requesterId); 
-        Observers.NotifyListUpdated();  
-
     }
 
     internal static void AddOrder(int requesterId, BO.Order order)
@@ -581,6 +608,9 @@ internal static class OrderManager
                 Description = order.OrderDescription
             };
             s_dal.Order.Create(doOrder);
+            
+            // Notification for adding order to list
+            Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -591,14 +621,13 @@ internal static class OrderManager
             if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
-        Observers.NotifyListUpdated();
     }
 
     internal static void FinishOrder(int requesterId, int courierId, int deliveryId)
     {
         try
         {
-            // validate requester and courier
+            // Validate requester and courier
             var requester = s_dal.Courier.Read(requesterId);
             if (requester == null)
                 throw new BLNotFoundException("Requester does not exist.");
@@ -609,7 +638,7 @@ internal static class OrderManager
             var order = s_dal.Order.Read(delivery.OrderId) ?? throw new BLNotFoundException($"Order {delivery.OrderId} not found.");
             var config = AdminManager.GetConfig();
 
-            // compute coordinates and distance
+            // Compute coordinates and distance
             double lat = order.Latitude ?? 0;
             double lon = order.Longitude ?? 0;
             if (lat == 0 && lon == 0)
@@ -625,7 +654,7 @@ internal static class OrderManager
 
             double distance = Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
 
-            // update delivery
+            // Update delivery
             var updated = delivery with
             {
                 ArrivalTime = AdminManager.Now,
@@ -635,13 +664,17 @@ internal static class OrderManager
 
             s_dal.Delivery.Update(updated);
 
-            // optionally update courier activity (best-effort)
+            // Optionally update courier activity (best-effort)
             try
             {
                 Tools.UpdateCourierActivity(courier, config.InactivityThreshold);
                 s_dal.Courier.Update(courier);
             }
             catch { }
+
+            // Notifications for order/delivery completion
+            Observers.NotifyItemUpdated(delivery.OrderId);
+            Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -658,7 +691,7 @@ internal static class OrderManager
     {
         try
         {
-            // validate requester, courier and order
+            // Validate requester, courier and order
             var requester = s_dal.Courier.Read(requesterId);
             if (requester == null)
                 throw new BLNotFoundException("Requester does not exist.");
@@ -666,15 +699,15 @@ internal static class OrderManager
             var courier = s_dal.Courier.Read(courierId) ?? throw new BLNotFoundException($"Courier {courierId} not found.");
             var order = s_dal.Order.Read(orderId) ?? throw new BLNotFoundException($"Order {orderId} not found.");
 
-            // NEW: verify courier is active
+            // Verify courier is active
             if (!courier.IsActive)
                 throw new BO.BLInvalidOperationException($"Cannot assign order {orderId} to courier {courierId}: courier is not active.");
 
-            // NEW: verify courier is not Director
+            // Verify courier is not Director
             if (courier.Administrator == DO.Administrator.Director)
                 throw new BO.BLInvalidOperationException($"Cannot assign order {orderId} to courier {courierId}: courier is a Director.");
 
-            // create a new delivery assigned to courier
+            // Create a new delivery assigned to courier
             var delivery = new DO.Delivery
             {
                 Id = 0,
@@ -688,8 +721,10 @@ internal static class OrderManager
             };
 
             s_dal.Delivery.Create(delivery);
-            Observers.NotifyItemUpdated(requesterId);
-
+            
+            // Notifications for order assignment
+            Observers.NotifyItemUpdated(orderId);
+            Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -827,7 +862,7 @@ internal static class OrderManager
             if (filter.HasValue)
                 list = list.Where(x => x.OrderType == filter.Value).ToList();
 
-            // sorter param is DeliveredStatus? but for open orders we'll support sorting by AddedTime or BirdDistance via enum name string
+            // Sorter param is DeliveredStatus? but for open orders we'll support sorting by AddedTime or BirdDistance via enum name string
             if (sorter != null)
             {
                 string key = sorter.ToString() ?? string.Empty;
