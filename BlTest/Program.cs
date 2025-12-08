@@ -221,8 +221,52 @@ internal class Program
     private static void GetOrdersBySummary()
     {
         var summary = s_bl.Order.GetOrdersBySummary(TestRequesterId);
-        Console.WriteLine("Orders by summary:");
-        foreach (var v in summary) Console.WriteLine(v);
+        Console.WriteLine("\n--- ORDERS BY SUMMARY ---");
+        
+        // Get the number of statuses and schedule statuses for proper interpretation
+        int statusCount = Enum.GetValues(typeof(BO.OrderStatus)).Length;
+        int scheduleCount = Enum.GetValues(typeof(BO.ScheduleStatus)).Length;
+        
+        var summaryArray = summary.ToArray();
+        
+        if (summaryArray.Length == 0)
+        {
+            Console.WriteLine("No summary data available.");
+        }
+        else
+        {
+            Console.WriteLine($"Summary Matrix ({statusCount} statuses × {scheduleCount} schedule statuses):");
+            Console.WriteLine();
+            
+            // Print header row with schedule status names
+            Console.Write("Status\\Schedule".PadRight(15));
+            var scheduleStatuses = Enum.GetValues(typeof(BO.ScheduleStatus)).Cast<BO.ScheduleStatus>().ToArray();
+            foreach (var schedule in scheduleStatuses)
+            {
+                Console.Write(schedule.ToString().PadRight(12));
+            }
+            Console.WriteLine();
+            Console.WriteLine(new string('-', 15 + scheduleCount * 12));
+            
+            // Print each order status row
+            var orderStatuses = Enum.GetValues(typeof(BO.OrderStatus)).Cast<BO.OrderStatus>().ToArray();
+            for (int statusIdx = 0; statusIdx < statusCount && statusIdx < orderStatuses.Length; statusIdx++)
+            {
+                Console.Write(orderStatuses[statusIdx].ToString().PadRight(15));
+                
+                for (int scheduleIdx = 0; scheduleIdx < scheduleCount; scheduleIdx++)
+                {
+                    int arrayIdx = statusIdx * scheduleCount + scheduleIdx;
+                    int count = arrayIdx < summaryArray.Length ? summaryArray[arrayIdx] : 0;
+                    Console.Write(count.ToString().PadRight(12));
+                }
+                Console.WriteLine();
+            }
+            
+            Console.WriteLine();
+            Console.WriteLine($"Total orders counted: {summaryArray.Sum()}");
+        }
+        
         Console.WriteLine("Press Enter...");
         Console.ReadLine();
     }

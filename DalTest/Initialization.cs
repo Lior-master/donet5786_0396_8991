@@ -51,7 +51,7 @@ public static class Initialization
             Administrator: Administrator.Director
         ));
 
-        for (int i = 0; i < 25; i++)
+        for (int i = 0; i < 40; i++)
         {
             var transport = (DeliveryTransport)s_rand.Next(0, 4);
 
@@ -64,6 +64,9 @@ public static class Initialization
                 _ => 1
             };
 
+            // 80% chance d'être actif (1-80 = actif, 81-100 = inactif)
+            bool isActive = s_rand.Next(1, 101) <= 80;
+
             Courier courier = new Courier
             (
                 Id: i+100001,
@@ -71,7 +74,7 @@ public static class Initialization
                 Phone: $"+100000000{i + 1:D2}",
                 Email: $"Courier_{i + 1}@gmail.com",
                 Password: "password",
-                IsActive: s_rand.Next(0, 5) % 2 == 0,
+                IsActive: isActive,
                 Transport: transport,
                 StartDate: DateTime.Now.AddDays(s_rand.Next(-365, 0)),
                 MaxDistance: maxDistance,
@@ -118,10 +121,9 @@ public static class Initialization
         var allCouriers = s_dal!.Courier.ReadAll().ToList();
         var deliveriesSnapshot = s_dal!.Delivery.ReadAll().ToList();
 
-        // Filter: active, not Director, and with no open (ArrivalTime == null) deliveries
+        // Filter: active, not Director
         var availableCouriers = allCouriers
-            .Where(c => c.IsActive && c.Administrator != Administrator.Director
-                        && !deliveriesSnapshot.Any(d => d.CourierId == c.Id && d.ArrivalTime == null))
+            .Where(c => c.IsActive && c.Administrator != Administrator.Director)
             .ToList();
 
         if (orders.Count == 0 || availableCouriers.Count == 0)
@@ -130,29 +132,73 @@ public static class Initialization
             return;
         }
 
-        // create up to 50 deliveries but avoid assigning more than one open delivery per courier
+        // Create deliveries with various statuses
         int attempts = 0;
         int created = 0;
-        while (created < 50 && created < orders.Count && availableCouriers.Count > 0 && attempts < 1000)
+        var usedOrders = new HashSet<int>();
+        
+        while (created < Math.Min(45, orders.Count) && attempts < 1000)
         {
             attempts++;
 
-            // Pick a random order that doesn't already have a processing delivery (best-effort)
+            // Pick a random order that hasn't been used yet
             var order = orders[s_rand.Next(orders.Count)];
-
-            // ensure order isn't already assigned in an open delivery
-            bool orderHasOpenDelivery = deliveriesSnapshot.Any(d => d.OrderId == order.Id && d.ArrivalTime == null);
-            if (orderHasOpenDelivery) continue;
+            if (usedOrders.Contains(order.Id)) continue;
 
             // Pick a random available courier
             var courier = availableCouriers[s_rand.Next(availableCouriers.Count)];
 
-            // Random pickup time (past 24h)
-            DateTime pickup;
-            // choose pickup >= order.OrderDate and up to some minutes after
-            pickup = (order.OrderDate <= s_dal.Config.Clock)
-                ? order.OrderDate.AddMinutes(s_rand.Next(1, 120)) // between 1 and 120 min after order
-                : s_dal.Config.Clock; // fallback
+            // Random pickup time - équilibré
+            DateTime pickup = order.OrderDate.AddMinutes(s_rand.Next(3, 20)); // 3-20 minutes après commande
+
+            // Determine delivery status and timing
+            DO.OrderStatus? deliveryStatus;
+            DateTime? arrivalTime = null;
+            
+            // Create different scenarios plus équilibrés:
+            // 60% delivered, 20% processing, 15% pending, 5% canceled
+            int statusRoll = s_rand.Next(1, 101);
+            
+            if (statusRoll <= 60) // 60% - Delivered
+            {
+                deliveryStatus = DO.OrderStatus.Delivered;
+                
+                // Temps de livraison basés sur le type de transport pour être plus réalistes
+                int deliveryTime = courier.Transport switch
+                {
+                    DeliveryTransport.Foot => s_rand.Next(20, 35),      // 20-35 minutes
+                    DeliveryTransport.Bike => s_rand.Next(15, 25),      // 15-25 minutes  
+                    DeliveryTransport.Motorcycle => s_rand.Next(10, 20), // 10-20 minutes
+                    DeliveryTransport.Car => s_rand.Next(8, 18),        // 8-18 minutes
+                    _ => s_rand.Next(15, 30)
+                };
+                
+                arrivalTime = pickup.AddMinutes(deliveryTime);
+            }
+            else if (statusRoll <= 80) // 20% - Processing (picked up but not delivered yet)
+            {
+                deliveryStatus = DO.OrderStatus.Processing;
+                arrivalTime = null; // still in transit
+            }
+            else if (statusRoll <= 95) // 15% - Pending (not picked up yet)
+            {
+                deliveryStatus = null; // not yet started
+                // Pickup dans le futur proche pour certains pending
+                pickup = s_dal.Config.Clock.AddMinutes(s_rand.Next(-2, 15));
+            }
+            else // 5% - Canceled
+            {
+                deliveryStatus = DO.OrderStatus.Canceled;
+                arrivalTime = pickup.AddMinutes(s_rand.Next(5, 15));
+            }
+
+            // Calculate distance for completed deliveries
+            double? distance = null;
+            if (arrivalTime.HasValue)
+            {
+                var address = addresses[s_rand.Next(addresses.Length)];
+                distance = s_rand.NextDouble() * address.DistanceFromCompany + 0.8;
+            }
 
             // Create delivery
             Delivery delivery = new Delivery
@@ -161,17 +207,18 @@ public static class Initialization
                 OrderId: order.Id,
                 CourierId: courier.Id,
                 PickupTime: pickup,
-                Transport: courier.Transport
+                Transport: courier.Transport,
+                ArrivalTime: arrivalTime,
+                Distance: distance,
+                Status: deliveryStatus
             );
 
             s_dal!.Delivery.Create(delivery);
-
-            // update snapshots: add delivery and remove courier from available pool so they won't get another open delivery
-            deliveriesSnapshot.Add(delivery);
-            availableCouriers.RemoveAll(c => c.Id == courier.Id);
-
+            usedOrders.Add(order.Id);
             created++;
         }
+
+        Console.WriteLine($"Created {created} deliveries with various statuses.");
     }
 
     public static Adresses[] addresses = new Adresses[]
@@ -203,11 +250,11 @@ public static class Initialization
             // set the central clock to the current system time
             s_dal.Config.Clock = DateTime.Now;
 
-            // optionally ensure sensible defaults for time/range/speeds if ResetDB left them empty
+            // Ajuster les paramètres pour avoir un équilibre réaliste
             if (s_dal.Config.MaxTimeDelivery == TimeSpan.Zero)
-                s_dal.Config.MaxTimeDelivery = TimeSpan.FromMinutes(60);
+                s_dal.Config.MaxTimeDelivery = TimeSpan.FromMinutes(45); // 45 minutes
             if (s_dal.Config.RiskRange == TimeSpan.Zero)
-                s_dal.Config.RiskRange = TimeSpan.FromMinutes(10);
+                s_dal.Config.RiskRange = TimeSpan.FromMinutes(8); // 8 minutes avant la limite
         }
         catch
         {
