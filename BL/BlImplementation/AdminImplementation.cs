@@ -35,4 +35,12 @@ internal class AdminImplementation : IAdmin
 
     public void SetConfig(Config configuration)
         => AdminManager.SetConfig(configuration);
+    public void AddClockObserver(Action clockObserver)
+        => AdminManager.ClockUpdatedObservers += clockObserver;
+    public void RemoveClockObserver(Action clockObserver)
+        => AdminManager.ClockUpdatedObservers -= clockObserver;
+    public void AddConfigObserver(Action configObserver)
+        => AdminManager.ConfigUpdatedObservers += configObserver;
+    public void RemoveConfigObserver(Action configObserver)
+        => AdminManager.ConfigUpdatedObservers -= configObserver;
 }
