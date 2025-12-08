@@ -11,6 +11,7 @@ internal static class CourierManager
 {
     private static readonly IDal s_dal = Factory.Get;
 
+    internal static ObserverManager Observers = new();
     internal static void addCourier(int requesterId, BO.Courier newCourier)
     {
         try

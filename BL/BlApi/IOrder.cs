@@ -3,7 +3,7 @@
 using BO;
 using System.Runtime.InteropServices.ObjectiveC;
 
-public interface IOrder
+public interface IOrder : IObservable 
 {
     IEnumerable<int> GetOrdersBySummary(int requesterId);
     IEnumerable<BO.OrderInList> orderInLists(int requesterId,Enum? filter,object? Object,Enum? sorter);

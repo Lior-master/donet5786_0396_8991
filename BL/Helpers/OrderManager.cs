@@ -11,6 +11,7 @@ internal static class OrderManager
 {
     private static readonly IDal s_dal = Factory.Get;
 
+    internal static ObserverManager Observers = new();
     internal static void PeriodicOrdersUpdates(DateTime oldClock, DateTime newClock)
     {
         try
@@ -33,6 +34,7 @@ internal static class OrderManager
                 {
                     var upd = d with { Status = DO.OrderStatus.Processing };
                     s_dal.Delivery.Update(upd);
+
                 }
 
                 // 2) Cancel processing deliveries that exceed maxDeliveryTime (best-effort)
@@ -289,7 +291,6 @@ internal static class OrderManager
         }
     }
 
-    // GetOrdersList similar changes (use AdminManager.Now)
     internal static IEnumerable<BO.OrderInList> GetOrdersList(int requesterId, BO.OrderStatus? statusFilter, object? sortParameter)
     {
         try
@@ -556,6 +557,9 @@ internal static class OrderManager
             if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
+        Observers.NotifyItemUpdated(requesterId); 
+        Observers.NotifyListUpdated();  
+
     }
 
     internal static void AddOrder(int requesterId, BO.Order order)
@@ -587,9 +591,9 @@ internal static class OrderManager
             if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
+        Observers.NotifyListUpdated();
     }
 
-    // FinishOrder: use AdminManager.Now instead of DateTime.Now when marking arrival
     internal static void FinishOrder(int requesterId, int courierId, int deliveryId)
     {
         try
@@ -684,6 +688,8 @@ internal static class OrderManager
             };
 
             s_dal.Delivery.Create(delivery);
+            Observers.NotifyItemUpdated(requesterId);
+
         }
         catch (Exception ex)
         {
