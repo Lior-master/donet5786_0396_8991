@@ -12,6 +12,7 @@ internal static class CourierManager
     private static readonly IDal s_dal = Factory.Get;
 
     internal static ObserverManager Observers = new();
+    
     internal static void addCourier(int requesterId, BO.Courier newCourier)
     {
         try
@@ -34,7 +35,7 @@ internal static class CourierManager
             int idToUse = newCourier.Id;
             if (idToUse == 0)
             {
-                // build set of existing ids to avoid collision
+                // Build set of existing ids to avoid collision
                 var existing = new HashSet<int>(s_dal.Courier.ReadAll().Select(c => c.Id));
                 int candidate;
                 do
@@ -58,6 +59,9 @@ internal static class CourierManager
                 Password = newCourier.Password
             };
             s_dal.Courier.Create(courierDO);
+            
+            // Notification for adding courier to list
+            Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -69,6 +73,7 @@ internal static class CourierManager
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
     }
+    
     internal static void PeriodicCouriersUpdates(DateTime oldClock, DateTime newClock)
     {
         try
@@ -77,7 +82,7 @@ internal static class CourierManager
 
             var allDeliveries = s_dal.Delivery.ReadAll();
 
-            _ = s_dal.Courier.ReadAll()
+            var updatedCouriers = s_dal.Courier.ReadAll()
                 .Where(c => c.IsActive)
                 .Select(c => new
                 {
@@ -97,9 +102,19 @@ internal static class CourierManager
                 {
                     var updated = x.Courier with { IsActive = false };
                     s_dal.Courier.Update(updated);
+                    
+                    // Notification for courier modification
+                    Observers.NotifyItemUpdated(updated.Id);
+                    
                     return updated;
                 })
                 .ToList();
+                
+            // If couriers have been modified, notify the list
+            if (updatedCouriers.Any())
+            {
+                Observers.NotifyListUpdated();
+            }
         }
         catch (Exception ex)
         {
@@ -314,26 +329,40 @@ internal static class CourierManager
     {
         try
         {
-            var requester = s_dal.Courier.Read(requesterId);
-            if (requester == null)
-                throw new BLNotFoundException("requesterId doesn't exist");
-            var existingCourier = s_dal.Courier.Read(updatedCourier.Id);
-            if (existingCourier == null)
-                throw new BLNotFoundException($"courierId with id : {updatedCourier.Id} doesn't exist");
-
-            existingCourier = existingCourier with
+            try
             {
-                Name = updatedCourier.Name,
-                Phone = updatedCourier.Phone,
-                Email = updatedCourier.Email,
-                IsActive = updatedCourier.IsActive,
-                Transport = (DO.DeliveryTransport)updatedCourier.Transport,
-                Administrator = (DO.Administrator)updatedCourier.Administrator,
-                // MaxDistance may be nullable on both sides
-                MaxDistance = updatedCourier.MaxDistance
-            };
+                var requester = s_dal.Courier.Read(requesterId);
+            }
+            catch (Exception)
+            {
+                throw new BLNotFoundException("requesterId doesn't exist");
+            }
+            try
+            {
+                var existingCourier = s_dal.Courier.Read(updatedCourier.Id);
+                existingCourier = existingCourier with
+                {
+                    Name = updatedCourier.Name,
+                    Phone = updatedCourier.Phone,
+                    Email = updatedCourier.Email,
+                    IsActive = updatedCourier.IsActive,
+                    Transport = (DO.DeliveryTransport)updatedCourier.Transport,
+                    Administrator = (DO.Administrator)updatedCourier.Administrator,
+                    // MaxDistance may be nullable on both sides
+                    MaxDistance = updatedCourier.MaxDistance
+                };
 
-            s_dal.Courier.Update(existingCourier);
+                s_dal.Courier.Update(existingCourier);
+                
+                // Notifications for courier modification
+                Observers.NotifyItemUpdated(updatedCourier.Id);
+                Observers.NotifyListUpdated();
+
+            }
+            catch (Exception ex)
+            {
+                throw new BLNotFoundException($"courierId with id : {updatedCourier.Id} doesn't exist", ex);
+            }
         }
         catch (Exception ex)
         {
@@ -346,7 +375,7 @@ internal static class CourierManager
         }
     }
 
-    // new helper to promote a courier to Director (authorization checked)
+    // New helper to promote a courier to Director (authorization checked)
     internal static void PromoteCourierToDirector(int requesterId, int courierId)
     {
         try
@@ -362,6 +391,10 @@ internal static class CourierManager
 
             var updated = courier with { Administrator = DO.Administrator.Director };
             s_dal.Courier.Update(updated);
+            
+            // Notifications for courier promotion (modification)
+            Observers.NotifyItemUpdated(courierId);
+            Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -396,6 +429,10 @@ internal static class CourierManager
                 throw new BLInvalidOperationException("This courier is currently handling a delivery and cannot be deleted.");
 
             s_dal.Courier.Delete(courierId);
+            
+            // Notifications for courier removal
+            Observers.NotifyItemUpdated(courierId); // The object has been deleted
+            Observers.NotifyListUpdated(); // The list has been modified
         }
         catch (Exception ex)
         {
