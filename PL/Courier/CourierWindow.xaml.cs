@@ -12,16 +12,15 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace PL.Courier
+namespace PL.Courier;
+
+/// <summary>
+/// Interaction logic for CourierWindow.xaml
+/// </summary>
+public partial class CourierWindow : Window
 {
-    /// <summary>
-    /// Interaction logic for CourierWindow.xaml
-    /// </summary>
-    public partial class CourierWindow : Window
+    public CourierWindow()
     {
-        public CourierWindow()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
     }
 }
