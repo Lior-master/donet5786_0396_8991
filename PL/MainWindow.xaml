@@ -5,8 +5,33 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PL"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="640" Width="800">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230*"/>
+            <ColumnDefinition Width="344*"/>
+            <ColumnDefinition Width="230*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="140*"/>
+            <RowDefinition Height="313*"/>
+            <RowDefinition Height="170*"/>
+        </Grid.RowDefinitions>
+        <!-- Clock affichage -->
+        <Label Grid.Column="1" Content="Label" HorizontalAlignment="Center" Margin="0,10,0,0" Grid.Row="1" VerticalAlignment="Top" FontSize="24" Height="40" Width="344" HorizontalContentAlignment="Center" Background="Red" Foreground="Blue" FontWeight="Bold" BorderBrush="Black"/>
+        <!-- AddSecond button -->
+        <Button Grid.Column="1" Content="Add Second" Margin="0,88,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
+        <!-- AddMinute button -->
+        <Button Grid.Column="1" Content="Add Minute" HorizontalAlignment="Center" Margin="0,133,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
+        <!-- AddHour button -->
+        <Button Grid.Column="1" Content="Add Hour" HorizontalAlignment="Center" Margin="0,178,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
+        <!-- AddMonth button -->
+        <Button Grid.Column="1" Content="Add Month" HorizontalAlignment="Center" Margin="0,223,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
+        <!-- AddYear button -->
+        <Button Grid.Column="1" Content="Add Year" HorizontalAlignment="Center" Margin="0,268,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
+
+
+
 
     </Grid>
 </Window>
