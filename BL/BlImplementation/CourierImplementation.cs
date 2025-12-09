@@ -1,6 +1,6 @@
 ﻿namespace BLImplementation;
 
-using BLApi;
+using BlApi;
 using BO;
 using Helpers;
 using System.Collections.Generic;

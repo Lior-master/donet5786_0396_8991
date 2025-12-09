@@ -1,10 +1,9 @@
 ﻿using BO;
-
-namespace BLApi;
+namespace BlApi;
 
 // Specify the type parameter for IObservable<T>.
 // Assuming you want to observe Courier changes, use Courier as the type argument.
-public interface ICourier : IObservable<Courier>
+public interface ICourier : IObservable
 {
     Administrator Login(string username, string password);
     IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, DeliveryTransport? status);
