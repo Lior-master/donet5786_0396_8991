@@ -5,33 +5,144 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PL"
         mc:Ignorable="d"
-        Title="MainWindow" Height="640" Width="800">
+        Title="MainWindow" Height="800" Width="1200">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="230*"/>
-            <ColumnDefinition Width="344*"/>
-            <ColumnDefinition Width="230*"/>
+            <ColumnDefinition Width="17*"/>
+            <ColumnDefinition Width="28*"/>
+            <ColumnDefinition Width="15*"/>
         </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="140*"/>
-            <RowDefinition Height="313*"/>
-            <RowDefinition Height="170*"/>
-        </Grid.RowDefinitions>
-        <!-- Clock affichage -->
-        <Label Grid.Column="1" Content="Label" HorizontalAlignment="Center" Margin="0,10,0,0" Grid.Row="1" VerticalAlignment="Top" FontSize="24" Height="40" Width="344" HorizontalContentAlignment="Center" Background="Red" Foreground="Blue" FontWeight="Bold" BorderBrush="Black"/>
-        <!-- AddSecond button -->
-        <Button Grid.Column="1" Content="Add Second" Margin="0,88,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
-        <!-- AddMinute button -->
-        <Button Grid.Column="1" Content="Add Minute" HorizontalAlignment="Center" Margin="0,133,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
-        <!-- AddHour button -->
-        <Button Grid.Column="1" Content="Add Hour" HorizontalAlignment="Center" Margin="0,178,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
-        <!-- AddMonth button -->
-        <Button Grid.Column="1" Content="Add Month" HorizontalAlignment="Center" Margin="0,223,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
-        <!-- AddYear button -->
-        <Button Grid.Column="1" Content="Add Year" HorizontalAlignment="Center" Margin="0,268,0,0" Grid.Row="1" VerticalAlignment="Top" Height="40" Width="344" FontSize="20" Background="Aquamarine"/>
 
+        <!-- Configuration Parameters - Left Column -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="10,10,2,10">
+            <StackPanel>
+                <TextBlock Text="Configuration Parameters" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
 
+                <!-- Boss ID -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Boss ID:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="BossIdTextBox" Width="70" Text=""/>
+                    <Button x:Name="UpdateBossIdButton" Content="Update" Width="60" Margin="5,0" Click="UpdateBossId_Click"/>
+                </StackPanel>
 
+                <!-- Boss Password -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Boss Password:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="BossPasswordTextBox" Width="70" Text=""/>
+                    <Button x:Name="UpdateBossPasswordButton" Content="Update" Width="60" Margin="5,0" Click="UpdateBossPassword_Click"/>
+                </StackPanel>
 
+                <!-- Car Speed -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Car Speed:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="CarSpeedTextBox" Width="70" Text=""/>
+                    <Button x:Name="UpdateCarSpeedButton" Content="Update" Width="60" Margin="5,0" Click="UpdateCarSpeed_Click"/>
+                </StackPanel>
+
+                <!-- Motorcycle Speed -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Motorcycle Speed:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="MotorcycleSpeedTextBox" Width="70" Text=""/>
+                    <Button x:Name="UpdateMotorcycleSpeedButton" Content="Update" Width="60" Margin="5,0" Click="UpdateMotorcycleSpeed_Click"/>
+                </StackPanel>
+
+                <!-- Bike Speed -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Bike Speed:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="BikeSpeedTextBox" Width="70" Text=""/>
+                    <Button x:Name="UpdateBikeSpeedButton" Content="Update" Width="60" Margin="5,0" Click="UpdateBikeSpeed_Click"/>
+                </StackPanel>
+
+                <!-- Walking Speed -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Walking Speed:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="WalkingSpeedTextBox" Width="70" Text=""/>
+                    <Button x:Name="UpdateWalkingSpeedButton" Content="Update" Width="60" Margin="5,0" Click="UpdateWalkingSpeed_Click"/>
+                </StackPanel>
+
+                <!-- Max Delivery Time -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Max Delivery Time:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="MaxDeliveryTimeTextBox" Width="50" Text=""/>
+                    <TextBlock Text="min" VerticalAlignment="Center" Margin="2,0,5,0"/>
+                    <Button x:Name="UpdateMaxDeliveryTimeButton" Content="Update" Width="60" Margin="5,0" Click="UpdateMaxDeliveryTime_Click"/>
+                </StackPanel>
+
+                <!-- Risk Range -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Risk Range:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="RiskRangeTextBox" Width="50" Text=""/>
+                    <TextBlock Text="min" VerticalAlignment="Center" Margin="2,0,5,0"/>
+                    <Button x:Name="UpdateRiskRangeButton" Content="Update" Width="60" Margin="5,0" Click="UpdateRiskRange_Click"/>
+                </StackPanel>
+
+                <!-- Inactivity -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Inactivity:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="InactivityTextBox" Width="50" Text=""/>
+                    <TextBlock Text="days" VerticalAlignment="Center" Margin="2,0,5,0"/>
+                    <Button x:Name="UpdateInactivityButton" Content="Update" Width="60" Margin="5,0" Click="UpdateInactivity_Click"/>
+                </StackPanel>
+
+                <!-- Company Address -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Company Address:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="CompanyAddressTextBox" Width="120" Text=""/>
+                    <Button x:Name="UpdateCompanyAddressButton" Content="Update" Width="60" Margin="5,0" Click="UpdateCompanyAddress_Click"/>
+                </StackPanel>
+
+                <!-- Latitude -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Latitude:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="LatitudeTextBox" Width="90" Text=""/>
+                    <Button x:Name="UpdateLatitudeButton" Content="Update" Width="60" Margin="5,0" Click="UpdateLatitude_Click"/>
+                </StackPanel>
+
+                <!-- Longitude -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Longitude:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="LongitudeTextBox" Width="90" Text=""/>
+                    <Button x:Name="UpdateLongitudeButton" Content="Update" Width="60" Margin="5,0" Click="UpdateLongitude_Click"/>
+                </StackPanel>
+
+                <!-- Max Distance -->
+                <StackPanel Orientation="Horizontal" Margin="0,5">
+                    <TextBlock Text="Max Distance:" Width="140" VerticalAlignment="Center"/>
+                    <TextBox x:Name="MaxDistanceTextBox" Width="50" Text=""/>
+                    <TextBlock Text="km" VerticalAlignment="Center" Margin="2,0,5,0"/>
+                    <Button x:Name="UpdateMaxDistanceButton" Content="Update" Width="60" Margin="5,0" Click="UpdateMaxDistance_Click"/>
+                </StackPanel>
+
+                <!-- Action Buttons -->
+                <StackPanel Margin="0,30">
+                    <Button Content="Load All Config" Height="35" Margin="0,5" Background="LightBlue" FontSize="14" Click="LoadAllConfig_Click"/>
+                    <Button Content="Reset Config" Height="35" Margin="0,5" Background="LightCoral" FontSize="14" Click="ResetConfig_Click"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Clock and Controls - Center Column -->
+        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Height="325" Width="400">
+            <!-- Clock Display -->
+            <Label x:Name="ClockLabel" Content="9.12.2024 12:36" HorizontalAlignment="Center" FontSize="28" Height="50" Width="400" 
+                   HorizontalContentAlignment="Center" Background="Cyan" Foreground="Blue" FontWeight="Bold" 
+                   BorderBrush="Black" BorderThickness="2" Margin="0,0,0,20"/>
+
+            <!-- Clock Control Buttons -->
+            <Button Content="Add One Second" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneSecond_Click"/>
+            <Button Content="Add One Minute" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneMinute_Click"/>
+            <Button Content="Add One Day" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneDay_Click"/>
+            <Button Content="Add One Hour" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneHour_Click"/>
+            <Button Content="Add One Month" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneMonth_Click"/>
+            <Button Content="Add One Year" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneYear_Click"/>
+        </StackPanel>
+
+        <!-- Main Action Buttons - Right Column -->
+        <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Height="320" Width="170">
+            <Button Content="Reset DB" Height="60" Width="150" Margin="10" FontSize="16" Background="LightGray" Click="ResetDB_Click"/>
+            <Button Content="Init DB" Height="60" Width="150" Margin="10" FontSize="16" Background="LightGray" Click="InitDB_Click"/>
+            <Button Content="Couriers List" Height="60" Width="150" Margin="10" FontSize="16" Background="LightGray" Click="CouriersList_Click"/>
+            <Button Content="Orders List" Height="60" Width="150" Margin="10" FontSize="16" Background="LightGray" Click="OrdersList_Click"/>
+        </StackPanel>
     </Grid>
 </Window>
