@@ -3,146 +3,321 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:PL"
         mc:Ignorable="d"
-        Title="MainWindow" Height="800" Width="1200">
+        Title="Delivery Management System" 
+        Height="700" Width="1400"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}">
+
+    <Window.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1976D2"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#0D47A1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Time Control Button Style -->
+        <Style x:Key="TimeButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#45a049"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Action Button Style -->
+        <Style x:Key="ActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#607D8B"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#546E7A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- TextBox Style -->
+        <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderBrush" Value="#BDBDBD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="White" 
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                        Padding="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#2196F3"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Section Header Style -->
+        <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#37474F"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+
+        <!-- Label Style -->
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#546E7A"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="17*"/>
-            <ColumnDefinition Width="28*"/>
-            <ColumnDefinition Width="15*"/>
+            <ColumnDefinition Width="350"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="280"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Configuration Parameters - Left Column -->
-        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="10,10,2,10">
-            <StackPanel>
-                <TextBlock Text="Configuration Parameters" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+        <!-- ======================================================= -->
+        <!--   LEFT PANEL — CONFIGURATION                           -->
+        <!-- ======================================================= -->
+        <Border Grid.Column="0" Background="White" 
+                BorderBrush="#E0E0E0" BorderThickness="0,0,1,0"
+                Padding="20">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="⚙️ Configuration" Style="{StaticResource SectionHeaderStyle}"/>
 
-                <!-- Boss ID -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Boss ID:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="BossIdTextBox" Width="70" Text=""/>
-                    <Button x:Name="UpdateBossIdButton" Content="Update" Width="60" Margin="5,0" Click="UpdateBossId_Click"/>
+                    <!-- Boss Credentials -->
+                    <TextBlock Text="ADMINISTRATOR" FontWeight="SemiBold" 
+                               Foreground="#757575" FontSize="11" Margin="0,0,0,8"/>
+                    
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Boss ID" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.BossId, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Boss Password" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.BossPassword, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <!-- Speed Settings -->
+                    <TextBlock Text="VEHICLE SPEEDS (km/h)" FontWeight="SemiBold" 
+                               Foreground="#757575" FontSize="11" Margin="0,0,0,8"/>
+                    
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Car Speed" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.CarSpeed, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Motorcycle Speed" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.MotorcycleSpeed, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Bike Speed" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.BikeSpeed, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Walking Speed" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.WalkingSpeed, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <!-- Delivery Settings -->
+                    <TextBlock Text="DELIVERY PARAMETERS" FontWeight="SemiBold" 
+                               Foreground="#757575" FontSize="11" Margin="0,0,0,8"/>
+                    
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Max Delivery Time (minutes)" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.MaxDeliveryTime, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Risk Range (minutes)" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.RiskRange, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Inactivity Threshold (days)" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.InactivityThreshold, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Max Distance (km)" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.MaxDistance, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <!-- Location Settings -->
+                    <TextBlock Text="COMPANY LOCATION" FontWeight="SemiBold" 
+                               Foreground="#757575" FontSize="11" Margin="0,0,0,8"/>
+                    
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Address" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.CompanyAddress, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Latitude" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.CompanyLatitude, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,25">
+                        <TextBlock Text="Longitude" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4"/>
+                        <TextBox Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="{Binding Configuration.CompanyLongitude, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <!-- Action Buttons -->
+                    <Button Content="↻ Reload Configuration"
+                            Style="{StaticResource ModernButtonStyle}"
+                            Height="40" Margin="0,5"
+                            Click="LoadAllConfig_Click"/>
+
+                    <Button Content="✓ Apply Changes"
+                            Style="{StaticResource ModernButtonStyle}"
+                            Background="#4CAF50"
+                            Height="40" Margin="0,5"
+                            Click="ApplyConfig_Click"/>
                 </StackPanel>
+            </ScrollViewer>
+        </Border>
 
-                <!-- Boss Password -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Boss Password:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="BossPasswordTextBox" Width="70" Text=""/>
-                    <Button x:Name="UpdateBossPasswordButton" Content="Update" Width="60" Margin="5,0" Click="UpdateBossPassword_Click"/>
-                </StackPanel>
-
-                <!-- Car Speed -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Car Speed:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="CarSpeedTextBox" Width="70" Text=""/>
-                    <Button x:Name="UpdateCarSpeedButton" Content="Update" Width="60" Margin="5,0" Click="UpdateCarSpeed_Click"/>
-                </StackPanel>
-
-                <!-- Motorcycle Speed -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Motorcycle Speed:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="MotorcycleSpeedTextBox" Width="70" Text=""/>
-                    <Button x:Name="UpdateMotorcycleSpeedButton" Content="Update" Width="60" Margin="5,0" Click="UpdateMotorcycleSpeed_Click"/>
-                </StackPanel>
-
-                <!-- Bike Speed -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Bike Speed:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="BikeSpeedTextBox" Width="70" Text=""/>
-                    <Button x:Name="UpdateBikeSpeedButton" Content="Update" Width="60" Margin="5,0" Click="UpdateBikeSpeed_Click"/>
-                </StackPanel>
-
-                <!-- Walking Speed -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Walking Speed:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="WalkingSpeedTextBox" Width="70" Text=""/>
-                    <Button x:Name="UpdateWalkingSpeedButton" Content="Update" Width="60" Margin="5,0" Click="UpdateWalkingSpeed_Click"/>
-                </StackPanel>
-
-                <!-- Max Delivery Time -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Max Delivery Time:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="MaxDeliveryTimeTextBox" Width="50" Text=""/>
-                    <TextBlock Text="min" VerticalAlignment="Center" Margin="2,0,5,0"/>
-                    <Button x:Name="UpdateMaxDeliveryTimeButton" Content="Update" Width="60" Margin="5,0" Click="UpdateMaxDeliveryTime_Click"/>
-                </StackPanel>
-
-                <!-- Risk Range -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Risk Range:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="RiskRangeTextBox" Width="50" Text=""/>
-                    <TextBlock Text="min" VerticalAlignment="Center" Margin="2,0,5,0"/>
-                    <Button x:Name="UpdateRiskRangeButton" Content="Update" Width="60" Margin="5,0" Click="UpdateRiskRange_Click"/>
-                </StackPanel>
-
-                <!-- Inactivity -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Inactivity:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="InactivityTextBox" Width="50" Text=""/>
-                    <TextBlock Text="days" VerticalAlignment="Center" Margin="2,0,5,0"/>
-                    <Button x:Name="UpdateInactivityButton" Content="Update" Width="60" Margin="5,0" Click="UpdateInactivity_Click"/>
-                </StackPanel>
-
-                <!-- Company Address -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Company Address:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="CompanyAddressTextBox" Width="120" Text=""/>
-                    <Button x:Name="UpdateCompanyAddressButton" Content="Update" Width="60" Margin="5,0" Click="UpdateCompanyAddress_Click"/>
-                </StackPanel>
-
-                <!-- Latitude -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Latitude:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="LatitudeTextBox" Width="90" Text=""/>
-                    <Button x:Name="UpdateLatitudeButton" Content="Update" Width="60" Margin="5,0" Click="UpdateLatitude_Click"/>
-                </StackPanel>
-
-                <!-- Longitude -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Longitude:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="LongitudeTextBox" Width="90" Text=""/>
-                    <Button x:Name="UpdateLongitudeButton" Content="Update" Width="60" Margin="5,0" Click="UpdateLongitude_Click"/>
-                </StackPanel>
-
-                <!-- Max Distance -->
-                <StackPanel Orientation="Horizontal" Margin="0,5">
-                    <TextBlock Text="Max Distance:" Width="140" VerticalAlignment="Center"/>
-                    <TextBox x:Name="MaxDistanceTextBox" Width="50" Text=""/>
-                    <TextBlock Text="km" VerticalAlignment="Center" Margin="2,0,5,0"/>
-                    <Button x:Name="UpdateMaxDistanceButton" Content="Update" Width="60" Margin="5,0" Click="UpdateMaxDistance_Click"/>
-                </StackPanel>
-
-                <!-- Action Buttons -->
-                <StackPanel Margin="0,30">
-                    <Button Content="Load All Config" Height="35" Margin="0,5" Background="LightBlue" FontSize="14" Click="LoadAllConfig_Click"/>
-                    <Button Content="Reset Config" Height="35" Margin="0,5" Background="LightCoral" FontSize="14" Click="ResetConfig_Click"/>
-                </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
-
-        <!-- Clock and Controls - Center Column -->
-        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Height="325" Width="400">
+        <!-- ======================================================= -->
+        <!--   CENTER PANEL — CLOCK & TIME CONTROLS                 -->
+        <!-- ======================================================= -->
+        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            
             <!-- Clock Display -->
-            <Label x:Name="ClockLabel" Content="9.12.2024 12:36" HorizontalAlignment="Center" FontSize="28" Height="50" Width="400" 
-                   HorizontalContentAlignment="Center" Background="Cyan" Foreground="Blue" FontWeight="Bold" 
-                   BorderBrush="Black" BorderThickness="2" Margin="0,0,0,20"/>
+            <Border Background="White" 
+                    BorderBrush="#E0E0E0" BorderThickness="2"
+                    CornerRadius="8"
+                    Padding="30,20"
+                    Margin="0,0,0,30">
+                <StackPanel>
+                    <TextBlock Text="🕐 System Clock" 
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="#546E7A"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,15"/>
+                    
+                    <TextBlock Text="{Binding CurrentTime, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}"
+                               FontSize="32" FontWeight="Bold"
+                               Foreground="#37474F"
+                               HorizontalAlignment="Center"
+                               FontFamily="Consolas"/>
+                </StackPanel>
+            </Border>
 
-            <!-- Clock Control Buttons -->
-            <Button Content="Add One Second" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneSecond_Click"/>
-            <Button Content="Add One Minute" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneMinute_Click"/>
-            <Button Content="Add One Day" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneDay_Click"/>
-            <Button Content="Add One Hour" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneHour_Click"/>
-            <Button Content="Add One Month" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneMonth_Click"/>
-            <Button Content="Add One Year" Height="35" Width="300" Margin="5" FontSize="16" Background="GreenYellow" Click="AddOneYear_Click"/>
+            <!-- Time Controls -->
+            <TextBlock Text="Time Controls" 
+                       FontSize="16" FontWeight="SemiBold"
+                       Foreground="#546E7A"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,15"/>
+
+            <UniformGrid Columns="2" Rows="3" Width="450">
+                <Button Content="+ 1 Second" Style="{StaticResource TimeButtonStyle}"
+                        Height="45" Margin="5" Click="AddOneSecond_Click"/>
+                <Button Content="+ 1 Minute" Style="{StaticResource TimeButtonStyle}"
+                        Height="45" Margin="5" Click="AddOneMinute_Click"/>
+                <Button Content="+ 1 Hour" Style="{StaticResource TimeButtonStyle}"
+                        Height="45" Margin="5" Click="AddOneHour_Click"/>
+                <Button Content="+ 1 Day" Style="{StaticResource TimeButtonStyle}"
+                        Height="45" Margin="5" Click="AddOneDay_Click"/>
+                <Button Content="+ 1 Month" Style="{StaticResource TimeButtonStyle}"
+                        Height="45" Margin="5" Click="AddOneMonth_Click"/>
+                <Button Content="+ 1 Year" Style="{StaticResource TimeButtonStyle}"
+                        Height="45" Margin="5" Click="AddOneYear_Click"/>
+            </UniformGrid>
         </StackPanel>
 
-        <!-- Main Action Buttons - Right Column -->
-        <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Height="320" Width="170">
-            <Button Content="Reset DB" Height="60" Width="150" Margin="10" FontSize="16" Background="LightGray" Click="ResetDB_Click"/>
-            <Button Content="Init DB" Height="60" Width="150" Margin="10" FontSize="16" Background="LightGray" Click="InitDB_Click"/>
-            <Button Content="Couriers List" Height="60" Width="150" Margin="10" FontSize="16" Background="LightGray" Click="CouriersList_Click"/>
-            <Button Content="Orders List" Height="60" Width="150" Margin="10" FontSize="16" Background="LightGray" Click="OrdersList_Click"/>
-        </StackPanel>
+        <!-- ======================================================= -->
+        <!--   RIGHT PANEL — NAVIGATION & ACTIONS                   -->
+        <!-- ======================================================= -->
+        <Border Grid.Column="2" Background="White" 
+                BorderBrush="#E0E0E0" BorderThickness="1,0,0,0"
+                Padding="20">
+            <StackPanel VerticalAlignment="Center">
+                
+                <TextBlock Text="📊 Management" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <Button Content="👥 Couriers List"
+                        Style="{StaticResource ActionButtonStyle}"
+                        Height="70" Margin="0,10"
+                        Click="CouriersList_Click"/>
+
+                <Button Content="📦 Orders List"
+                        Style="{StaticResource ActionButtonStyle}"
+                        Height="70" Margin="0,10"
+                        Click="OrdersList_Click"/>
+
+                <Separator Margin="0,30" Background="#E0E0E0"/>
+
+                <TextBlock Text="🗄️ Database" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <Button Content="🔄 Initialize DB"
+                        Style="{StaticResource ActionButtonStyle}"
+                        Background="#FF9800"
+                        Height="55" Margin="0,10"
+                        Click="InitDB_Click"/>
+
+                <Button Content="⚠️ Reset DB"
+                        Style="{StaticResource ActionButtonStyle}"
+                        Background="#F44336"
+                        Height="55" Margin="0,10"
+                        Click="ResetDB_Click"/>
+
+            </StackPanel>
+        </Border>
+
     </Grid>
 </Window>
