@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PL.Courier;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,5 +25,16 @@ namespace PL.Order
         {
             InitializeComponent();
         }
+        public IEnumerable<BO.OrderInList> OrderList
+        {
+            get { return (IEnumerable<BO.OrderInList>)GetValue(OrderListProperty); }
+            set { SetValue(OrderListProperty, value); }
+        }
+        
+
+        public static readonly DependencyProperty OrderListProperty =
+            DependencyProperty.Register("OrderList", typeof(IEnumerable<BO.OrderInList>), typeof(OrderListWindow), new PropertyMetadata(null));
+
+
     }
 }
