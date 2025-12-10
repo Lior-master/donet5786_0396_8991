@@ -19,8 +19,20 @@ namespace PL.Courier;
 /// </summary>
 public partial class CourierListWindow : Window
 {
+    static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
     public CourierListWindow()
     {
         InitializeComponent();
     }
+
+    public IEnumerable<BO.CourierInList> CourierList
+    {
+        get { return (IEnumerable<BO.CourierInList>)GetValue(CourierListProperty); }
+        set { SetValue(CourierListProperty, value); }
+    }
+    
+    public static readonly DependencyProperty CourierListProperty =
+        DependencyProperty.Register("CourierList", typeof(IEnumerable<BO.CourierInList>), typeof(CourierListWindow), new PropertyMetadata(null));
+
+
 }
