@@ -21,7 +21,7 @@
             </Grid.ColumnDefinitions>
             
             <!-- Text before selection -->
-            <Label Grid.Column="0"  Content="Label" HorizontalAlignment="center" VerticalAlignment="Center" FontSize="19"/>
+            <Label Grid.Column="0"  Content="Transport Type :" HorizontalAlignment="center" VerticalAlignment="Center" FontSize="19"/>
             
             <!-- List of selection for the filter -->
             <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ItemsSource="{Binding Source={StaticResource TransportsCollectionKey}}"/>
