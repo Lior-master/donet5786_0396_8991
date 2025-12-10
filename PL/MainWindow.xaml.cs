@@ -11,12 +11,12 @@ namespace PL
     public partial class MainWindow : Window
     {
         // ================================
-        //  ACCÈS À LA COUCHE BL (OBLIGATOIRE)
+        //  ACCESS TO BL LAYER (REQUIRED)
         // ================================
         static readonly IBl s_bl = Factory.Get();
 
         // ================================
-        //   DEPENDENCY PROPERTY : HORLOGE
+        //   DEPENDENCY PROPERTY: CLOCK
         // ================================
         public DateTime CurrentTime
         {
@@ -28,7 +28,7 @@ namespace PL
             DependencyProperty.Register("CurrentTime", typeof(DateTime), typeof(MainWindow));
 
         // ================================
-        //   DEPENDENCY PROPERTY : CONFIG
+        //   DEPENDENCY PROPERTY: CONFIG
         // ================================
         public Config Configuration
         {
@@ -40,7 +40,7 @@ namespace PL
             DependencyProperty.Register("Configuration", typeof(Config), typeof(MainWindow));
 
         // ================================
-        //             CONSTRUCTOR
+        //           CONSTRUCTOR
         // ================================
         public MainWindow()
         {
@@ -51,7 +51,7 @@ namespace PL
         }
 
         // ================================
-        //     OBSERVER : HORLOGE
+        //      OBSERVER: CLOCK
         // ================================
         private void ClockObserver()
         {
@@ -63,7 +63,7 @@ namespace PL
         }
 
         // ================================
-        //     OBSERVER : CONFIG
+        //      OBSERVER: CONFIG
         // ================================
         private void ConfigObserver()
         {
@@ -75,7 +75,7 @@ namespace PL
         }
 
         // ================================
-        //   INITIALISATION À L’OUVERTURE
+        //   INITIALIZATION ON OPENING
         // ================================
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -89,7 +89,7 @@ namespace PL
         }
 
         // ================================
-        //      CLEANUP À LA FERMETURE
+        //      CLEANUP ON CLOSING
         // ================================
         private void MainWindow_Closing(object? sender, CancelEventArgs e)
         {
@@ -105,7 +105,7 @@ namespace PL
         }
 
         // =======================================================
-        //          BOUTONS : HORLOGE (AVANCEMENT)
+        //          BUTTONS: CLOCK (ADVANCE TIME)
         // =======================================================
 
         private void AddOneSecond_Click(object sender, RoutedEventArgs e)
@@ -139,7 +139,7 @@ namespace PL
         }
 
         // =======================================================
-        //               CONFIGURATION : LOAD / APPLY
+        //           CONFIGURATION: LOAD / APPLY
         // =======================================================
 
         private void LoadAllConfig_Click(object sender, RoutedEventArgs e)
@@ -163,7 +163,7 @@ namespace PL
         }
 
         // =======================================================
-        //              BOUTONS : BASE DE DONNÉES
+        //              BUTTONS: DATABASE
         // =======================================================
 
         private void InitDB_Click(object sender, RoutedEventArgs e)
@@ -187,7 +187,7 @@ namespace PL
         }
 
         // =======================================================
-        //     BOUTONS : OUVERTURE DES ÉCRANS LISTE
+        //     BUTTONS: OPENING LIST SCREENS
         // =======================================================
 
         private void CouriersList_Click(object sender, RoutedEventArgs e)

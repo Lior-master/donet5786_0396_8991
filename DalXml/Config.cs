@@ -118,5 +118,9 @@ internal static class Config
         Latitude = 31.778449894212013;
         Longitude = 35.18761502733661;
         MaxDistance = 25;
+        CarSpeed = 40;
+        MotorcycleSpeed = 50;
+        BikeSpeed = 20;
+        WalkingSpeed = 5;
     }
 }

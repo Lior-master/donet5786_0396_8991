@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <config>
-  <NextOrderId>1000</NextOrderId>
-  <NextDeliveryId>5000</NextDeliveryId>
-  <Clock>10/12/2025 17:43:21</Clock>
+  <NextOrderId>1060</NextOrderId>
+  <NextDeliveryId>5045</NextDeliveryId>
+  <Clock>10/01/2026 20:19:27</Clock>
   <BossId>347657991</BossId>
   <BossPassword>admin</BossPassword>
-  <CarSpeed>50</CarSpeed>
+  <CarSpeed>40</CarSpeed>
   <MotorcycleSpeed>50</MotorcycleSpeed>
   <BikeSpeed>20</BikeSpeed>
-  <WalkingSpeed>7</WalkingSpeed>
+  <WalkingSpeed>5</WalkingSpeed>
   <!-- MaxTimeDelivery is stored as hours -->
   <MaxTimeDelivery>1</MaxTimeDelivery>
   <!-- RiskRange is stored as minutes -->
