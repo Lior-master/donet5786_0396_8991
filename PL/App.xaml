@@ -5,5 +5,7 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <local:TransportsCollection x:Key="TransportsCollectionKey" />
+        <local:OrderStatusCollection x:Key="OrderStatusCollectionKey" />
+
     </Application.Resources>
 </Application>
