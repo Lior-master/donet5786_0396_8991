@@ -20,10 +20,12 @@ internal class AdminImplementation : IAdmin
         // we forward the clock
         DateTime newTime = unit switch
         {
+            TimeUnit.Second => AdminManager.Now.AddSeconds(1),
             TimeUnit.Minute => AdminManager.Now.AddMinutes(1),
             TimeUnit.Hour => AdminManager.Now.AddHours(1),
             TimeUnit.Day => AdminManager.Now.AddDays(1),
             TimeUnit.Month => AdminManager.Now.AddMonths(1),
+            TimeUnit.Year => AdminManager.Now.AddYears(1),
             _ => AdminManager.Now
         };
 

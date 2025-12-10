@@ -128,10 +128,12 @@ public enum ScheduleStatus
 }
 public enum TimeUnit
 {
+    Second,
     Minute,
     Hour,
     Day,
-    Month
+    Month,
+    Year
 }
 
 public enum Administrator

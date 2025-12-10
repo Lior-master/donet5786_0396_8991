@@ -1,26 +1,203 @@
-﻿using System.Text;
+﻿using BlApi;
+using BO;
+using PL.Courier;
+using PL.Order;
+using System;
+using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
-namespace PL;
-
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-
-public partial class MainWindow : Window
+namespace PL
 {
-    static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
-
-    public MainWindow()
+    public partial class MainWindow : Window
     {
-        InitializeComponent();
+        // ================================
+        //  ACCÈS À LA COUCHE BL (OBLIGATOIRE)
+        // ================================
+        static readonly IBl s_bl = Factory.Get();
+
+        // ================================
+        //   DEPENDENCY PROPERTY : HORLOGE
+        // ================================
+        public DateTime CurrentTime
+        {
+            get => (DateTime)GetValue(CurrentTimeProperty);
+            set => SetValue(CurrentTimeProperty, value);
+        }
+
+        public static readonly DependencyProperty CurrentTimeProperty =
+            DependencyProperty.Register("CurrentTime", typeof(DateTime), typeof(MainWindow));
+
+        // ================================
+        //   DEPENDENCY PROPERTY : CONFIG
+        // ================================
+        public Config Configuration
+        {
+            get => (Config)GetValue(ConfigurationProperty);
+            set => SetValue(ConfigurationProperty, value);
+        }
+
+        public static readonly DependencyProperty ConfigurationProperty =
+            DependencyProperty.Register("Configuration", typeof(Config), typeof(MainWindow));
+
+        // ================================
+        //             CONSTRUCTOR
+        // ================================
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            Loaded += MainWindow_Loaded;
+            Closing += MainWindow_Closing;
+        }
+
+        // ================================
+        //     OBSERVER : HORLOGE
+        // ================================
+        private void ClockObserver()
+        {
+            try
+            {
+                CurrentTime = s_bl.Admin.GetClock();
+            }
+            catch { }
+        }
+
+        // ================================
+        //     OBSERVER : CONFIG
+        // ================================
+        private void ConfigObserver()
+        {
+            try
+            {
+                Configuration = s_bl.Admin.GetConfig();
+            }
+            catch { }
+        }
+
+        // ================================
+        //   INITIALISATION À L’OUVERTURE
+        // ================================
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Load current data
+            CurrentTime = s_bl.Admin.GetClock();
+            Configuration = s_bl.Admin.GetConfig();
+
+            // Register observers
+            s_bl.Admin.AddClockObserver(ClockObserver);
+            s_bl.Admin.AddConfigObserver(ConfigObserver);
+        }
+
+        // ================================
+        //      CLEANUP À LA FERMETURE
+        // ================================
+        private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        {
+            try
+            {
+                s_bl.Admin.RemoveClockObserver(ClockObserver);
+                s_bl.Admin.RemoveConfigObserver(ConfigObserver);
+            }
+            catch
+            {
+                // Some BL versions do not implement RemoveObserver — ignore.
+            }
+        }
+
+        // =======================================================
+        //          BOUTONS : HORLOGE (AVANCEMENT)
+        // =======================================================
+
+        private void AddOneSecond_Click(object sender, RoutedEventArgs e)
+        {
+            s_bl.Admin.ForwardClock(TimeUnit.Second);
+        }
+
+        private void AddOneMinute_Click(object sender, RoutedEventArgs e)
+        {
+            s_bl.Admin.ForwardClock(TimeUnit.Minute);
+        }
+
+        private void AddOneHour_Click(object sender, RoutedEventArgs e)
+        {
+            s_bl.Admin.ForwardClock(TimeUnit.Hour);
+        }
+
+        private void AddOneDay_Click(object sender, RoutedEventArgs e)
+        {
+            s_bl.Admin.ForwardClock(TimeUnit.Day);
+        }
+
+        private void AddOneMonth_Click(object sender, RoutedEventArgs e)
+        {
+            s_bl.Admin.ForwardClock(TimeUnit.Month);
+        }
+
+        private void AddOneYear_Click(object sender, RoutedEventArgs e)
+        {
+            s_bl.Admin.ForwardClock(TimeUnit.Year);
+        }
+
+        // =======================================================
+        //               CONFIGURATION : LOAD / APPLY
+        // =======================================================
+
+        private void LoadAllConfig_Click(object sender, RoutedEventArgs e)
+        {
+            Configuration = s_bl.Admin.GetConfig();
+        }
+
+        private void ApplyConfig_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                s_bl.Admin.SetConfig(Configuration);
+                MessageBox.Show("Configuration updated successfully.",
+                                "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error updating configuration:\n{ex.Message}",
+                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // =======================================================
+        //              BOUTONS : BASE DE DONNÉES
+        // =======================================================
+
+        private void InitDB_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Initialize database?", "Confirm",
+                MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                s_bl.Admin.InitializeDB();
+                MessageBox.Show("Database initialized.");
+            }
+        }
+
+        private void ResetDB_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("Reset database?", "Confirm",
+                MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                s_bl.Admin.ResetDB();
+                MessageBox.Show("Database reset.");
+            }
+        }
+
+        // =======================================================
+        //     BOUTONS : OUVERTURE DES ÉCRANS LISTE
+        // =======================================================
+
+        private void CouriersList_Click(object sender, RoutedEventArgs e)
+        {
+            new CourierListWindow().Show();
+        }
+
+        private void OrdersList_Click(object sender, RoutedEventArgs e)
+        {
+            new OrderListWindow().Show();
+        }
     }
 }
