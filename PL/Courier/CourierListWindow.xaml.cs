@@ -34,5 +34,5 @@ public partial class CourierListWindow : Window
     public static readonly DependencyProperty CourierListProperty =
         DependencyProperty.Register("CourierList", typeof(IEnumerable<BO.CourierInList>), typeof(CourierListWindow), new PropertyMetadata(null));
 
-
+    public BO.DeliveryTransport CourierStatus { get; set; } = BO.DeliveryTransport.All;
 }

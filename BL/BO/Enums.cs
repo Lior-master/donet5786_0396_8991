@@ -20,9 +20,7 @@ public enum OrderStatus
     /// <summary>Order was returned after delivery.</summary>
     Returned,
 
-    /// <summary>
-    /// For all order statuses.
-    /// </summary>
+    /// <summary> For all order statuses.</summary>
     All
 }
 
@@ -64,9 +62,7 @@ public enum DeliveryTransport
     /// <summary>foot delivery.</summary>
     Foot,
 
-    /// <summary>
-    /// For all transport methods.
-    /// </summary>
+    /// <summary> For all transport methods. </summary>
     All
 }
 

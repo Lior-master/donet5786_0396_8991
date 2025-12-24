@@ -35,6 +35,6 @@ namespace PL.Order
         public static readonly DependencyProperty OrderListProperty =
             DependencyProperty.Register("OrderList", typeof(IEnumerable<BO.OrderInList>), typeof(OrderListWindow), new PropertyMetadata(null));
 
-
+        public BO.OrderStatus OrderStatus { get; set; } = BO.OrderStatus.All;
     }
 }
