@@ -18,7 +18,12 @@ public enum OrderStatus
     Canceled,
 
     /// <summary>Order was returned after delivery.</summary>
-    Returned
+    Returned,
+
+    /// <summary>
+    /// For all order statuses.
+    /// </summary>
+    All
 }
 
 /// <summary>
@@ -57,7 +62,12 @@ public enum DeliveryTransport
     Car,
 
     /// <summary>foot delivery.</summary>
-    Foot
+    Foot,
+
+    /// <summary>
+    /// For all transport methods.
+    /// </summary>
+    All
 }
 
 /// <summary>
