@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,5 +35,21 @@ public partial class CourierListWindow : Window
     public static readonly DependencyProperty CourierListProperty =
         DependencyProperty.Register("CourierList", typeof(IEnumerable<BO.CourierInList>), typeof(CourierListWindow), new PropertyMetadata(null));
 
-    public BO.DeliveryTransport CourierStatus { get; set; } = BO.DeliveryTransport.All;
+    public BO.DeliveryTransport CourierDelivery { get; set; } = BO.DeliveryTransport.All;
+
+    private void queryCourierList()
+    {
+        CourierList = (CourierDelivery == BO.DeliveryTransport.All) ?
+            s_bl?.Courier.GetCouriersList(347657991, null,null)! : s_bl?.Courier.GetCouriersList(347657991, null, CourierDelivery)!;
+    }
+
+    private void courseListObserver()
+        => queryCourierList();
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    => s_bl.Order.AddObserver(courseListObserver);
+
+    private void Window_Closed(object sender, EventArgs e)
+        => s_bl.Order.RemoveObserver(courseListObserver);
+
 }
