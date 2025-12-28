@@ -9,7 +9,9 @@
         Height="700" Width="1000"
         WindowStartupLocation="CenterScreen"
         Background="#F5F5F5"
-        DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}">
+        DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}"
+        Loaded="Window_Loaded"
+        Closed="Window_Closed">
 
     <Window.Resources>
         <!-- Modern Button Style -->
