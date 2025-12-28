@@ -131,7 +131,7 @@
         <!-- Data Grid -->
         <Border Grid.Row="2" Background="White" CornerRadius="6" Padding="15" Margin="0,0,0,15">
             <DataGrid Style="{StaticResource ModernDataGridStyle}"
-                      ItemsSource="{Binding Path=OrderList}"/>
+                      ItemsSource="{Binding Path=OrderList, RelativeSource={RelativeSource AncestorType=Window}}"/>
         </Border>
 
         <!-- Bottom Action Bar -->

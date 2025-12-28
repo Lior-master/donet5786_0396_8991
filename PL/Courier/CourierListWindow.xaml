@@ -124,7 +124,7 @@
                 <ComboBox Grid.Column="1" 
                           Style="{StaticResource ModernComboBoxStyle}"
                           ItemsSource="{Binding Source={StaticResource TransportsCollectionKey}}"
-                          SelectedValue="{Binding CourierStatus, Mode=TwoWay}"/>
+                          SelectedValue="{Binding CourierDelivery, Mode=TwoWay}"/>
             </Grid>
         </Border>
 

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -39,17 +40,30 @@ public partial class CourierListWindow : Window
 
     private void queryCourierList()
     {
-        CourierList = (CourierDelivery == BO.DeliveryTransport.All) ?
-            s_bl?.Courier.GetCouriersList(347657991, null,null)! : s_bl?.Courier.GetCouriersList(347657991, null, CourierDelivery)!;
+        try
+        {
+            int bossId = s_bl.Admin.GetConfig().BossId;
+            CourierList = (CourierDelivery == BO.DeliveryTransport.All) ?
+                s_bl?.Courier.GetCouriersList(bossId, null, null)! : s_bl?.Courier.GetCouriersList(bossId, null, CourierDelivery)!;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error loading orders: {ex.Message}",
+               "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            CourierList = new List<BO.CourierInList>();
+        }
     }
 
-    private void courseListObserver()
+    private void courierListObserver()
         => queryCourierList();
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
-    => s_bl.Order.AddObserver(courseListObserver);
+    {
+        queryCourierList();
+        s_bl.Courier.AddObserver(courierListObserver);
+    }
 
     private void Window_Closed(object sender, EventArgs e)
-        => s_bl.Order.RemoveObserver(courseListObserver);
+        => s_bl.Courier.RemoveObserver(courierListObserver);
 
 }

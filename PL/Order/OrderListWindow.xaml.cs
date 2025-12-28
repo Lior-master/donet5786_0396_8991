@@ -39,17 +39,50 @@ public partial class OrderListWindow : Window
 
     private void queryOrderList()
     {
-        OrderList = (OrderStatus == BO.OrderStatus.All) ?
-            s_bl?.Order.orderInLists(347657991,null, null, null)! : s_bl?.Order.orderInLists(347657991, OrderStatus, null, null)!;
+        try
+        {
+            // First, try to find any existing courier to use as requester
+            var bossId = s_bl.Admin.GetConfig().BossId;
+
+            OrderList = (OrderStatus == BO.OrderStatus.All) ?
+                s_bl?.Order.orderInLists(bossId, null, null, null)! : 
+                s_bl?.Order.orderInLists(bossId, OrderStatus, null, null)!;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error loading orders: {ex.Message}", 
+                           "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            OrderList = new List<BO.OrderInList>();
+        }
     }
 
-    private void courseListObserver()
+    private void orderListObserver()
         => queryOrderList();
- 
+
     private void Window_Loaded(object sender, RoutedEventArgs e)
-    => s_bl.Order.AddObserver(courseListObserver);
+    {
+        queryOrderList();
+        try
+        {
+            s_bl.Order.AddObserver(orderListObserver);
+        }
+        catch (Exception ex)
+        {
+            // Some BL implementations might not support observers
+            MessageBox.Show($"Observer registration failed: {ex.Message}", 
+                           "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
 
     private void Window_Closed(object sender, EventArgs e)
-        => s_bl.Order.RemoveObserver(courseListObserver);
-
+    {
+        try
+        {
+            s_bl.Order.RemoveObserver(orderListObserver);
+        }
+        catch
+        {
+            // Ignore errors during cleanup
+        }
+    }
 }
