@@ -22,6 +22,7 @@ namespace PL.Courier;
 public partial class CourierListWindow : Window
 {
     static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
+    
     public CourierListWindow()
     {
         InitializeComponent();
@@ -44,11 +45,12 @@ public partial class CourierListWindow : Window
         {
             int bossId = s_bl.Admin.GetConfig().BossId;
             CourierList = (CourierDelivery == BO.DeliveryTransport.All) ?
-                s_bl?.Courier.GetCouriersList(bossId, null, null)! : s_bl?.Courier.GetCouriersList(bossId, null, CourierDelivery)!;
+                s_bl?.Courier.GetCouriersList(bossId, null, null)! : 
+                s_bl?.Courier.GetCouriersList(bossId, null, CourierDelivery)!;
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error loading orders: {ex.Message}",
+            MessageBox.Show($"Error loading couriers: {ex.Message}",
                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             CourierList = new List<BO.CourierInList>();
         }
@@ -60,10 +62,36 @@ public partial class CourierListWindow : Window
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
         queryCourierList();
-        s_bl.Courier.AddObserver(courierListObserver);
+        try
+        {
+            s_bl.Courier.AddObserver(courierListObserver);
+        }
+        catch (Exception ex)
+        {
+            // Some BL implementations might not support observers
+            MessageBox.Show($"Observer registration failed: {ex.Message}", 
+                           "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void Window_Closed(object sender, EventArgs e)
-        => s_bl.Courier.RemoveObserver(courierListObserver);
+    {
+        try
+        {
+            s_bl.Courier.RemoveObserver(courierListObserver);
+        }
+        catch
+        {
+            // Ignore errors during cleanup
+        }
+    }
 
+    private void TransportFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is BO.DeliveryTransport selectedTransport)
+        {
+            CourierDelivery = selectedTransport;
+            queryCourierList(); // refresh the list based on the new filter
+        }
+    }
 }

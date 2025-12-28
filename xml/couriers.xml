@@ -8,9 +8,21 @@
     <Password>admin</Password>
     <IsActive>true</IsActive>
     <Transport>Car</Transport>
-    <StartDate>2025-12-28T12:40:47.3461151+02:00</StartDate>
+    <StartDate>2025-12-28T13:18:36.0248022+02:00</StartDate>
     <Administrator>Director</Administrator>
     <MaxDistance>999</MaxDistance>
+  </Courier>
+  <Courier>
+    <Id>100001</Id>
+    <Name>Courier_1</Name>
+    <Phone>+10000000001</Phone>
+    <Email>Courier_1@gmail.com</Email>
+    <Password>password</Password>
+    <IsActive>true</IsActive>
+    <Transport>Foot</Transport>
+    <StartDate>2025-02-02T13:18:36.0278297+02:00</StartDate>
+    <Administrator>Courier</Administrator>
+    <MaxDistance>0</MaxDistance>
   </Courier>
   <Courier>
     <Id>100002</Id>
@@ -19,10 +31,10 @@
     <Email>Courier_2@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-08-14T12:40:47.3648911+03:00</StartDate>
+    <Transport>Motorcycle</Transport>
+    <StartDate>2025-08-26T13:18:36.0399468+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>4</MaxDistance>
+    <MaxDistance>13</MaxDistance>
   </Courier>
   <Courier>
     <Id>100003</Id>
@@ -31,10 +43,10 @@
     <Email>Courier_3@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Motorcycle</Transport>
-    <StartDate>2025-11-27T12:40:47.3760228+02:00</StartDate>
+    <Transport>Car</Transport>
+    <StartDate>2025-06-29T13:18:36.0506475+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>14</MaxDistance>
+    <MaxDistance>47</MaxDistance>
   </Courier>
   <Courier>
     <Id>100004</Id>
@@ -42,11 +54,11 @@
     <Phone>+10000000004</Phone>
     <Email>Courier_4@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>true</IsActive>
-    <Transport>Foot</Transport>
-    <StartDate>2025-01-21T12:40:47.3874823+02:00</StartDate>
+    <IsActive>false</IsActive>
+    <Transport>Bike</Transport>
+    <StartDate>2025-03-14T13:18:36.0622156+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>2</MaxDistance>
+    <MaxDistance>4</MaxDistance>
   </Courier>
   <Courier>
     <Id>100005</Id>
@@ -54,11 +66,11 @@
     <Phone>+10000000005</Phone>
     <Email>Courier_5@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-05-27T12:40:47.3984361+03:00</StartDate>
+    <IsActive>false</IsActive>
+    <Transport>Motorcycle</Transport>
+    <StartDate>2025-08-27T13:18:36.0730177+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>6</MaxDistance>
+    <MaxDistance>12</MaxDistance>
   </Courier>
   <Courier>
     <Id>100006</Id>
@@ -67,10 +79,10 @@
     <Email>Courier_6@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Motorcycle</Transport>
-    <StartDate>2025-01-11T12:40:47.409573+02:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-11-06T13:18:36.0839672+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>8</MaxDistance>
+    <MaxDistance>1</MaxDistance>
   </Courier>
   <Courier>
     <Id>100007</Id>
@@ -78,11 +90,11 @@
     <Phone>+10000000007</Phone>
     <Email>Courier_7@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>false</IsActive>
+    <IsActive>true</IsActive>
     <Transport>Car</Transport>
-    <StartDate>2025-10-07T12:40:47.4209692+03:00</StartDate>
+    <StartDate>2025-12-25T13:18:36.0952796+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>47</MaxDistance>
+    <MaxDistance>21</MaxDistance>
   </Courier>
   <Courier>
     <Id>100008</Id>
@@ -91,10 +103,10 @@
     <Email>Courier_8@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-04-18T12:40:47.4333274+03:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-06-13T13:18:36.1055794+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>4</MaxDistance>
+    <MaxDistance>0</MaxDistance>
   </Courier>
   <Courier>
     <Id>100009</Id>
@@ -102,11 +114,11 @@
     <Phone>+10000000009</Phone>
     <Email>Courier_9@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>true</IsActive>
-    <Transport>Motorcycle</Transport>
-    <StartDate>2025-10-20T12:40:47.4448621+03:00</StartDate>
+    <IsActive>false</IsActive>
+    <Transport>Car</Transport>
+    <StartDate>2025-10-17T13:18:36.1166091+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>12</MaxDistance>
+    <MaxDistance>38</MaxDistance>
   </Courier>
   <Courier>
     <Id>100010</Id>
@@ -115,10 +127,10 @@
     <Email>Courier_10@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Motorcycle</Transport>
-    <StartDate>2025-09-21T12:40:47.4560062+03:00</StartDate>
+    <Transport>Bike</Transport>
+    <StartDate>2025-01-26T13:18:36.1271171+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>14</MaxDistance>
+    <MaxDistance>3</MaxDistance>
   </Courier>
   <Courier>
     <Id>100011</Id>
@@ -127,10 +139,10 @@
     <Email>Courier_11@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-10-16T12:40:47.4672088+03:00</StartDate>
+    <Transport>Car</Transport>
+    <StartDate>2025-10-11T13:18:36.1379364+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>3</MaxDistance>
+    <MaxDistance>20</MaxDistance>
   </Courier>
   <Courier>
     <Id>100012</Id>
@@ -139,10 +151,10 @@
     <Email>Courier_12@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-02-27T12:40:47.4775995+02:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-01-27T13:18:36.1487795+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>49</MaxDistance>
+    <MaxDistance>1</MaxDistance>
   </Courier>
   <Courier>
     <Id>100013</Id>
@@ -151,10 +163,10 @@
     <Email>Courier_13@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-07-07T12:40:47.4882869+03:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-07-31T13:18:36.160164+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>44</MaxDistance>
+    <MaxDistance>1</MaxDistance>
   </Courier>
   <Courier>
     <Id>100014</Id>
@@ -162,11 +174,11 @@
     <Phone>+10000000014</Phone>
     <Email>Courier_14@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>false</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-08-16T12:40:47.4992016+03:00</StartDate>
+    <IsActive>true</IsActive>
+    <Transport>Bike</Transport>
+    <StartDate>2025-07-02T13:18:36.1722064+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>17</MaxDistance>
+    <MaxDistance>6</MaxDistance>
   </Courier>
   <Courier>
     <Id>100015</Id>
@@ -175,10 +187,10 @@
     <Email>Courier_15@gmail.com</Email>
     <Password>password</Password>
     <IsActive>false</IsActive>
-    <Transport>Foot</Transport>
-    <StartDate>2025-03-04T12:40:47.509655+02:00</StartDate>
+    <Transport>Motorcycle</Transport>
+    <StartDate>2025-05-08T13:18:36.1844076+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>0</MaxDistance>
+    <MaxDistance>8</MaxDistance>
   </Courier>
   <Courier>
     <Id>100016</Id>
@@ -186,11 +198,11 @@
     <Phone>+10000000016</Phone>
     <Email>Courier_16@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>false</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-12-19T12:40:47.5201344+02:00</StartDate>
+    <IsActive>true</IsActive>
+    <Transport>Motorcycle</Transport>
+    <StartDate>2025-02-21T13:18:36.1951476+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>3</MaxDistance>
+    <MaxDistance>10</MaxDistance>
   </Courier>
   <Courier>
     <Id>100017</Id>
@@ -200,9 +212,9 @@
     <Password>password</Password>
     <IsActive>true</IsActive>
     <Transport>Car</Transport>
-    <StartDate>2025-02-04T12:40:47.5316437+02:00</StartDate>
+    <StartDate>2025-05-17T13:18:36.2071059+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>42</MaxDistance>
+    <MaxDistance>34</MaxDistance>
   </Courier>
   <Courier>
     <Id>100018</Id>
@@ -210,11 +222,11 @@
     <Phone>+10000000018</Phone>
     <Email>Courier_18@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>true</IsActive>
+    <IsActive>false</IsActive>
     <Transport>Motorcycle</Transport>
-    <StartDate>2025-07-04T12:40:47.5433151+03:00</StartDate>
+    <StartDate>2025-04-14T13:18:36.2179282+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>13</MaxDistance>
+    <MaxDistance>10</MaxDistance>
   </Courier>
   <Courier>
     <Id>100019</Id>
@@ -223,10 +235,10 @@
     <Email>Courier_19@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-06-16T12:40:47.5541717+03:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-04-06T13:18:36.2287889+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>7</MaxDistance>
+    <MaxDistance>1</MaxDistance>
   </Courier>
   <Courier>
     <Id>100020</Id>
@@ -234,11 +246,11 @@
     <Phone>+10000000020</Phone>
     <Email>Courier_20@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>false</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-12-20T12:40:47.5670071+02:00</StartDate>
+    <IsActive>true</IsActive>
+    <Transport>Foot</Transport>
+    <StartDate>2025-06-19T13:18:36.2400143+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>35</MaxDistance>
+    <MaxDistance>1</MaxDistance>
   </Courier>
   <Courier>
     <Id>100021</Id>
@@ -246,11 +258,11 @@
     <Phone>+10000000021</Phone>
     <Email>Courier_21@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-02-06T12:40:47.5788999+02:00</StartDate>
+    <IsActive>false</IsActive>
+    <Transport>Car</Transport>
+    <StartDate>2025-07-19T13:18:36.2538265+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>4</MaxDistance>
+    <MaxDistance>37</MaxDistance>
   </Courier>
   <Courier>
     <Id>100022</Id>
@@ -258,11 +270,11 @@
     <Phone>+10000000022</Phone>
     <Email>Courier_22@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-03-31T12:40:47.5902942+03:00</StartDate>
+    <IsActive>false</IsActive>
+    <Transport>Car</Transport>
+    <StartDate>2025-11-30T13:18:36.2658211+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>7</MaxDistance>
+    <MaxDistance>32</MaxDistance>
   </Courier>
   <Courier>
     <Id>100023</Id>
@@ -271,10 +283,10 @@
     <Email>Courier_23@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Foot</Transport>
-    <StartDate>2025-04-21T12:40:47.601676+03:00</StartDate>
+    <Transport>Bike</Transport>
+    <StartDate>2025-04-27T13:18:36.2771817+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>2</MaxDistance>
+    <MaxDistance>5</MaxDistance>
   </Courier>
   <Courier>
     <Id>100024</Id>
@@ -283,10 +295,10 @@
     <Email>Courier_24@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Motorcycle</Transport>
-    <StartDate>2025-09-18T12:40:47.6131542+03:00</StartDate>
+    <Transport>Bike</Transport>
+    <StartDate>2025-09-27T13:18:36.2889897+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>9</MaxDistance>
+    <MaxDistance>5</MaxDistance>
   </Courier>
   <Courier>
     <Id>100025</Id>
@@ -295,10 +307,10 @@
     <Email>Courier_25@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-05-03T12:40:47.6242746+03:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-01-30T13:18:36.3000742+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>35</MaxDistance>
+    <MaxDistance>1</MaxDistance>
   </Courier>
   <Courier>
     <Id>100026</Id>
@@ -306,11 +318,11 @@
     <Phone>+10000000026</Phone>
     <Email>Courier_26@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>true</IsActive>
-    <Transport>Foot</Transport>
-    <StartDate>2025-03-15T12:40:47.635418+02:00</StartDate>
+    <IsActive>false</IsActive>
+    <Transport>Motorcycle</Transport>
+    <StartDate>2025-03-04T13:18:36.3119559+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>1</MaxDistance>
+    <MaxDistance>10</MaxDistance>
   </Courier>
   <Courier>
     <Id>100027</Id>
@@ -318,11 +330,11 @@
     <Phone>+10000000027</Phone>
     <Email>Courier_27@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>false</IsActive>
-    <Transport>Motorcycle</Transport>
-    <StartDate>2025-09-30T12:40:47.6466721+03:00</StartDate>
+    <IsActive>true</IsActive>
+    <Transport>Bike</Transport>
+    <StartDate>2025-10-03T13:18:36.3227487+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>10</MaxDistance>
+    <MaxDistance>3</MaxDistance>
   </Courier>
   <Courier>
     <Id>100028</Id>
@@ -332,9 +344,9 @@
     <Password>password</Password>
     <IsActive>true</IsActive>
     <Transport>Motorcycle</Transport>
-    <StartDate>2025-06-02T12:40:47.6585447+03:00</StartDate>
+    <StartDate>2025-10-02T13:18:36.3331021+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>14</MaxDistance>
+    <MaxDistance>8</MaxDistance>
   </Courier>
   <Courier>
     <Id>100029</Id>
@@ -343,10 +355,10 @@
     <Email>Courier_29@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Motorcycle</Transport>
-    <StartDate>2025-02-17T12:40:47.6703338+02:00</StartDate>
+    <Transport>Car</Transport>
+    <StartDate>2025-09-21T13:18:36.3437861+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>8</MaxDistance>
+    <MaxDistance>29</MaxDistance>
   </Courier>
   <Courier>
     <Id>100030</Id>
@@ -355,10 +367,10 @@
     <Email>Courier_30@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-05-31T12:40:47.68218+03:00</StartDate>
+    <Transport>Bike</Transport>
+    <StartDate>2025-12-03T13:18:36.3549427+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>18</MaxDistance>
+    <MaxDistance>5</MaxDistance>
   </Courier>
   <Courier>
     <Id>100031</Id>
@@ -367,10 +379,10 @@
     <Email>Courier_31@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-10-09T12:40:47.6938241+03:00</StartDate>
+    <Transport>Motorcycle</Transport>
+    <StartDate>2025-08-03T13:18:36.3658077+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>33</MaxDistance>
+    <MaxDistance>8</MaxDistance>
   </Courier>
   <Courier>
     <Id>100032</Id>
@@ -379,10 +391,10 @@
     <Email>Courier_32@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Motorcycle</Transport>
-    <StartDate>2025-08-23T12:40:47.705289+03:00</StartDate>
+    <Transport>Car</Transport>
+    <StartDate>2025-02-19T13:18:36.3770836+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>11</MaxDistance>
+    <MaxDistance>19</MaxDistance>
   </Courier>
   <Courier>
     <Id>100033</Id>
@@ -391,10 +403,10 @@
     <Email>Courier_33@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Foot</Transport>
-    <StartDate>2025-03-17T12:40:47.7168745+02:00</StartDate>
+    <Transport>Car</Transport>
+    <StartDate>2025-01-05T13:18:36.3886095+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>0</MaxDistance>
+    <MaxDistance>19</MaxDistance>
   </Courier>
   <Courier>
     <Id>100034</Id>
@@ -403,10 +415,10 @@
     <Email>Courier_34@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-09-22T12:40:47.7284221+03:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-02-21T13:18:36.4020555+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>48</MaxDistance>
+    <MaxDistance>0</MaxDistance>
   </Courier>
   <Courier>
     <Id>100035</Id>
@@ -415,10 +427,10 @@
     <Email>Courier_35@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-03-26T12:40:47.73941+02:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-01-06T13:18:36.4134791+02:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>4</MaxDistance>
+    <MaxDistance>2</MaxDistance>
   </Courier>
   <Courier>
     <Id>100036</Id>
@@ -427,10 +439,10 @@
     <Email>Courier_36@gmail.com</Email>
     <Password>password</Password>
     <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-11-01T12:40:47.7542812+02:00</StartDate>
+    <Transport>Foot</Transport>
+    <StartDate>2025-06-01T13:18:36.4248869+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>5</MaxDistance>
+    <MaxDistance>0</MaxDistance>
   </Courier>
   <Courier>
     <Id>100037</Id>
@@ -438,11 +450,11 @@
     <Phone>+10000000037</Phone>
     <Email>Courier_37@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>false</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-02-24T12:40:47.7667899+02:00</StartDate>
+    <IsActive>true</IsActive>
+    <Transport>Car</Transport>
+    <StartDate>2025-05-15T13:18:36.4362845+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>6</MaxDistance>
+    <MaxDistance>26</MaxDistance>
   </Courier>
   <Courier>
     <Id>100038</Id>
@@ -450,11 +462,11 @@
     <Phone>+10000000038</Phone>
     <Email>Courier_38@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>false</IsActive>
+    <IsActive>true</IsActive>
     <Transport>Bike</Transport>
-    <StartDate>2025-12-16T12:40:47.7793893+02:00</StartDate>
+    <StartDate>2025-05-07T13:18:36.4473695+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>6</MaxDistance>
+    <MaxDistance>3</MaxDistance>
   </Courier>
   <Courier>
     <Id>100039</Id>
@@ -464,9 +476,9 @@
     <Password>password</Password>
     <IsActive>true</IsActive>
     <Transport>Foot</Transport>
-    <StartDate>2025-07-20T12:40:47.7911157+03:00</StartDate>
+    <StartDate>2025-05-20T13:18:36.4586059+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>0</MaxDistance>
+    <MaxDistance>2</MaxDistance>
   </Courier>
   <Courier>
     <Id>100040</Id>
@@ -474,22 +486,10 @@
     <Phone>+10000000040</Phone>
     <Email>Courier_40@gmail.com</Email>
     <Password>password</Password>
-    <IsActive>false</IsActive>
+    <IsActive>true</IsActive>
     <Transport>Foot</Transport>
-    <StartDate>2025-07-13T12:40:47.8025354+03:00</StartDate>
+    <StartDate>2025-06-12T13:18:36.4705997+03:00</StartDate>
     <Administrator>Courier</Administrator>
-    <MaxDistance>2</MaxDistance>
-  </Courier>
-  <Courier>
-    <Id>100001</Id>
-    <Name>Courier_1</Name>
-    <Phone>+10000000001</Phone>
-    <Email>Courier_1@gmail.com</Email>
-    <Password>password</Password>
-    <IsActive>false</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-02-13T12:40:47.3512806+02:00</StartDate>
-    <Administrator>Courier</Administrator>
-    <MaxDistance>26</MaxDistance>
+    <MaxDistance>1</MaxDistance>
   </Courier>
 </ArrayOfCourier>

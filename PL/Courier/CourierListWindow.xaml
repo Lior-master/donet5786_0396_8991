@@ -126,14 +126,15 @@
                 <ComboBox Grid.Column="1" 
                           Style="{StaticResource ModernComboBoxStyle}"
                           ItemsSource="{Binding Source={StaticResource TransportsCollectionKey}}"
-                          SelectedValue="{Binding CourierDelivery, Mode=TwoWay}"/>
+                          SelectedValue="{Binding CourierDelivery, Mode=TwoWay}"
+                          SelectionChanged="TransportFilter_SelectionChanged"/>
             </Grid>
         </Border>
 
         <!-- Data Grid -->
         <Border Grid.Row="2" Background="White" CornerRadius="6" Padding="15" Margin="0,0,0,15">
             <DataGrid Style="{StaticResource ModernDataGridStyle}"
-                      ItemsSource="{Binding Path=CourierList}"/>
+                      ItemsSource="{Binding CourierList}"/>
         </Border>
 
         <!-- Bottom Action Bar -->

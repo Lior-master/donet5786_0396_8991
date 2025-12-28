@@ -21,16 +21,17 @@ namespace PL.Order;
 public partial class OrderListWindow : Window
 {
     static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
+    
     public OrderListWindow()
     {
         InitializeComponent();
     }
+    
     public IEnumerable<BO.OrderInList> OrderList
     {
         get { return (IEnumerable<BO.OrderInList>)GetValue(OrderListProperty); }
         set { SetValue(OrderListProperty, value); }
     }
-
 
     public static readonly DependencyProperty OrderListProperty =
         DependencyProperty.Register("OrderList", typeof(IEnumerable<BO.OrderInList>), typeof(OrderListWindow), new PropertyMetadata(null));
@@ -83,6 +84,15 @@ public partial class OrderListWindow : Window
         catch
         {
             // Ignore errors during cleanup
+        }
+    }
+
+    private void OrderStatusFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is BO.OrderStatus selectedStatus)
+        {
+            OrderStatus = selectedStatus;
+            queryOrderList(); // reload the list based on new filter
         }
     }
 }
