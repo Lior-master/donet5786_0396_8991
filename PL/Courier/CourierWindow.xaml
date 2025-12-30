@@ -4,9 +4,223 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PL.Courier"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:bo="clr-namespace:BO;assembly=BL"
         mc:Ignorable="d"
-        Title="CourierWindow" Height="450" Width="800">
-    <Grid>
-        
+        Title="Courier Details"
+        Height="750" Width="600"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5"
+        DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}">
+
+    <Window.Resources>
+
+        <!-- ===== Enum sources for ComboBoxes ===== -->
+        <ObjectDataProvider x:Key="TransportValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="bo:DeliveryTransport"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <ObjectDataProvider x:Key="AdministratorValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="bo:Administrator"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <!-- ===== Basic styles (same visual language as OrderWindow) ===== -->
+
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#546E7A"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Margin" Value="0,0,15,0"/>
+        </Style>
+
+        <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="35"/>
+        </Style>
+
+        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="35"/>
+        </Style>
+
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1976D2"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#0D47A1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Save Button Style -->
+        <Style x:Key="SaveButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#45a049"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Cancel Button Style -->
+        <Style x:Key="CancelButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#F44336"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D32F2F"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===== Main content ===== -->
+        <Border Background="White" Padding="30" CornerRadius="6">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Courier ID (init → read-only) -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Courier ID:" Style="{StaticResource FieldLabelStyle}"/>
+                <TextBox Grid.Row="0" Grid.Column="1"
+                         Style="{StaticResource ModernTextBoxStyle}"
+                         IsReadOnly="True"
+                         Text="{Binding CourierCurrent.Id}"
+                         Margin="0,0,0,15"/>
+
+                <!-- Name (editable) -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" Style="{StaticResource FieldLabelStyle}"/>
+                <TextBox Grid.Row="1" Grid.Column="1"
+                         Style="{StaticResource ModernTextBoxStyle}"
+                         Text="{Binding CourierCurrent.Name, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,15"/>
+
+                <!-- Phone -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Phone:" Style="{StaticResource FieldLabelStyle}"/>
+                <TextBox Grid.Row="2" Grid.Column="1"
+                         Style="{StaticResource ModernTextBoxStyle}"
+                         Text="{Binding CourierCurrent.Phone, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,15"/>
+
+                <!-- Email -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Email:" Style="{StaticResource FieldLabelStyle}"/>
+                <TextBox Grid.Row="3" Grid.Column="1"
+                         Style="{StaticResource ModernTextBoxStyle}"
+                         Text="{Binding CourierCurrent.Email, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,15"/>
+
+                <!-- Password -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="Password:" Style="{StaticResource FieldLabelStyle}"/>
+                <TextBox Grid.Row="4" Grid.Column="1"
+                         Style="{StaticResource ModernTextBoxStyle}"
+                         Text="{Binding CourierCurrent.Password, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0,0,0,15"/>
+
+                <!-- IsActive -->
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Active:" Style="{StaticResource FieldLabelStyle}"/>
+                <CheckBox Grid.Row="5" Grid.Column="1"
+                          IsChecked="{Binding CourierCurrent.IsActive}"
+                          VerticalAlignment="Center"
+                          Margin="0,0,0,15"/>
+
+                <!-- Transport -->
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Transport:" Style="{StaticResource FieldLabelStyle}"/>
+                <ComboBox Grid.Row="6" Grid.Column="1"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          ItemsSource="{Binding Source={StaticResource TransportValues}}"
+                          SelectedItem="{Binding CourierCurrent.Transport}"
+                          Margin="0,0,0,15"/>
+
+                <!-- Max Distance -->
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Max Distance (km):" Style="{StaticResource FieldLabelStyle}"/>
+                <TextBox Grid.Row="7" Grid.Column="1"
+                         Style="{StaticResource ModernTextBoxStyle}"
+                         Text="{Binding CourierCurrent.MaxDistance}"
+                         Margin="0,0,0,15"/>
+
+                <!-- Administrator role (init → read-only) -->
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="Role:" Style="{StaticResource FieldLabelStyle}"/>
+                <ComboBox Grid.Row="8" Grid.Column="1"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          IsEnabled="False"
+                          ItemsSource="{Binding Source={StaticResource AdministratorValues}}"
+                          SelectedItem="{Binding CourierCurrent.Administrator}"
+                          Margin="0,0,0,15"/>
+
+                <!-- Start Date (init → read-only) -->
+                <TextBlock Grid.Row="9" Grid.Column="0" Text="Start Date:" Style="{StaticResource FieldLabelStyle}"/>
+                <TextBox Grid.Row="9" Grid.Column="1"
+                         Style="{StaticResource ModernTextBoxStyle}"
+                         IsReadOnly="True"
+                         Text="{Binding CourierCurrent.StartDate, StringFormat={}{0:dd/MM/yyyy}}"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== Action buttons ===== -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+            <Button Content="💾 Save"
+                    Width="120" Height="45"
+                    Style="{StaticResource SaveButtonStyle}"
+                    Click="btnSave_Click"
+                    Margin="0,0,15,0"/>
+            <Button Content="❌ Cancel"
+                    Style="{StaticResource CancelButtonStyle}"
+                    Width="120" Height="45"
+                    Click="btnCancel_Click"/>
+        </StackPanel>
     </Grid>
 </Window>

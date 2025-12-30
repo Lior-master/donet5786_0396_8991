@@ -66,17 +66,25 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         _isCreateMode = false;
 
-        try
+        Loaded += async (_, __) =>
         {
-            // IMPORTANT: adapte le nom de méthode si besoin.
-            // L'idée Stage 5: charger l'objet complet par son ID puis binder l'écran dessus.
-            OrderCurrent = s_bl.Order.GetOrderDetails(bossId,orderId);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message, "Cannot load order", MessageBoxButton.OK, MessageBoxImage.Error);
-            Close();
-        }
+            try
+            {
+                Mouse.OverrideCursor = Cursors.Wait;
+
+                var order = await Task.Run(() => s_bl.Order.GetOrderDetails(bossId, orderId));
+                OrderCurrent = order;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Cannot load order", MessageBoxButton.OK, MessageBoxImage.Error);
+                Close();
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
+            }
+        };
     }
 
     private void btnCancel_Click(object sender, RoutedEventArgs e)

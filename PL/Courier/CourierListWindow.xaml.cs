@@ -1,4 +1,5 @@
 ﻿using BO;
+using PL.Order;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -97,12 +98,12 @@ public partial class CourierListWindow : Window
 
     private void dgCourierList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        // Handle double-click event on DataGrid row
-        var dataGrid = sender as DataGrid;
-        if (dataGrid?.SelectedItem != null)
-        {
-            // Add your logic here
-            MessageBox.Show("Row double-clicked!");
-        }
+        if (sender is not DataGrid dataGrid)
+            return;
+
+        if (dataGrid.SelectedItem is not BO.CourierInList selectedCourier)
+            return;
+
+        new CourierWindow(selectedCourier.Id).Show();
     }
 }
