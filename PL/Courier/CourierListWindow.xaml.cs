@@ -94,4 +94,15 @@ public partial class CourierListWindow : Window
             queryCourierList(); // refresh the list based on the new filter
         }
     }
+
+    private void dgCourierList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        // Handle double-click event on DataGrid row
+        var dataGrid = sender as DataGrid;
+        if (dataGrid?.SelectedItem != null)
+        {
+            // Add your logic here
+            MessageBox.Show("Row double-clicked!");
+        }
+    }
 }

@@ -4,9 +4,321 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PL.Order"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:bo="clr-namespace:BO;assembly=BL"
         mc:Ignorable="d"
-        Title="OrderWindow" Height="450" Width="800">
-    <Grid>
-        
+        Title="Order Details"
+        Height="750" Width="600"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5"
+        DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}">
+
+    <Window.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1976D2"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#0D47A1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Save Button Style -->
+        <Style x:Key="SaveButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#45a049"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Cancel Button Style -->
+        <Style x:Key="CancelButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#F44336"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D32F2F"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- TextBox Style -->
+        <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#BDBDBD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#BDBDBD"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="35"/>
+        </Style>
+
+        <!-- Section Header Style -->
+        <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#37474F"/>
+        </Style>
+
+        <!-- Label Style -->
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#546E7A"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Margin" Value="0,0,15,0"/>
+        </Style>
+
+        <!-- Enum sources for ComboBoxes -->
+        <ObjectDataProvider x:Key="OrderTypeValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="bo:OrderType"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <ObjectDataProvider x:Key="FragilityValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="bo:FragilityLevel"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <ObjectDataProvider x:Key="OrderStatusValues"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="bo:OrderStatus"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="White" CornerRadius="6" Padding="20" Margin="0,0,0,20">
+            <TextBlock Text="📦 Order Details" Style="{StaticResource SectionHeaderStyle}"/>
+        </Border>
+
+        <!-- Main Content -->
+        <Border Grid.Row="1" Background="White" CornerRadius="6" Padding="30" Margin="0,0,0,20">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Order ID (init -> readonly) -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Order ID:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="0" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.Id}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Order Type (set -> editable) -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Order Type:" Style="{StaticResource FieldLabelStyle}"/>
+                    <ComboBox Grid.Row="1" Grid.Column="1"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              ItemsSource="{Binding Source={StaticResource OrderTypeValues}}"
+                              SelectedItem="{Binding OrderCurrent.Type}"
+                              Margin="0,0,0,15"/>
+
+                    <!-- Customer Name (set -> editable) -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Customer Name:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="2" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             Text="{Binding OrderCurrent.CustomerName, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Customer Phone (set -> editable) -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Customer Phone:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="3" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             Text="{Binding OrderCurrent.CustomerPhone, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Customer Address (set -> editable) -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Delivery Address:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="4" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             Height="60"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             Text="{Binding OrderCurrent.CustomerAddress, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Weight (set -> editable, nullable) -->
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Weight (kg):" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="5" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             Text="{Binding OrderCurrent.Weight, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Volume (set -> editable, nullable) -->
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Volume:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="6" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             Text="{Binding OrderCurrent.Volume, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Fragility Level (set -> editable, nullable enum) -->
+                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Fragility Level:" Style="{StaticResource FieldLabelStyle}"/>
+                    <ComboBox Grid.Row="7" Grid.Column="1"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              ItemsSource="{Binding Source={StaticResource FragilityValues}}"
+                              SelectedItem="{Binding OrderCurrent.Fragility}"
+                              Margin="0,0,0,15"/>
+
+                    <!-- Order Description (set -> editable, nullable) -->
+                    <TextBlock Grid.Row="8" Grid.Column="0" Text="Description:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="8" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             Height="80"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             Text="{Binding OrderCurrent.OrderDescription, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Order Date (init -> readonly display) -->
+                    <TextBlock Grid.Row="9" Grid.Column="0" Text="Order Date:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="9" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.OrderDate, StringFormat={}{0:dd/MM/yyyy HH:mm}}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Status (init -> readonly display) -->
+                    <TextBlock Grid.Row="10" Grid.Column="0" Text="Status:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="10" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.Status}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Distance (init -> readonly display) -->
+                    <TextBlock Grid.Row="11" Grid.Column="0" Text="Distance (km):" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="11" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.Distance, StringFormat={}{0:0.0}}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Estimated Arrival (init -> readonly display) -->
+                    <TextBlock Grid.Row="12" Grid.Column="0" Text="Estimated Arrival:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="12" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.ArrivalDateEstimeted, StringFormat={}{0:dd/MM/yyyy HH:mm}}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Max Arrival Date (init -> readonly display) -->
+                    <TextBlock Grid.Row="13" Grid.Column="0" Text="Max Arrival Date:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="13" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.ArrivalDateMax, StringFormat={}{0:dd/MM/yyyy HH:mm}}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Schedule Status (init -> readonly display) -->
+                    <TextBlock Grid.Row="14" Grid.Column="0" Text="Schedule Status:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="14" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.ScheduleStatus}"
+                             Margin="0,0,0,0"/>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Bottom Action Bar -->
+        <Border Grid.Row="2" Background="White" CornerRadius="6" Padding="20">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="💾 Save"
+                        Style="{StaticResource SaveButtonStyle}"
+                        Width="120" Height="45"
+                        Click="btnSave_Click"
+                        Margin="0,0,15,0"/>
+                <Button Content="❌ Cancel"
+                        Style="{StaticResource CancelButtonStyle}"
+                        Width="120" Height="45"
+                        Click="btnCancel_Click"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

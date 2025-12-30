@@ -134,7 +134,62 @@
         <!-- Data Grid -->
         <Border Grid.Row="2" Background="White" CornerRadius="6" Padding="15" Margin="0,0,0,15">
             <DataGrid Style="{StaticResource ModernDataGridStyle}"
-                      ItemsSource="{Binding CourierList}"/>
+          ItemsSource="{Binding CourierList}"
+          AutoGenerateColumns="False"
+          IsReadOnly="True"
+          MouseDoubleClick="dgCourierList_MouseDoubleClick">
+
+                <DataGrid.Columns>
+
+                    <!-- Id -->
+                    <DataGridTextColumn Header="Id"
+                            Binding="{Binding Id}"
+                            Width="Auto" />
+
+                    <!-- Name -->
+                    <DataGridTextColumn Header="Name"
+                            Binding="{Binding Name}"
+                            Width="150" />
+
+                    <!-- IsActive -->
+                    <DataGridTemplateColumn Header="Is Active"
+                                Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsEnabled="False"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              IsChecked="{Binding IsActive}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Transport -->
+                    <DataGridTextColumn Header="Transport"
+                            Binding="{Binding Transport}"
+                            Width="Auto" />
+
+                    <!-- StartDate -->
+                    <DataGridTextColumn Header="Start Date"
+                            Binding="{Binding StartDate, StringFormat={}{0:dd/MM/yyyy}}"
+                            Width="Auto" />
+
+                    <!-- OnTimes/Lates -->
+                    <DataGridTextColumn Header="On Time"
+                            Binding="{Binding NumberOfOnTimeDeliveries}"
+                            Width="Auto" />
+
+                    <DataGridTextColumn Header="Late"
+                            Binding="{Binding NumberOfLateDeliveries}"
+                            Width="Auto" />
+
+                    <!-- ActualOrder -->
+                    <DataGridTextColumn Header="Actual Order"
+                            Binding="{Binding ActualOrder}"
+                            Width="Auto" />
+
+                </DataGrid.Columns>
+            </DataGrid>
         </Border>
 
         <!-- Bottom Action Bar -->

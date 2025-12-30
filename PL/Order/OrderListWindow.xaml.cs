@@ -95,4 +95,16 @@ public partial class OrderListWindow : Window
             queryOrderList(); // reload the list based on new filter
         }
     }
+
+    private void dgOrderList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGrid dataGrid)
+            return;
+
+        if (dataGrid.SelectedItem is not BO.OrderInList selectedOrder)
+            return;
+
+        new OrderWindow(selectedOrder.OrderId).Show();
+    }
+
 }

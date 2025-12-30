@@ -134,7 +134,60 @@
         <!-- Data Grid -->
         <Border Grid.Row="2" Background="White" CornerRadius="6" Padding="15" Margin="0,0,0,15">
             <DataGrid Style="{StaticResource ModernDataGridStyle}"
-                      ItemsSource="{Binding OrderList}"/>
+                      ItemsSource="{Binding OrderList}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      MouseDoubleClick="dgOrderList_MouseDoubleClick">
+
+                <DataGrid.Columns>
+
+                    <!-- Order Id -->
+                    <DataGridTextColumn Header="Order Id"
+                            Binding="{Binding OrderId}"
+                            Width="80"/>
+
+                    <!-- Delivery Id  -->
+                    <DataGridTextColumn Header="Delivery Id"
+                            Binding="{Binding DeliveryId}"
+                            Width="90"/>
+
+                    <!-- Type  -->
+                    <DataGridTextColumn Header="Type"
+                            Binding="{Binding Type}"
+                            Width="100"/>
+
+                    <!-- Distance (km, formatted) -->
+                    <DataGridTextColumn Header="Distance (km)"
+                            Binding="{Binding Distance, StringFormat={}{0:0.0}}"
+                            Width="110"/>
+
+                    <!-- Order Status -->
+                    <DataGridTextColumn Header="Status"
+                            Binding="{Binding Status}"
+                            Width="110"/>
+
+                    <!-- Schedule Status -->
+                    <DataGridTextColumn Header="Schedule"
+                            Binding="{Binding ScheduleStatus}"
+                            Width="120"/>
+
+                    <!-- Order End Time -->
+                    <DataGridTextColumn Header="Order Time"
+                            Binding="{Binding OrderEndTime}"
+                            Width="120"/>
+
+                    <!-- Treatment End Time -->
+                    <DataGridTextColumn Header="Treatment Time"
+                            Binding="{Binding TreatmentEndTime}"
+                            Width="130"/>
+
+                    <!-- Number of Couriers -->
+                    <DataGridTextColumn Header="Couriers"
+                            Binding="{Binding NumberOfCouriers}"
+                            Width="90"/>
+
+                </DataGrid.Columns>
+            </DataGrid>
         </Border>
 
         <!-- Bottom Action Bar -->
