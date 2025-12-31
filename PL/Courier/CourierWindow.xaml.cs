@@ -24,10 +24,10 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
 
     private readonly bool _isCreateMode;
 
-    private BO.Courier _courierCurrent;
+    private BO.Courier? _courierCurrent;
     public BO.Courier CourierCurrent
     {
-        get => _courierCurrent;
+        get => _courierCurrent!;
         set
         {
             _courierCurrent = value;

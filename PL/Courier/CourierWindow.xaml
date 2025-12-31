@@ -138,7 +138,6 @@
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Courier ID:" Style="{StaticResource FieldLabelStyle}"/>
                 <TextBox Grid.Row="0" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
-                         IsReadOnly="True"
                          Text="{Binding CourierCurrent.Id}"
                          Margin="0,0,0,15"/>
 

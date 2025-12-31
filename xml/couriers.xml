@@ -37,18 +37,6 @@
     <MaxDistance>47</MaxDistance>
   </Courier>
   <Courier>
-    <Id>100004</Id>
-    <Name>Courier_4</Name>
-    <Phone>+10000000004</Phone>
-    <Email>Courier_4@gmail.com</Email>
-    <Password>password</Password>
-    <IsActive>false</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-03-14T13:18:36.0622156+02:00</StartDate>
-    <Administrator>Courier</Administrator>
-    <MaxDistance>4</MaxDistance>
-  </Courier>
-  <Courier>
     <Id>100005</Id>
     <Name>Courier_5</Name>
     <Phone>+10000000005</Phone>
@@ -491,5 +479,17 @@
     <StartDate>2025-08-26T13:18:36.0399468+03:00</StartDate>
     <Administrator>Courier</Administrator>
     <MaxDistance>12</MaxDistance>
+  </Courier>
+  <Courier>
+    <Id>100004</Id>
+    <Name>Courier_4</Name>
+    <Phone>+10000000004</Phone>
+    <Email>Courier_4@gmail.com</Email>
+    <Password>password</Password>
+    <IsActive>false</IsActive>
+    <Transport>Bike</Transport>
+    <StartDate>2025-03-14T13:18:36.0622156+02:00</StartDate>
+    <Administrator>Courier</Administrator>
+    <MaxDistance>4</MaxDistance>
   </Courier>
 </ArrayOfCourier>
