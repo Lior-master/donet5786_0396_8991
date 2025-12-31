@@ -67,12 +67,13 @@
 
         <!-- TextBox Style -->
         <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#BDBDBD"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Height" Value="35"/>
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -81,7 +82,9 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
                             <ScrollViewer x:Name="PART_ContentHost"
-                                          Margin="{TemplateBinding Padding}"/>
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Hidden"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -215,7 +218,6 @@
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Delivery Address:" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="4" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
-                             Height="60"
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
                              VerticalScrollBarVisibility="Auto"
