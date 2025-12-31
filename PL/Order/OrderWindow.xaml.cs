@@ -71,9 +71,8 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
             try
             {
                 Mouse.OverrideCursor = Cursors.Wait;
-
-                var order = await Task.Run(() => s_bl.Order.GetOrderDetails(bossId, orderId));
-                OrderCurrent = order;
+                OrderCurrent = await Task.Run(() => s_bl.Order.GetOrderDetails(bossId, orderId));
+               
             }
             catch (Exception ex)
             {
