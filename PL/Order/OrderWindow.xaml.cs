@@ -109,12 +109,10 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
             // Persist
             if (_isCreateMode)
             {
-                // IMPORTANT: adapte le nom si besoin
                 s_bl.Order.AddOrder(bossId,OrderCurrent);
             }
             else
             {
-                // IMPORTANT: adapte le nom si besoin
                 s_bl.Order.UpdateOrderDetails(bossId, OrderCurrent);
             }
 
