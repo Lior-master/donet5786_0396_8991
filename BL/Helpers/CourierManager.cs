@@ -302,6 +302,7 @@ internal static class CourierManager
             {
                 Id = courierDO.Id,
                 Name = courierDO.Name,
+                Password = courierDO.Password,
                 Phone = courierDO.Phone,
                 Email = courierDO.Email,
                 IsActive = courierDO.IsActive,
