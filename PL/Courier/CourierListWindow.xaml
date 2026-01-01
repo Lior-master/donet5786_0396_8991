@@ -197,6 +197,7 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Button Content="➕ Add Courier" 
                         Style="{StaticResource AddButtonStyle}"
+                        Click="btnAddCourier_Click"
                         Width="150" Height="45"/>
             </StackPanel>
         </Border>

@@ -106,4 +106,9 @@ public partial class CourierListWindow : Window
 
         new CourierWindow(selectedCourier.Id).Show();
     }
+
+    private void btnAddCourier_Click(object sender, RoutedEventArgs e)
+    {
+        new CourierWindow().Show();
+    }
 }

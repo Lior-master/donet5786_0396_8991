@@ -79,6 +79,7 @@ internal class CourierImplementation : ICourier
                 Couriers.Remove(it);
                 Couriers.Add(item);
                 XmlTools.SaveListToXMLSerializer(Couriers, Config.s_couriers_xml);
+                return;
             }
         }
         throw new DalDoesNotExistException($"Object Courier whit ID {item.Id} doesnt exist"); // if not found

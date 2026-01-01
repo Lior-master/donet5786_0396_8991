@@ -341,6 +341,9 @@ internal static class CourierManager
             try
             {
                 var existingCourier = s_dal.Courier.Read(updatedCourier.Id);
+                if (existingCourier == null)
+                    throw new BLNotFoundException($"Courier with ID {updatedCourier.Id} doesn't exist");
+
                 existingCourier = existingCourier with
                 {
                     Name = updatedCourier.Name,
