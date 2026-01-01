@@ -61,8 +61,8 @@
     <OrderDate>2025-12-28T12:51:36</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
-    <Latitude>31.768730189008583</Latitude>
-    <Longitude>35.184873153283796</Longitude>
+    <Latitude>0</Latitude>
+    <Longitude>0</Longitude>
     <Fragility xsi:nil="true" />
   </Order>
   <Order>

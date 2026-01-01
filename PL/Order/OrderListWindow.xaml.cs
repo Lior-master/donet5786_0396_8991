@@ -107,4 +107,8 @@ public partial class OrderListWindow : Window
         new OrderWindow(selectedOrder.OrderId).Show();
     }
 
+    private void btnNewOrder_Click(object sender, RoutedEventArgs e)
+    {
+        new OrderWindow().Show();
+    }
 }

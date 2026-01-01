@@ -50,11 +50,11 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
             CustomerName = string.Empty,
             CustomerPhone = string.Empty,
             CustomerAddress = string.Empty,
+            OrderDate = s_bl.Admin.GetClock(),
             Weight = null,
             Volume = null,
             Fragility = null,
-            OrderDescription = null,
-            Distance = 0
+            OrderDescription = null
         };
     }
 
@@ -95,32 +95,56 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            // Sanity checks min (tu peux en ajouter)
-            if (string.IsNullOrWhiteSpace(OrderCurrent.CustomerName))
-                throw new InvalidOperationException("Customer name is required.");
+            // Validate all fields
+            if (!ValidateFields())
+            {
+                return; // Don't save if validation fails
+            }
 
-            if (string.IsNullOrWhiteSpace(OrderCurrent.CustomerPhone))
-                throw new InvalidOperationException("Customer phone is required.");
-
-            if (string.IsNullOrWhiteSpace(OrderCurrent.CustomerAddress))
-                throw new InvalidOperationException("Customer address is required.");
-
-            // Persist
             if (_isCreateMode)
             {
-                s_bl.Order.AddOrder(bossId,OrderCurrent);
+                s_bl.Order.AddOrder(bossId, OrderCurrent);
+                MessageBox.Show("Order created successfully.", "Success",
+                              MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
                 s_bl.Order.UpdateOrderDetails(bossId, OrderCurrent);
+                MessageBox.Show("Order updated successfully.", "Success",
+                              MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
-            MessageBox.Show("Saved successfully.", "Order", MessageBoxButton.OK, MessageBoxImage.Information);
             Close();
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "Save failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Save failed: {ex.Message}", "Error",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
         }
+
     }
+
+    private bool ValidateFields()
+    {
+        var errors = new List<string>();
+
+        if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerName))
+            errors.Add("Customer name is required.");
+        if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerPhone))
+            errors.Add("Customer phone is required.");
+        if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerAddress))
+            errors.Add("Customer address is required.");
+
+        // Show validation errors if any
+        if (errors.Count > 0)
+        {
+            string errorMessage = "Please fix the following issues:\n\n" + string.Join("\n", errors);
+            MessageBox.Show(errorMessage, "Validation Error",
+                          MessageBoxButton.OK, MessageBoxImage.Warning);
+            return false;
+        }
+
+        return true;
+    }
+
 }

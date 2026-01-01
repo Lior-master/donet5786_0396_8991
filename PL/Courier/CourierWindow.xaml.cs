@@ -67,7 +67,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         // Initialize a new courier with editable fields - FIX INITIALIZATION
         CourierCurrent = new BO.Courier
         {
-            Id = 0, // Will be assigned by BL layer
+            Id = 0,
             Name = string.Empty,
             Phone = string.Empty,
             Email = string.Empty,
@@ -75,7 +75,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
             IsActive = true,
             Transport = DeliveryTransport.Bike,
             MaxDistance = null,
-            StartDate = DateTime.Now, // Set current date
+            StartDate = s_bl.Admin.GetClock(), // Set current date
             Administrator = BO.Administrator.Courier // Set default role
         };
     }
