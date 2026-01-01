@@ -143,6 +143,13 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
 
+        <ObjectDataProvider x:Key="ShedulStatus"
+                            MethodName="GetValues"
+                            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="bo:ScheduleStatus"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </Window.Resources>
 
     <Grid Margin="20">
@@ -267,9 +274,10 @@
 
                     <!-- Status (init -> readonly display) -->
                     <TextBlock Grid.Row="10" Grid.Column="0" Text="Status:" Style="{StaticResource FieldLabelStyle}"/>
-                    <TextBox Grid.Row="10" Grid.Column="1"
-                             Style="{StaticResource ModernTextBoxStyle}"
-                             IsReadOnly="True"
+                    <ComboBox Grid.Row="10" Grid.Column="1"
+                             Style="{StaticResource ModernComboBoxStyle}"
+                             IsEnabled="False"
+                             ItemsSource="{StaticResource OrderStatusCollectionKey}"
                              Text="{Binding OrderCurrent.Status}"
                              Margin="0,0,0,15"/>
 
@@ -299,11 +307,12 @@
 
                     <!-- Schedule Status (init -> readonly display) -->
                     <TextBlock Grid.Row="14" Grid.Column="0" Text="Schedule Status:" Style="{StaticResource FieldLabelStyle}"/>
-                    <TextBox Grid.Row="14" Grid.Column="1"
-                             Style="{StaticResource ModernTextBoxStyle}"
-                             IsReadOnly="True"
-                             Text="{Binding OrderCurrent.ScheduleStatus}"
-                             Margin="0,0,0,0"/>
+                    <ComboBox Grid.Row="14" Grid.Column="1"
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              IsEnabled="False"
+                              ItemsSource="{Binding Source={StaticResource ShedulStatus}}"
+                              SelectedItem="{Binding OrderCurrent.ScheduleStatus}"
+                              Margin="0,0,0,0"/>
                 </Grid>
             </ScrollViewer>
         </Border>
