@@ -1,18 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ArrayOfCourier xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Courier>
-    <Id>347657991</Id>
-    <Name>Boss</Name>
-    <Phone>+111111111</Phone>
-    <Email>boss@company.com</Email>
-    <Password>admin</Password>
-    <IsActive>true</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2026-01-01T18:48:49.2243027+02:00</StartDate>
-    <Administrator>Director</Administrator>
-    <MaxDistance>999</MaxDistance>
-  </Courier>
-  <Courier>
     <Id>100001</Id>
     <Name>Courier_1</Name>
     <Phone>+10000000001</Phone>
@@ -491,5 +479,17 @@
     <StartDate>2025-09-21T18:48:49.7253906+03:00</StartDate>
     <Administrator>Courier</Administrator>
     <MaxDistance>7</MaxDistance>
+  </Courier>
+  <Courier>
+    <Id>347657991</Id>
+    <Name>Boss</Name>
+    <Phone>+111111111</Phone>
+    <Email>boss@company.com</Email>
+    <Password>admin</Password>
+    <IsActive>true</IsActive>
+    <Transport>Bike</Transport>
+    <StartDate>2026-01-01T18:48:49.2243027+02:00</StartDate>
+    <Administrator>Director</Administrator>
+    <MaxDistance>999</MaxDistance>
   </Courier>
 </ArrayOfCourier>

@@ -2,15 +2,15 @@
 <ArrayOfOrder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Order>
     <Id>1000</Id>
-    <Type>FastFood</Type>
+    <Type>Pizza</Type>
     <CustomerName>Customer_1</CustomerName>
-    <CustomerAddress>21 Vaad Haleumi St</CustomerAddress>
+    <CustomerAddress>2 kadish luz israel</CustomerAddress>
     <CustomerPhone>+20000000001</CustomerPhone>
     <OrderDate>2026-01-01T18:08:49</OrderDate>
     <size xsi:nil="true" />
     <weight xsi:nil="true" />
-    <Latitude>31.76503763226389</Latitude>
-    <Longitude>35.19018701095478</Longitude>
+    <Latitude>31.7587739</Latitude>
+    <Longitude>35.1842047</Longitude>
     <Fragility xsi:nil="true" />
   </Order>
   <Order>

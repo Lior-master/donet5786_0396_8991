@@ -505,20 +505,63 @@ internal static class OrderManager
     {
         try
         {
-            // Map BO.Order to DO.Order before passing to DAL
+            // Validate requester first
+            var requester = s_dal.Courier.Read(requesterId);
+            if (requester == null)
+                throw new BLNotFoundException($"Requester with id {requesterId} does not exist.");
+
+            // Validate the order exists
+            var existingOrder = s_dal.Order.Read(order.Id);
+            if (existingOrder == null)
+                throw new BLNotFoundException($"Order with id {order.Id} does not exist.");
+
+            // Get coordinates with better error handling
+            (double Latitude, double Longitude) coordinates;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(order.CustomerAddress))
+                {
+                    coordinates = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
+                }
+                else
+                {
+                    // Use existing coordinates if address is empty
+                    coordinates = (existingOrder.Latitude ?? 0, existingOrder.Longitude ?? 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the actual geocoding error for debugging
+                System.Diagnostics.Debug.WriteLine($"Geocoding failed for address '{order.CustomerAddress}': {ex.Message}");
+                
+                // Fallback to existing coordinates or default
+                coordinates = (existingOrder.Latitude ?? 0, existingOrder.Longitude ?? 0);
+            }
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(order.CustomerName))
+                throw new BLInvalidInputException("Customer name cannot be empty.");
+        
+            if (string.IsNullOrWhiteSpace(order.CustomerAddress))
+                throw new BLInvalidInputException("Customer address cannot be empty.");
+
+            // Map BO.Order to DO.Order with proper null handling
             var doOrder = new DO.Order
             {
                 Id = order.Id,
+                Type = (DO.OrderType)order.Type,
                 CustomerName = order.CustomerName,
                 CustomerAddress = order.CustomerAddress,
-                CustomerPhone = order.CustomerPhone,
-                OrderDate = order.OrderDate,
-                size = order.Volume,
-                weight = order.Weight,
-                Latitude = order.Latitude,
-                Longitude = order.Longitude,
-                Description = order.OrderDescription
+                CustomerPhone = order.CustomerPhone ?? existingOrder.CustomerPhone,
+                OrderDate = order.OrderDate != default ? order.OrderDate : existingOrder.OrderDate,
+                size = order.Volume ?? existingOrder.size,
+                weight = order.Weight ?? existingOrder.weight,
+                Latitude = coordinates.Latitude,
+                Longitude = coordinates.Longitude,
+                Description = order.OrderDescription ?? existingOrder.Description,
+                Fragility = order.Fragility.HasValue ? (DO.FragilityLevel)order.Fragility.Value : existingOrder.Fragility
             };
+            
             s_dal.Order.Update(doOrder);
             
             // Notifications for order modification
@@ -527,12 +570,15 @@ internal static class OrderManager
         }
         catch (Exception ex)
         {
+            // Enhanced error logging
+            System.Diagnostics.Debug.WriteLine($"UpdateOrderDetails failed: {ex.GetType().Name}: {ex.Message}");
+        
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
             if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
             if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
-            throw new BO.BLFailedOperation(ex.Message, ex);
+            throw new BO.BLFailedOperation($"Unexpected error in UpdateOrderDetails: {ex.Message}", ex);
         }
     }
 
@@ -593,6 +639,19 @@ internal static class OrderManager
     {
         try
         {
+            try
+            {
+                var requester = s_dal.Order.Read(requesterId);
+
+            }
+            catch (Exception)
+            {
+                throw new BLNotFoundException("requesterId doesn't exist");
+            }
+
+            // Ensure StartDate is valid (avoid DateTime.MinValue)
+            DateTime startDate = order.OrderDate == default ? AdminManager.Now : order.OrderDate;
+
             // Map BO.Order to DO.Order before passing to DAL
             var doOrder = new DO.Order
             {

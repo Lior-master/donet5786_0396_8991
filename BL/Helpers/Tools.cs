@@ -1,9 +1,9 @@
 ﻿using BO;
+using System.Collections.Concurrent;
 using System.Globalization;
-using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
-
 
 namespace Helpers;
 
@@ -62,32 +62,72 @@ internal static class Tools
         };
     }
 
-    public static async Task<double> CalculateRouteDistanceAsync(double lat1, double lon1, double lat2, double lon2)
+    public static async Task<double> CalculateRouteDistanceAsync(
+        double lat1, double lon1,
+        double lat2, double lon2)
     {
-        using var client = new HttpClient();
+        // Réutilise la même clé que pour le geocoding
+        string apiKey =
+            Environment.GetEnvironmentVariable("LOCATIONIQ_KEY")
+            ?? throw new InvalidOperationException("Missing LOCATIONIQ_KEY environment variable.");
 
-        // OBLIGATOIRE : sinon OSRM renvoie 403
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; MyDotNetApp/1.0)");
+        const string baseUrl = "https://us1.locationiq.com/v1/directions/driving";
+
+        using var client = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(20)
+        };
+
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("DotNetDeliveryProject/1.0");
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
 
         string url =
-            $"https://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}?overview=false";
+            $"{baseUrl}/{lon1.ToString(CultureInfo.InvariantCulture)},{lat1.ToString(CultureInfo.InvariantCulture)};" +
+            $"{lon2.ToString(CultureInfo.InvariantCulture)},{lat2.ToString(CultureInfo.InvariantCulture)}" +
+            $"?key={Uri.EscapeDataString(apiKey)}" +
+            $"&overview=false&alternatives=false";
 
-        var response = await client.GetAsync(url);
+        System.Diagnostics.Debug.WriteLine($"LocationIQ routing request: {url}");
 
-        // Diagnostic si un jour ça recasse
-        Console.WriteLine("StatusCode = " + (int)response.StatusCode);
+        HttpResponseMessage response;
 
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            response = await client.GetAsync(url);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new BLFailedOperation($"Network error during routing: {ex.Message}", ex);
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new BLFailedOperation("Routing request timed out", ex);
+        }
 
-        string json = await response.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(json);
+        using (response)
+        {
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                throw new BLFailedOperation("LocationIQ routing rate-limited (HTTP 429)");
 
-        var route = doc.RootElement.GetProperty("routes")[0];
-        double meters = route.GetProperty("distance").GetDouble();
+            if (!response.IsSuccessStatusCode)
+            {
+                string err = await response.Content.ReadAsStringAsync();
+                throw new BLFailedOperation(
+                    $"Routing failed with status {response.StatusCode}: {err}");
+            }
 
-        return meters / 1000.0;
+            string json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            // routes[0].distance est en mètres
+            var routes = doc.RootElement.GetProperty("routes");
+            if (routes.GetArrayLength() == 0)
+                throw new BLNotFoundException("No route found between the two points");
+
+            double meters = routes[0].GetProperty("distance").GetDouble();
+            return meters / 1000.0;
+        }
     }
-
 
     public static double GetSpeed(DO.DeliveryTransport transport, BO.Config config)
     {
@@ -119,54 +159,157 @@ internal static class Tools
         return d.ArrivalTime <= expectedTime;
     }
 
-    private static readonly HttpClient client = new HttpClient();
+    // LocationIQ Geocoding
+
+    private static readonly string LocationIqKey =
+        Environment.GetEnvironmentVariable("LOCATIONIQ_KEY") // Windows variable in my system
+        ?? throw new InvalidOperationException("Missing LOCATIONIQ_KEY environment variable.");
+
+    private const string LocationIqSearchEndpoint = "https://us1.locationiq.com/v1/search";
+
+    private static readonly HttpClient s_geoClient = new HttpClient
+    {
+        Timeout = TimeSpan.FromSeconds(20)
+    };
+
+    // LocationIQ Free plan commonly enforces ~2 req/sec; we keep a safety margin.
+    private static readonly SemaphoreSlim s_geoRateGate = new SemaphoreSlim(1, 1);
+    private static DateTime s_lastGeoRequestUtc = DateTime.MinValue;
+    private static readonly TimeSpan s_minGeoInterval = TimeSpan.FromMilliseconds(550);
+
+    // In-memory cache to avoid consuming daily quota for repeated addresses
+    private static readonly ConcurrentDictionary<string, (double lat, double lon)> s_geoCache = new();
 
     static Tools()
     {
-        // User-Agent OBLIGATOIRE pour Nominatim
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(
-            "DotNetDeliveryProject/1.0 (your-email@something.com)");
+        // Not mandatory, but good practice
+        s_geoClient.DefaultRequestHeaders.UserAgent.ParseAdd("DotNetDeliveryProject/1.0");
+        s_geoClient.DefaultRequestHeaders.Accept.ParseAdd("application/json");
     }
 
     /// <summary>
     /// Converts a textual address into geographic coordinates (Latitude, Longitude)
-    /// using OpenStreetMap Nominatim API (no API key required).
+    /// using LocationIQ Forward Geocoding API (API key required).
+    /// The key is read from the environment variable "LOCATIONIQ_KEY".
     /// </summary>
     public static async Task<(double Latitude, double Longitude)> GetCoordinatesFromAddressAsync(string address)
     {
-        // on réutilise le HttpClient statique + User-Agent déjà configuré
-        string url =
-            $"https://nominatim.openstreetmap.org/search?format=json&limit=1&q={Uri.EscapeDataString(address)}";
+        if (string.IsNullOrWhiteSpace(address))
+            throw new BLInvalidInputException("Address cannot be null or empty");
 
-        using var response = await client.GetAsync(url);
+        try
+        {
+            string normalized = NormalizeAddress(address);
 
-        // si 403 / 500 etc -> HttpRequestException avec le message que tu voyais
-        response.EnsureSuccessStatusCode();
+            if (s_geoCache.TryGetValue(normalized, out var cached))
+                return (cached.lat, cached.lon);
 
-        string json = await response.Content.ReadAsStringAsync();
+            await EnforceGeoRateLimitAsync();
 
-        using var doc = JsonDocument.Parse(json);
-        var results = doc.RootElement;
+            string url =
+                $"{LocationIqSearchEndpoint}" +
+                $"?key={Uri.EscapeDataString(LocationIqKey)}" +
+                $"&q={Uri.EscapeDataString(address)}" +
+                $"&format=json&limit=1";
 
-        if (results.GetArrayLength() == 0)
-            throw new Exception("Address not found");
+            System.Diagnostics.Debug.WriteLine($"LocationIQ geocoding request: {url}");
 
-        var first = results[0];
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                HttpResponseMessage response;
 
-        // important : utiliser InvariantCulture pour les nombres avec point
-        // avoid possible null reference: throw a clear exception if missing
-        string? latStr = first.GetProperty("lat").GetString();
-        string? lonStr = first.GetProperty("lon").GetString();
+                try
+                {
+                    response = await s_geoClient.GetAsync(url);
+                }
+                catch (HttpRequestException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"HttpRequestException in LocationIQ geocoding: {ex.Message}");
+                    throw new BLFailedOperation($"Network error during geocoding: {ex.Message}", ex);
+                }
+                catch (TaskCanceledException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Timeout in LocationIQ geocoding: {ex.Message}");
+                    throw new BLFailedOperation("Geocoding request timed out", ex);
+                }
 
-        if (string.IsNullOrWhiteSpace(latStr) || string.IsNullOrWhiteSpace(lonStr))
-            throw new Exception("Coordinates missing in geocoding result");
+                using (response)
+                {
+                    System.Diagnostics.Debug.WriteLine($"LocationIQ geocoding response status: {response.StatusCode}");
 
-        double lat = double.Parse(latStr, CultureInfo.InvariantCulture);
-        double lon = double.Parse(lonStr, CultureInfo.InvariantCulture);
+                    if (response.StatusCode == (HttpStatusCode)429)
+                    {
+                        // Rate limited (per-second). Wait and retry.
+                        await Task.Delay(TimeSpan.FromSeconds(1));
+                        continue;
+                    }
 
-        return (lat, lon);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        string errorContent = await response.Content.ReadAsStringAsync();
+                        throw new BLFailedOperation(
+                            $"Geocoding failed with status {response.StatusCode}: {errorContent}");
+                    }
+
+                    string json = await response.Content.ReadAsStringAsync();
+                    System.Diagnostics.Debug.WriteLine($"LocationIQ geocoding response: {json}");
+
+                    if (string.IsNullOrWhiteSpace(json))
+                        throw new BLNotFoundException("Empty response from geocoding service");
+
+                    using var doc = JsonDocument.Parse(json);
+
+                    if (doc.RootElement.ValueKind != JsonValueKind.Array || doc.RootElement.GetArrayLength() == 0)
+                        throw new BLNotFoundException($"Address not found: {address}");
+
+                    var first = doc.RootElement[0];
+
+                    string? latStr = first.GetProperty("lat").GetString();
+                    string? lonStr = first.GetProperty("lon").GetString();
+
+                    if (string.IsNullOrWhiteSpace(latStr) || string.IsNullOrWhiteSpace(lonStr))
+                        throw new BLNotFoundException("Coordinates missing in geocoding result");
+
+                    double lat = double.Parse(latStr, CultureInfo.InvariantCulture);
+                    double lon = double.Parse(lonStr, CultureInfo.InvariantCulture);
+
+                    s_geoCache[normalized] = (lat, lon);
+
+                    System.Diagnostics.Debug.WriteLine($"LocationIQ geocoding successful: Lat={lat}, Lon={lon}");
+                    return (lat, lon);
+                }
+            }
+
+            throw new BLFailedOperation("LocationIQ geocoding was rate-limited (HTTP 429) after retries.");
+        }
+        catch (Exception ex) when (!(ex is BLNotFoundException || ex is BLInvalidInputException || ex is BLFailedOperation))
+        {
+            System.Diagnostics.Debug.WriteLine($"Unexpected exception in LocationIQ geocoding: {ex.GetType().Name}: {ex.Message}");
+            throw new BLFailedOperation($"Unexpected error during geocoding: {ex.Message}", ex);
+        }
     }
 
+    private static async Task EnforceGeoRateLimitAsync()
+    {
+        await s_geoRateGate.WaitAsync();
+        try
+        {
+            var now = DateTime.UtcNow;
+            var elapsed = now - s_lastGeoRequestUtc;
+
+            if (elapsed < s_minGeoInterval)
+                await Task.Delay(s_minGeoInterval - elapsed);
+
+            s_lastGeoRequestUtc = DateTime.UtcNow;
+        }
+        finally
+        {
+            s_geoRateGate.Release();
+        }
+    }
+
+    private static string NormalizeAddress(string a) =>
+        string.Join(' ', a.Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
     public static DateTime CalculateEstimatedArrival(DateTime orderDate, double distanceKm, double speedKmH)
     {
@@ -203,5 +346,4 @@ internal static class Tools
 
         return BO.ScheduleStatus.OnTime;
     }
-
 }

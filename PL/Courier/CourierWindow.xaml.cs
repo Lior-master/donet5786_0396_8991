@@ -73,7 +73,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
             Email = string.Empty,
             Password = string.Empty,
             IsActive = true,
-            Transport = DeliveryTransport.Bike,
+            Transport = DeliveryTransport.All,
             MaxDistance = null,
             StartDate = s_bl.Admin.GetClock(), // Set current date
             Administrator = BO.Administrator.Courier // Set default role

@@ -139,7 +139,7 @@
                 <TextBox Grid.Row="0" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
                          Text="{Binding CourierCurrent.Id}"
-                         IsReadOnly="{Binding IsReadOnly}"
+                         IsReadOnly="{Binding isReadOnly}"
                          Margin="0,0,0,15"/>
 
                 <!-- Name (editable) -->
@@ -205,7 +205,7 @@
                 <TextBlock Grid.Row="9" Grid.Column="0" Text="Start Date:" Style="{StaticResource FieldLabelStyle}"/>
                 <TextBox Grid.Row="9" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
-                         IsReadOnly="{Binding IsReadOnly}"
+                         IsReadOnly="{Binding isReadOnly}"
                          Text="{Binding CourierCurrent.StartDate, StringFormat={}{0:dd/MM/yyyy}}"/>
             </Grid>
         </Border>

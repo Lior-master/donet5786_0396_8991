@@ -130,8 +130,10 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
 
         if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerName))
             errors.Add("Customer name is required.");
+
         if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerPhone))
             errors.Add("Customer phone is required.");
+
         if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerAddress))
             errors.Add("Customer address is required.");
 
