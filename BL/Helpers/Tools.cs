@@ -66,10 +66,8 @@ internal static class Tools
         double lat1, double lon1,
         double lat2, double lon2)
     {
-        // Réutilise la même clé que pour le geocoding
-        string apiKey =
-            Environment.GetEnvironmentVariable("LOCATIONIQ_KEY")
-            ?? throw new InvalidOperationException("Missing LOCATIONIQ_KEY environment variable.");
+        // Reuse the same key
+        string apiKey = LocationIqKey;
 
         const string baseUrl = "https://us1.locationiq.com/v1/directions/driving";
 
@@ -93,15 +91,13 @@ internal static class Tools
 
         try
         {
-            response = await client.GetAsync(url);
+            response = await client.GetAsync(url).ConfigureAwait(false);
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex)
         {
-            throw new BLFailedOperation($"Network error during routing: {ex.Message}", ex);
-        }
-        catch (TaskCanceledException ex)
-        {
-            throw new BLFailedOperation("Routing request timed out", ex);
+            System.Diagnostics.Debug.WriteLine("LocationIQ routing GetAsync FAILED:");
+            System.Diagnostics.Debug.WriteLine(ex.ToString());
+            throw new BLFailedOperation($"Network/TLS error during routing: {ex.Message}", ex);
         }
 
         using (response)
@@ -111,15 +107,14 @@ internal static class Tools
 
             if (!response.IsSuccessStatusCode)
             {
-                string err = await response.Content.ReadAsStringAsync();
+                string err = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 throw new BLFailedOperation(
                     $"Routing failed with status {response.StatusCode}: {err}");
             }
 
-            string json = await response.Content.ReadAsStringAsync();
+            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(json);
 
-            // routes[0].distance est en mètres
             var routes = doc.RootElement.GetProperty("routes");
             if (routes.GetArrayLength() == 0)
                 throw new BLNotFoundException("No route found between the two points");
@@ -159,7 +154,9 @@ internal static class Tools
         return d.ArrivalTime <= expectedTime;
     }
 
+    // =========================
     // LocationIQ Geocoding
+    // =========================
 
     private static readonly string LocationIqKey =
         Environment.GetEnvironmentVariable("LOCATIONIQ_KEY") // Windows variable in my system
@@ -172,17 +169,17 @@ internal static class Tools
         Timeout = TimeSpan.FromSeconds(20)
     };
 
-    // LocationIQ Free plan commonly enforces ~2 req/sec; we keep a safety margin.
     private static readonly SemaphoreSlim s_geoRateGate = new SemaphoreSlim(1, 1);
     private static DateTime s_lastGeoRequestUtc = DateTime.MinValue;
     private static readonly TimeSpan s_minGeoInterval = TimeSpan.FromMilliseconds(550);
 
-    // In-memory cache to avoid consuming daily quota for repeated addresses
     private static readonly ConcurrentDictionary<string, (double lat, double lon)> s_geoCache = new();
 
     static Tools()
     {
-        // Not mandatory, but good practice
+        // IMPORTANT for many WPF/.NET Framework environments: enforce TLS 1.2
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
         s_geoClient.DefaultRequestHeaders.UserAgent.ParseAdd("DotNetDeliveryProject/1.0");
         s_geoClient.DefaultRequestHeaders.Accept.ParseAdd("application/json");
     }
@@ -204,12 +201,13 @@ internal static class Tools
             if (s_geoCache.TryGetValue(normalized, out var cached))
                 return (cached.lat, cached.lon);
 
-            await EnforceGeoRateLimitAsync();
+            await EnforceGeoRateLimitAsync().ConfigureAwait(false);
 
             string url =
                 $"{LocationIqSearchEndpoint}" +
                 $"?key={Uri.EscapeDataString(LocationIqKey)}" +
                 $"&q={Uri.EscapeDataString(address)}" +
+                $"&countrycodes=il" +
                 $"&format=json&limit=1";
 
             System.Diagnostics.Debug.WriteLine($"LocationIQ geocoding request: {url}");
@@ -220,17 +218,15 @@ internal static class Tools
 
                 try
                 {
-                    response = await s_geoClient.GetAsync(url);
+                    response = await s_geoClient.GetAsync(url).ConfigureAwait(false);
                 }
-                catch (HttpRequestException ex)
+                catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"HttpRequestException in LocationIQ geocoding: {ex.Message}");
-                    throw new BLFailedOperation($"Network error during geocoding: {ex.Message}", ex);
-                }
-                catch (TaskCanceledException ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Timeout in LocationIQ geocoding: {ex.Message}");
-                    throw new BLFailedOperation("Geocoding request timed out", ex);
+                    // Full diagnostics (includes InnerException)
+                    System.Diagnostics.Debug.WriteLine("LocationIQ geocoding GetAsync FAILED:");
+                    System.Diagnostics.Debug.WriteLine(ex.ToString());
+
+                    throw new BLFailedOperation($"Network/TLS error during geocoding: {ex.Message}", ex);
                 }
 
                 using (response)
@@ -239,19 +235,18 @@ internal static class Tools
 
                     if (response.StatusCode == (HttpStatusCode)429)
                     {
-                        // Rate limited (per-second). Wait and retry.
-                        await Task.Delay(TimeSpan.FromSeconds(1));
+                        await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                         continue;
                     }
 
                     if (!response.IsSuccessStatusCode)
                     {
-                        string errorContent = await response.Content.ReadAsStringAsync();
+                        string errorContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                         throw new BLFailedOperation(
                             $"Geocoding failed with status {response.StatusCode}: {errorContent}");
                     }
 
-                    string json = await response.Content.ReadAsStringAsync();
+                    string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     System.Diagnostics.Debug.WriteLine($"LocationIQ geocoding response: {json}");
 
                     if (string.IsNullOrWhiteSpace(json))
@@ -291,14 +286,14 @@ internal static class Tools
 
     private static async Task EnforceGeoRateLimitAsync()
     {
-        await s_geoRateGate.WaitAsync();
+        await s_geoRateGate.WaitAsync().ConfigureAwait(false);
         try
         {
             var now = DateTime.UtcNow;
             var elapsed = now - s_lastGeoRequestUtc;
 
             if (elapsed < s_minGeoInterval)
-                await Task.Delay(s_minGeoInterval - elapsed);
+                await Task.Delay(s_minGeoInterval - elapsed).ConfigureAwait(false);
 
             s_lastGeoRequestUtc = DateTime.UtcNow;
         }
@@ -335,7 +330,6 @@ internal static class Tools
                 ? BO.ScheduleStatus.OnTime
                 : BO.ScheduleStatus.Late;
 
-        // Use central app clock for consistency
         DateTime now = AdminManager.Now;
 
         if (now > maxArrival)

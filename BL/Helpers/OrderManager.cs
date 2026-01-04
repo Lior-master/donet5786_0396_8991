@@ -639,33 +639,61 @@ internal static class OrderManager
     {
         try
         {
+            // Validate requester first
+            var requester = s_dal.Courier.Read(requesterId);
+            if (requester == null)
+                throw new BLNotFoundException($"Requester with id {requesterId} does not exist.");
+
+            // Get coordinates with better error handling (like UpdateOrderDetails)
+            (double Latitude, double Longitude) coordinates;
             try
             {
-                var requester = s_dal.Order.Read(requesterId);
-
+                if (!string.IsNullOrWhiteSpace(order.CustomerAddress))
+                {
+                    coordinates = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
+                }
+                else
+                {
+                    // Default coordinates if no address provided
+                    coordinates = (0, 0);
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw new BLNotFoundException("requesterId doesn't exist");
+                // Log the actual geocoding error for debugging
+                System.Diagnostics.Debug.WriteLine($"Geocoding failed for address '{order.CustomerAddress}': {ex.Message}");
+                
+                // Fallback to default coordinates
+                coordinates = (0, 0);
             }
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(order.CustomerName))
+                throw new BLInvalidInputException("Customer name cannot be empty.");
+    
+            if (string.IsNullOrWhiteSpace(order.CustomerAddress))
+                throw new BLInvalidInputException("Customer address cannot be empty.");
 
             // Ensure StartDate is valid (avoid DateTime.MinValue)
             DateTime startDate = order.OrderDate == default ? AdminManager.Now : order.OrderDate;
 
-            // Map BO.Order to DO.Order before passing to DAL
+            // Map BO.Order to DO.Order before passing to DAL with proper coordinate handling
             var doOrder = new DO.Order
             {
                 Id = order.Id,
+                Type = (DO.OrderType)order.Type,
                 CustomerName = order.CustomerName,
                 CustomerAddress = order.CustomerAddress,
                 CustomerPhone = order.CustomerPhone,
-                OrderDate = order.OrderDate,
+                OrderDate = startDate,
                 size = order.Volume,
                 weight = order.Weight,
-                Latitude = order.Latitude,
-                Longitude = order.Longitude,
-                Description = order.OrderDescription
+                Latitude = coordinates.Latitude,
+                Longitude = coordinates.Longitude,
+                Description = order.OrderDescription,
+                Fragility = order.Fragility.HasValue ? (DO.FragilityLevel)order.Fragility.Value : null
             };
+            
             s_dal.Order.Create(doOrder);
             
             // Notification for adding order to list
@@ -673,12 +701,15 @@ internal static class OrderManager
         }
         catch (Exception ex)
         {
+            // Enhanced error logging (like UpdateOrderDetails)
+            System.Diagnostics.Debug.WriteLine($"AddOrder failed: {ex.GetType().Name}: {ex.Message}");
+    
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
             if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
             if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
-            throw new BO.BLFailedOperation(ex.Message, ex);
+            throw new BO.BLFailedOperation($"Unexpected error in AddOrder: {ex.Message}", ex);
         }
     }
 
