@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 using BlApi;
@@ -12,12 +13,13 @@ namespace PL.Order;
 
 public partial class OrderWindow : Window, INotifyPropertyChanged
 {
-    // BL access (comme dans le reste du projet)
     private static readonly IBl s_bl = Factory.Get();
 
     private readonly int bossId = s_bl.Admin.GetConfig().BossId;
-
     private readonly bool _isCreateMode;
+
+    private readonly int? _orderId;
+    private readonly Action? _orderObserver;
 
     private BO.Order? _orderCurrent;
     public BO.Order OrderCurrent
@@ -43,7 +45,6 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         _isCreateMode = true;
 
-        // New order skeleton.
         OrderCurrent = new BO.Order
         {
             Type = default,
@@ -66,13 +67,16 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         _isCreateMode = false;
 
+        _orderId = orderId;
+        _orderObserver = RefreshOrderFromBl;
+
         Loaded += async (_, __) =>
         {
             try
             {
                 Mouse.OverrideCursor = Cursors.Wait;
+                s_bl.Order.AddObserver(orderId, _orderObserver);
                 OrderCurrent = await Task.Run(() => s_bl.Order.GetOrderDetails(bossId, orderId));
-               
             }
             catch (Exception ex)
             {
@@ -84,6 +88,24 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
                 Mouse.OverrideCursor = null;
             }
         };
+
+        Closed += (_, __) =>
+        {
+            if (_orderObserver is not null)
+                s_bl.Order.RemoveObserver(orderId, _orderObserver);
+        };
+    }
+
+    private void RefreshOrderFromBl()
+    {
+        Dispatcher.Invoke(async () =>
+        {
+            if (_isCreateMode || _orderId is null)
+                return;
+
+            OrderCurrent = await Task.Run(() =>
+                s_bl.Order.GetOrderDetails(bossId, _orderId.Value));
+        });
     }
 
     private void btnCancel_Click(object sender, RoutedEventArgs e)
@@ -95,23 +117,20 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            // Validate all fields
             if (!ValidateFields())
-            {
-                return; // Don't save if validation fails
-            }
+                return;
 
             if (_isCreateMode)
             {
                 s_bl.Order.AddOrder(bossId, OrderCurrent);
                 MessageBox.Show("Order created successfully.", "Success",
-                              MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
                 s_bl.Order.UpdateOrderDetails(bossId, OrderCurrent);
                 MessageBox.Show("Order updated successfully.", "Success",
-                              MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             Close();
@@ -119,34 +138,34 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         catch (Exception ex)
         {
             MessageBox.Show($"Save failed: {ex.Message}", "Error",
-                            MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
-
     }
 
     private bool ValidateFields()
     {
         var errors = new List<string>();
 
-        if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerName))
+        if (string.IsNullOrWhiteSpace(OrderCurrent.CustomerName))
             errors.Add("Customer name is required.");
 
-        if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerPhone))
+        if (string.IsNullOrWhiteSpace(OrderCurrent.CustomerPhone))
             errors.Add("Customer phone is required.");
 
-        if(string.IsNullOrWhiteSpace(OrderCurrent.CustomerAddress))
+        if (string.IsNullOrWhiteSpace(OrderCurrent.CustomerAddress))
             errors.Add("Customer address is required.");
 
-        // Show validation errors if any
         if (errors.Count > 0)
         {
-            string errorMessage = "Please fix the following issues:\n\n" + string.Join("\n", errors);
-            MessageBox.Show(errorMessage, "Validation Error",
-                          MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(
+                "Please fix the following issues:\n\n" + string.Join("\n", errors),
+                "Validation Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
             return false;
         }
 
         return true;
     }
-
 }

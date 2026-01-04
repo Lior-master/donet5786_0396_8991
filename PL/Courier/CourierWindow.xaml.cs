@@ -11,26 +11,19 @@ using BO;
 
 namespace PL.Courier;
 
-/// <summary>
-/// Interaction logic for CourierWindow.xaml
-/// This window is used as a "Single Item Window" (Stage 5 requirement),
-/// in Create or Update mode depending on the constructor used.
-/// </summary>
 public partial class CourierWindow : Window, INotifyPropertyChanged
 {
-    // Access to the BL layer
     private static readonly IBl s_bl = Factory.Get();
 
     private int bossId = s_bl.Admin.GetConfig().BossId;
-
     private readonly bool _isCreateMode;
 
-    /// <summary>
-    /// Property to determine if the ID field should be read-only (true in update mode, false in create mode)
-    /// </summary>
+    private readonly int? _courierId;
+    private readonly Action? _courierObserver;
+
     private bool _isIdReadOnly;
-    public bool isReadOnly 
-    { 
+    public bool IsReadOnly
+    {
         get => _isIdReadOnly;
         private set
         {
@@ -62,9 +55,8 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     {
         InitializeComponent();
         _isCreateMode = true;
-        isReadOnly = false; // Editable in create mode
+        IsReadOnly = false;
 
-        // Initialize a new courier with editable fields - FIX INITIALIZATION
         CourierCurrent = new BO.Courier
         {
             Id = 0,
@@ -75,8 +67,8 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
             IsActive = true,
             Transport = DeliveryTransport.All,
             MaxDistance = null,
-            StartDate = s_bl.Admin.GetClock(), // Set current date
-            Administrator = BO.Administrator.Courier // Set default role
+            StartDate = s_bl.Admin.GetClock(),
+            Administrator = BO.Administrator.Courier
         };
     }
 
@@ -87,19 +79,24 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     {
         InitializeComponent();
         _isCreateMode = false;
-        isReadOnly = true; // Read-only in update mode
+        IsReadOnly = true;
 
-        // Load data asynchronously to avoid freezing the UI thread
+        _courierId = courierId;
+        _courierObserver = RefreshCourierFromBl;
+
         Loaded += async (_, __) =>
         {
             try
             {
                 Mouse.OverrideCursor = Cursors.Wait;
-                CourierCurrent = await Task.Run(() => s_bl.Courier.GetCourierDetails(bossId, courierId));
+                s_bl.Courier.AddObserver(courierId, _courierObserver);
+                CourierCurrent = await Task.Run(() =>
+                    s_bl.Courier.GetCourierDetails(bossId, courierId));
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error loading courier", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.Message, "Error loading courier",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
                 Close();
             }
             finally
@@ -107,40 +104,49 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
                 Mouse.OverrideCursor = null;
             }
         };
+
+        Closed += (_, __) =>
+        {
+            if (_courierObserver is not null)
+                s_bl.Courier.RemoveObserver(courierId, _courierObserver);
+        };
     }
 
-    /// <summary>
-    /// Close the window without saving.
-    /// </summary>
+    private void RefreshCourierFromBl()
+    {
+        Dispatcher.Invoke(async () =>
+        {
+            if (_isCreateMode || _courierId is null)
+                return;
+
+            CourierCurrent = await Task.Run(() =>
+                s_bl.Courier.GetCourierDetails(bossId, _courierId.Value));
+        });
+    }
+
     private void btnCancel_Click(object sender, RoutedEventArgs e)
     {
         Close();
     }
 
-    /// <summary>
-    /// Save changes (Create or Update depending on mode).
-    /// </summary>
     private void btnSave_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            // Validate all fields
             if (!ValidateFields())
-            {
-                return; // Don't save if validation fails
-            }
+                return;
 
             if (_isCreateMode)
             {
                 s_bl.Courier.addCourier(bossId, CourierCurrent);
-                MessageBox.Show("Courier created successfully.", "Success", 
-                              MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Courier created successfully.", "Success",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
                 s_bl.Courier.UpdateCourier(bossId, CourierCurrent);
-                MessageBox.Show("Courier updated successfully.", "Success", 
-                              MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Courier updated successfully.", "Success",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             Close();
@@ -148,67 +154,43 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         catch (Exception ex)
         {
             MessageBox.Show($"Save failed: {ex.Message}", "Error",
-                            MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
-    /// <summary>
-    /// Validates all courier fields and shows error messages.
-    /// </summary>
-    /// <returns>True if all validation passes, false otherwise.</returns>
     private bool ValidateFields()
     {
         var errors = new List<string>();
 
-        // Validate name
         if (string.IsNullOrWhiteSpace(CourierCurrent.Name))
-        {
             errors.Add("Courier name is required.");
-        }
 
-        // Validate phone
         if (string.IsNullOrWhiteSpace(CourierCurrent.Phone))
-        {
             errors.Add("Courier phone is required.");
-        }
 
-        // Validate email
         if (string.IsNullOrWhiteSpace(CourierCurrent.Email))
-        {
             errors.Add("Courier email is required.");
-        }
 
-        // Validate password
         if (string.IsNullOrWhiteSpace(CourierCurrent.Password))
-        {
             errors.Add("Courier password is required.");
-        }
 
-        // Validate max distance - FIX NULL CHECK
         if (!CourierCurrent.MaxDistance.HasValue || CourierCurrent.MaxDistance <= 0)
-        {
             errors.Add("Courier max distance must be a positive number.");
-        }
 
-        // Validate start date - MAKE MORE LENIENT
-        var currentTime = s_bl.Admin.GetClock();
-        if (CourierCurrent.StartDate > currentTime.AddDays(1))
-        {
+        if (CourierCurrent.StartDate > s_bl.Admin.GetClock().AddDays(1))
             errors.Add("Courier start date cannot be in the future.");
-        }
 
-        // Validate transport
         if (CourierCurrent.Transport == DeliveryTransport.All)
-        {
             errors.Add("Courier transport type cannot be 'All'.");
-        }
 
-        // Show validation errors if any
         if (errors.Count > 0)
         {
-            string errorMessage = "Please fix the following issues:\n\n" + string.Join("\n", errors);
-            MessageBox.Show(errorMessage, "Validation Error", 
-                          MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(
+                "Please fix the following issues:\n\n" + string.Join("\n", errors),
+                "Validation Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
             return false;
         }
 
