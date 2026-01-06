@@ -71,7 +71,7 @@ public partial class LoginWindow : Window
                 }
 
                 // 4) Open admin main window, DO NOT close login window
-                var w = new AdminMainWindow();
+                var w = new MainWindow();
                 w.Show();
 
                 ClearInputs();
@@ -84,7 +84,7 @@ public partial class LoginWindow : Window
                 // - could be s_bl.Courier.Get(id)
                 // - could be s_bl.Couriers.Read(id)
                 // - etc.
-                var courier = s_bl.Courier.Read(id); // <-- CHANGE if needed
+                var courier = s_bl.Courier.GetCourierDetails(id, id);
 
                 // 4) Open courier window in update mode (existing courier)
                 var w = new PL.Courier.CourierWindow(id); // <-- adapt constructor to yours
