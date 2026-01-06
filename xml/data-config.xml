@@ -15,8 +15,8 @@
   <RiskRange>30</RiskRange>
   <!-- Inactivity is stored as days -->
   <Inactivity>30</Inactivity>
-  <CompanyAddress>22 Hameyasdim St</CompanyAddress>
-  <Latitude>31,778449894212013</Latitude>
-  <Longitude>35,18761502733661</Longitude>
+  <CompanyAddress>43 abraham stern jerusalem israel</CompanyAddress>
+  <Latitude>31,759595</Latitude>
+  <Longitude>35,215315</Longitude>
   <MaxDistance>25</MaxDistance>
 </config>
