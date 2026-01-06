@@ -6,102 +6,59 @@ namespace PL;
 
 public partial class LoginWindow : Window
 {
-    // BL access (adapt if your Factory is elsewhere)
+    // BL access
     private static readonly IBl s_bl = Factory.Get();
-
-    // If you implemented the password bonus, set to true.
-    // If not implemented, set to false => the password is ignored.
-    private const bool USE_PASSWORD = false;
 
     public LoginWindow()
     {
         InitializeComponent();
-
-        // Hide password UI if bonus not implemented
-        if (!USE_PASSWORD)
-        {
-            pbPassword.Visibility = Visibility.Collapsed;
-        }
     }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
 
     private void BtnLogin_Click(object sender, RoutedEventArgs e)
     {
+        // Clear all previous error messages
+        ClearErrorMessages();
+
         try
         {
+            bool hasErrors = false;
+
             // 1) Parse ID
             if (!int.TryParse(tbId.Text?.Trim(), out int id) || id <= 0)
             {
-                MessageBox.Show("Veuillez entrer un ID numérique valide.", "Connexion", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                ShowFieldError(tbIdError, "Please enter a valid ID");
+                hasErrors = true;
             }
 
-            // 2) Optional password check (bonus)
-            if (USE_PASSWORD)
+            // 2) Password check
+            string password = pbPassword.Password ?? "";
+            if (string.IsNullOrWhiteSpace(password))
             {
-                string password = pbPassword.Password ?? "";
-                if (string.IsNullOrWhiteSpace(password))
-                {
-                    MessageBox.Show("Veuillez entrer un mot de passe.", "Connexion", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                // IMPORTANT:
-                // Replace this with your real validation logic if you implemented password.
-                // Example idea:
-                // - Admin password stored in config
-                // - Courier password stored in courier entity
-                //
-                // Here we just show where it should happen.
+                ShowFieldError(tbPasswordError, "Please enter a password");
+                hasErrors = true;
             }
 
-            bool isAdmin = rbAdmin.IsChecked == true;
-
-            if (isAdmin)
-            {
-                // 3) Validate admin ID from configuration
-                // Adapt: your config property name might be BossId / AdminId etc.
-                int adminId = s_bl.Admin.GetConfig().BossId;
-
-                if (id != adminId)
-                {
-                    MessageBox.Show("ID administrateur incorrect.", "Connexion", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                // 4) Open admin main window, DO NOT close login window
-                var w = new MainWindow();
-                w.Show();
-
-                ClearInputs();
+            // Stop if there are validation errors
+            if (hasErrors)
                 return;
-            }
-            else
+
+            // Fix null reference issue
+            string idText = tbId.Text?.Trim() ?? "";
+            if(s_bl.Courier.Login(idText, password) == BO.Administrator.Director)
             {
-                // 3) Validate courier exists in DB via BL
-                // Adapt this line to your BL API:
-                // - could be s_bl.Courier.Get(id)
-                // - could be s_bl.Couriers.Read(id)
-                // - etc.
-                var courier = s_bl.Courier.GetCourierDetails(id, id);
-
-                // 4) Open courier window in update mode (existing courier)
-                var w = new PL.Courier.CourierWindow(id); // <-- adapt constructor to yours
-                w.Show();
-
-                ClearInputs();
-                return;
+                new MainWindow().Show();
             }
+            //else if(s_bl.Courier.Login(idText, password) == BO.Administrator.Courier)
+            //{
+            //    new CourierWindow(id).Show();
+            //}
         }
         catch (Exception ex)
         {
             // Stage requirement: catch exceptions and show user-friendly message
-            MessageBox.Show(
-                "Connexion impossible.\n" + ex.Message,
-                "Erreur",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            ShowGeneralError("Login failed.\n" + ex.Message);
         }
     }
 
@@ -109,6 +66,55 @@ public partial class LoginWindow : Window
     {
         tbId.Text = string.Empty;
         pbPassword.Password = string.Empty;
-        rbAdmin.IsChecked = true;
+        ClearErrorMessages();
+    }
+
+    private void ClearErrorMessages()
+    {
+        tbIdError.Visibility = Visibility.Collapsed;
+        tbPasswordError.Visibility = Visibility.Collapsed;
+        tbGeneralError.Visibility = Visibility.Collapsed;
+        tbIdError.Text = string.Empty;
+        tbPasswordError.Text = string.Empty;
+        tbGeneralError.Text = string.Empty;
+    }
+
+    private void ShowFieldError(System.Windows.Controls.TextBlock errorLabel, string message)
+    {
+        errorLabel.Text = message;
+        errorLabel.Visibility = Visibility.Visible;
+    }
+
+    private void ShowGeneralError(string message)
+    {
+        tbGeneralError.Text = message;
+        tbGeneralError.Visibility = Visibility.Visible;
+    }
+
+    // Add the missing event handlers referenced in XAML
+    private void TbId_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter)
+        {
+            BtnLogin_Click(sender, new RoutedEventArgs());
+        }
+    }
+
+    private void TbId_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        // Clear ID error when user starts typing
+        if (tbIdError != null && tbIdError.Visibility == Visibility.Visible)
+        {
+            tbIdError.Visibility = Visibility.Collapsed;
+            tbIdError.Text = string.Empty;
+        }
+    }
+
+    private void PbPassword_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter)
+        {
+            BtnLogin_Click(sender, new RoutedEventArgs());
+        }
     }
 }

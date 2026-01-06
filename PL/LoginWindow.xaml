@@ -165,6 +165,21 @@
                             Style="{StaticResource ModernPasswordBoxStyle}"
                             KeyDown="PbPassword_KeyDown"/>
 
+                <!-- Password Error Message -->
+                <TextBlock x:Name="tbPasswordError"
+                           FontSize="11"
+                           Foreground="#F44336"
+                           Margin="0,0,0,15"
+                           Visibility="Collapsed"/>
+
+                <!-- General Error Message -->
+                <TextBlock x:Name="tbGeneralError"
+                           FontSize="11"
+                           Foreground="#F44336"
+                           Margin="0,0,0,15"
+                           TextWrapping="Wrap"
+                           Visibility="Collapsed"/>
+
                 <!-- Login Button -->
                 <Button Content="🔓 Login" 
                        Style="{StaticResource ModernButtonStyle}"
