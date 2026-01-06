@@ -1,5 +1,6 @@
 //using BO;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Helpers;
 
@@ -139,20 +140,23 @@ internal static class AdminManager //stage 4
         if (s_dal.Config.CompanyAdress != configuration.CompanyAddress)
         {
             s_dal.Config.CompanyAdress = configuration.CompanyAddress;
+            (double lat, double lon) = Tools.GetCoordinatesFromAddressAsync(configuration.CompanyAddress).GetAwaiter().GetResult();
+            s_dal.Config.Latitude = lat;
+            s_dal.Config.Longitude = lon;
             configChanged = true;
         }
 
-        if (s_dal.Config.Latitude != configuration.CompanyLatitude)
-        {
-            s_dal.Config.Latitude = configuration.CompanyLatitude;
-            configChanged = true;
-        }
+        //if (s_dal.Config.Latitude != configuration.CompanyLatitude)
+        //{
+        //    s_dal.Config.Latitude = configuration.CompanyLatitude;
+        //    configChanged = true;
+        //}
 
-        if (s_dal.Config.Longitude != configuration.CompanyLongitude)
-        {
-            s_dal.Config.Longitude = configuration.CompanyLongitude;
-            configChanged = true;
-        }
+        //if (s_dal.Config.Longitude != configuration.CompanyLongitude)
+        //{
+        //    s_dal.Config.Longitude = configuration.CompanyLongitude;
+        //    configChanged = true;
+        //}
 
         if (s_dal.Config.MaxDistance != configuration.MaxDistance)
         {
