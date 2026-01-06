@@ -1,0 +1,47 @@
+﻿<Window x:Class="PL.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Connexion"
+        Height="320" Width="420"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Connexion au système"
+                   FontSize="22"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,18"/>
+
+        <!-- Type utilisateur -->
+        <GroupBox Grid.Row="1" Header="Type d'utilisateur" Padding="10" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <RadioButton x:Name="rbAdmin" Content="Administrateur" IsChecked="True" Margin="0,0,16,0"/>
+                <RadioButton x:Name="rbCourier" Content="Livreur"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- ID -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,10">
+            <TextBlock Text="ID (Teoudat Zehout)"/>
+            <TextBox x:Name="tbId" Height="28" Margin="0,6,0,0"/>
+        </StackPanel>
+
+        <!-- Mot de passe (bonus) -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,18">
+            <TextBlock Text="Mot de passe (si activé)"/>
+            <PasswordBox x:Name="pbPassword" Height="28" Margin="0,6,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Connexion" Width="110" Height="32" Margin="0,0,10,0" Click="BtnLogin_Click"/>
+            <Button Content="Fermer" Width="90" Height="32" Click="BtnClose_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
