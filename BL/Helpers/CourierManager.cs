@@ -127,23 +127,23 @@ internal static class CourierManager
         }
     }
 
-    internal static BO.Administrator Login(string username, string password)
+    internal static BO.Administrator Login(int Id, string password)
     {
         try
         {
-            if (!string.IsNullOrEmpty(username))
+            if (Id !=0)
             {
                 var courier = s_dal.Courier.ReadAll()
-                    .FirstOrDefault(c => c.Name == username);
+                    .FirstOrDefault(c => c.Id == Id);
                 if (courier == null)
-                    throw new BO.BLNotFoundException("User with this username not found.");
+                    throw new BO.BLNotFoundException("User with this Id not found.");
                 if (courier.Password != password)
                     throw new BO.BLInvalidInputException("Wrong password.");
                 return (BO.Administrator)courier.Administrator;
             }
             else
             {
-                throw new BO.BLInvalidInputException("Username cant be null");
+                throw new BO.BLInvalidInputException("ID cant be 0");
             }
         }
         catch (Exception ex)

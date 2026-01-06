@@ -44,13 +44,13 @@ public partial class LoginWindow : Window
             if (hasErrors)
                 return;
 
-            // Fix null reference issue
-            string idText = tbId.Text?.Trim() ?? "";
-            if(s_bl.Courier.Login(idText, password) == BO.Administrator.Director)
+            // Use the parsed id variable instead of incorrect TryParse usage
+            if (s_bl.Courier.Login(id, password) == BO.Administrator.Director)
             {
                 new MainWindow().Show();
+                Close();
             }
-            //else if(s_bl.Courier.Login(idText, password) == BO.Administrator.Courier)
+            //else if(s_bl.Courier.Login(id, password) == BO.Administrator.Courier)
             //{
             //    new CourierWindow(id).Show();
             //}

@@ -5,7 +5,7 @@ namespace BlApi;
 // Assuming you want to observe Courier changes, use Courier as the type argument.
 public interface ICourier : IObservable
 {
-    Administrator Login(string username, string password);
+    Administrator Login(int Id, string password);
     IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, DeliveryTransport? status);
     BO.Courier GetCourierDetails(int requesterId, int courierId);
     void UpdateCourier(int requesterId, Courier updatedCourier);
