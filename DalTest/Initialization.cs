@@ -224,13 +224,13 @@ public static class Initialization
     public static Adresses[] addresses = new Adresses[]
     {
         new Adresses("2 Kadish Luz St israel", 31.759170644410922, 35.18416389561243, 2.2, 2.6, 3.3),
-        new Adresses("21 Vaad Haleumi St israel",31.76503763226389, 35.19018701095478, 1.5, 12.0, 3.7),
-        new Adresses("42 Bayit Vagan St israel", 31.768730189008583, 35.184873153283796, 1.1, 18.0, 2.5),
-        new Adresses("24 Ouziel St israel", 31.770329906428557, 35.1847366055818, 0.9, 24.0, 1.8),
-        new Adresses("30 Barouh Duvdevani St israel", 31.761875305999634, 35.19177485143465, 1.9, 30.0, 3.3)
+        new Adresses("21 HaVaad Leumi israel",31.76503763226389, 35.19018701095478, 1.5, 12.0, 3.7),
+        new Adresses("31 HaRav Frank", 31.768730189008583, 35.184873153283796, 1.1, 18.0, 2.5),
+        new Adresses("73 HaRav Uziel", 31.770329906428557, 35.1847366055818, 0.9, 24.0, 1.8),
+        new Adresses("87 Arieh Ben Eliezer", 31.761875305999634, 35.19177485143465, 1.9, 30.0, 3.3)
     };
 
-    public static Adresses CompanyAdress = new Adresses("22 Hameyasdim St", 31.778449894212013, 35.18761502733661, 0.0, 0.0, 0.0);
+    public static Adresses CompanyAdress = new Adresses("22 HaMeyasdim jerusalem", 31.778449894212013, 35.18761502733661, 0.0, 0.0, 0.0);
 
     public static void Do() 
     {
