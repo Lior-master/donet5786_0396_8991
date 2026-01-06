@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Input;
 using BlApi;
 
 namespace PL;
 
 public partial class LoginWindow : Window
 {
-    // BL access
     private static readonly IBl s_bl = Factory.Get();
+
+    // Password visibility state
+    private bool _isPasswordVisible = false;
 
     public LoginWindow()
     {
@@ -18,104 +21,132 @@ public partial class LoginWindow : Window
 
     private void BtnLogin_Click(object sender, RoutedEventArgs e)
     {
-        // Clear all previous error messages
-        ClearErrorMessages();
-
         try
         {
-            bool hasErrors = false;
-
-            // 1) Parse ID
-            if (!int.TryParse(tbId.Text?.Trim(), out int id) || id <= 0)
+            // Basic input validation (allowed in PL)
+            var idText = tbId.Text?.Trim() ?? string.Empty;
+            if (!int.TryParse(idText, out int id) || id <= 0)
             {
-                ShowFieldError(tbIdError, "Please enter a valid ID");
-                hasErrors = true;
+                MessageBox.Show(
+                    "Please enter a valid ID (positive number).",
+                    "Invalid input",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                tbId.Focus();
+                tbId.SelectAll();
+                return;
             }
 
-            // 2) Password check
-            string password = pbPassword.Password ?? "";
+            var password = _isPasswordVisible
+                ? (tbPasswordVisible.Text ?? string.Empty)
+                : (pbPassword.Password ?? string.Empty);
+
             if (string.IsNullOrWhiteSpace(password))
             {
-                ShowFieldError(tbPasswordError, "Please enter a password");
-                hasErrors = true;
+                MessageBox.Show(
+                    "Please enter a password.",
+                    "Invalid input",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                if (_isPasswordVisible)
+                    tbPasswordVisible.Focus();
+                else
+                    pbPassword.Focus();
+
+                return;
             }
 
-            // Stop if there are validation errors
-            if (hasErrors)
-                return;
+            // Stage 6 rule: one BL call per GUI action
+            var role = s_bl.Courier.Login(id, password);
 
-            // Use the parsed id variable instead of incorrect TryParse usage
-            if (s_bl.Courier.Login(id, password) == BO.Administrator.Director)
+            if (role == BO.Administrator.Director)
             {
                 new MainWindow().Show();
                 Close();
+                return;
             }
-            //else if(s_bl.Courier.Login(id, password) == BO.Administrator.Courier)
+
+            //if (role == BO.Administrator.Courier)
             //{
-            //    new CourierWindow(id).Show();
+            //    // Adjust namespace if needed
+            //    new PL.Courier.CourierWindow(id).Show();
+            //    Close();
+            //    return;
             //}
+
+            MessageBox.Show(
+                "This account does not have permission to access the system.",
+                "Access denied",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            // Stage requirement: catch exceptions and show user-friendly message
-            ShowGeneralError("Login failed.\n" + ex.Message);
+            // User-friendly error (no technical details)
+            MessageBox.Show(
+                "Login failed. Please verify your ID and password and try again.",
+                "Login error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            ResetPasswordUi();
         }
     }
 
-    private void ClearInputs()
+    private void BtnTogglePassword_Click(object sender, RoutedEventArgs e)
     {
-        tbId.Text = string.Empty;
+        _isPasswordVisible = !_isPasswordVisible;
+
+        if (_isPasswordVisible)
+        {
+            // Show password
+            tbPasswordVisible.Text = pbPassword.Password;
+            tbPasswordVisible.Visibility = Visibility.Visible;
+            pbPassword.Visibility = Visibility.Collapsed;
+
+            btnTogglePassword.Content = "🙈";
+
+            tbPasswordVisible.Focus();
+            tbPasswordVisible.CaretIndex = tbPasswordVisible.Text.Length;
+        }
+        else
+        {
+            // Hide password
+            pbPassword.Password = tbPasswordVisible.Text ?? string.Empty;
+            pbPassword.Visibility = Visibility.Visible;
+            tbPasswordVisible.Visibility = Visibility.Collapsed;
+
+            btnTogglePassword.Content = "👁";
+
+            pbPassword.Focus();
+        }
+    }
+
+    private void ResetPasswordUi()
+    {
+        // Clear password + return to hidden mode
         pbPassword.Password = string.Empty;
-        ClearErrorMessages();
+        tbPasswordVisible.Text = string.Empty;
+
+        _isPasswordVisible = false;
+
+        pbPassword.Visibility = Visibility.Visible;
+        tbPasswordVisible.Visibility = Visibility.Collapsed;
+        btnTogglePassword.Content = "👁";
     }
 
-    private void ClearErrorMessages()
+    private void TbId_KeyDown(object sender, KeyEventArgs e)
     {
-        tbIdError.Visibility = Visibility.Collapsed;
-        tbPasswordError.Visibility = Visibility.Collapsed;
-        tbGeneralError.Visibility = Visibility.Collapsed;
-        tbIdError.Text = string.Empty;
-        tbPasswordError.Text = string.Empty;
-        tbGeneralError.Text = string.Empty;
-    }
-
-    private void ShowFieldError(System.Windows.Controls.TextBlock errorLabel, string message)
-    {
-        errorLabel.Text = message;
-        errorLabel.Visibility = Visibility.Visible;
-    }
-
-    private void ShowGeneralError(string message)
-    {
-        tbGeneralError.Text = message;
-        tbGeneralError.Visibility = Visibility.Visible;
-    }
-
-    // Add the missing event handlers referenced in XAML
-    private void TbId_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-    {
-        if (e.Key == System.Windows.Input.Key.Enter)
-        {
+        if (e.Key == Key.Enter)
             BtnLogin_Click(sender, new RoutedEventArgs());
-        }
     }
 
-    private void TbId_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    private void PbPassword_KeyDown(object sender, KeyEventArgs e)
     {
-        // Clear ID error when user starts typing
-        if (tbIdError != null && tbIdError.Visibility == Visibility.Visible)
-        {
-            tbIdError.Visibility = Visibility.Collapsed;
-            tbIdError.Text = string.Empty;
-        }
-    }
-
-
-    private void PbPassword_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-    {
-        if (e.Key == System.Windows.Input.Key.Enter)
-        {
+        if (e.Key == Key.Enter)
             BtnLogin_Click(sender, new RoutedEventArgs());
-        }
     }
 }
