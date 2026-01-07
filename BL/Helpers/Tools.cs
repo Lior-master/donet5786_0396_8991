@@ -158,9 +158,7 @@ internal static class Tools
     // LocationIQ Geocoding
     // =========================
 
-    private static readonly string LocationIqKey =
-        Environment.GetEnvironmentVariable("LOCATIONIQ_KEY") // Windows variable in my system
-        ?? throw new InvalidOperationException("Missing LOCATIONIQ_KEY environment variable.");
+    private static readonly string LocationIqKey = "pk.e8d2b136630548a5295a8c88b56c1b82";
 
     private const string LocationIqSearchEndpoint = "https://us1.locationiq.com/v1/search";
 
