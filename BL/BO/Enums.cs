@@ -41,7 +41,10 @@ public enum DeliveredStatus
     Absent,
 
     /// <summary>Delivery attempt failed due to an error (invalid address, vehicle issue, etc.).</summary>
-    Failed
+    Failed,
+
+    All
+
 }
 
 /// <summary>
@@ -60,6 +63,8 @@ public enum DeliveryTransport
 
     /// <summary>foot delivery.</summary>
     Foot,
+
+    All
 }
 
 /// <summary>
@@ -71,7 +76,8 @@ public enum OrderType
     Pizza,
     Suchi,
     Shawarma,
-    Dessert
+    Dessert,
+    All
 }
 
 /// <summary>
@@ -89,7 +95,9 @@ public enum PriorityLevel
     High,
 
     /// <summary>Critical priority — immediate action required.</summary>
-    Critical
+    Critical,
+    All
+
 }
 
 /// <summary>
@@ -107,7 +115,8 @@ public enum FragilityLevel
     High,
 
     /// <summary>Extremely fragile — special packaging and transport required.</summary>
-    ExtremelyFragile
+    ExtremelyFragile,
+    All
 }
 
 /// <summary>
@@ -125,7 +134,9 @@ public enum ScheduleStatus
     Late,
 
     /// <summary>Schedule status cannot be determined due to lack of information.</summary>
-    Unknown
+    Unknown,
+    All
+
 
 }
 public enum TimeUnit
@@ -142,5 +153,6 @@ public enum Administrator
 {
     Director,
     Courier,
-    Customer
+    Customer,
+    All
 }

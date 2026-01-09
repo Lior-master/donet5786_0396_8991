@@ -112,22 +112,83 @@
         <!-- Filter Section -->
         <Border Grid.Row="1" Background="White" CornerRadius="6" Padding="20" Margin="0,0,0,15">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="250"/>
+                    <ColumnDefinition Width="20"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="250"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" 
-                           Text="To Filter By :" 
+                <!-- First Row - Filter Type Selection -->
+                <TextBlock Grid.Row="0" Grid.Column="0" 
+                           Text="Filter By:" 
                            Style="{StaticResource FieldLabelStyle}" 
                            Margin="0,0,15,0"/>
 
-                <ComboBox Grid.Column="1" 
+                <ComboBox Grid.Row="0" Grid.Column="1" 
+                          Name="cmbFilterType"
                           Style="{StaticResource ModernComboBoxStyle}"
                           ItemsSource="{Binding Source={StaticResource FilterTypeCourierCollectionKey}}"
                           SelectedValue="{Binding FilterTypeCourier, Mode=TwoWay}"
-                          SelectionChanged="TransportFilter_SelectionChanged"/>
+                          SelectionChanged="FilterType_SelectionChanged"/>
+
+                <!-- Second Row - Specific Filter Selection (conditionally visible) -->
+                <TextBlock Grid.Row="1" Grid.Column="0" 
+                           Name="lblSpecificFilter"
+                           Text="Select:" 
+                           Style="{StaticResource FieldLabelStyle}" 
+                           Margin="0,15,15,0"
+                           Visibility="Collapsed"/>
+
+                <!-- Transport Type ComboBox -->
+                <ComboBox Grid.Row="1" Grid.Column="1" 
+                          Name="cmbTransportFilter"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          ItemsSource="{Binding Source={StaticResource TransportsCollectionKey}}"
+                          SelectedValue="{Binding CourierDelivery, Mode=TwoWay}"
+                          SelectionChanged="TransportFilter_SelectionChanged"
+                          Margin="0,15,0,0"
+                          Visibility="Collapsed"/>
+
+                <!-- Administrator Type ComboBox -->
+                <ComboBox Grid.Row="1" Grid.Column="1" 
+                          Name="cmbAdministratorFilter"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          ItemsSource="{Binding Source={StaticResource AdministratorTypeCollectionKey}}"
+                          SelectedValue="{Binding AdministratorFilter, Mode=TwoWay}"
+                          SelectionChanged="AdministratorFilter_SelectionChanged"
+                          Margin="0,15,0,0"
+                          Visibility="Collapsed"/>
+
+                <!-- Active Status Selection -->
+                <StackPanel Grid.Row="1" Grid.Column="1" 
+                           Name="pnlActiveFilter"
+                           Orientation="Horizontal"
+                           Margin="0,15,0,0"
+                           Visibility="Collapsed">
+                    <RadioButton Name="rbActiveOnly" 
+                                Content="Active Only" 
+                                GroupName="ActiveFilter"
+                                Margin="0,0,15,0"
+                                Checked="ActiveFilter_Changed"/>
+                    <RadioButton Name="rbInactiveOnly" 
+                                Content="Inactive Only" 
+                                GroupName="ActiveFilter"
+                                Margin="0,0,15,0"
+                                Checked="ActiveFilter_Changed"/>
+                    <RadioButton Name="rbAll" 
+                                Content="All" 
+                                GroupName="ActiveFilter"
+                                IsChecked="True"
+                                Checked="ActiveFilter_Changed"/>
+                </StackPanel>
             </Grid>
         </Border>
 

@@ -8,6 +8,7 @@
         <local:OrderStatusCollection x:Key="OrderStatusCollectionKey" />
         <local:FilterTypeCourierCollection x:Key="FilterTypeCourierCollectionKey" />
         <local:FilterTypeOrderCollection x:Key="FilterTypeOrderCollectionKey" />
+        <local:AdministratorTypeCollection x:Key="AdministratorTypeCollectionKey" />
 
 
     </Application.Resources>

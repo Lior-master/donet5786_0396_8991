@@ -40,9 +40,11 @@ public partial class CourierListWindow : Window
 
     public PL.FilterTypeCourier FilterTypeCourier { get; set; } = PL.FilterTypeCourier.All;
 
-    public BO.DeliveryTransport CourierDelivery { get; set; }
+    public BO.DeliveryTransport CourierDelivery { get; set; } = DeliveryTransport.All;
 
-    public BO.Administrator AdministratorFilter { get; set; }
+    public BO.Administrator AdministratorFilter { get; set; } = Administrator.All;
+
+    public bool IsFilterActiveStatus { get; set; }
 
     private void queryCourierList()
     {
@@ -52,19 +54,23 @@ public partial class CourierListWindow : Window
 
             if(FilterTypeCourier == PL.FilterTypeCourier.All)
             {
-                CourierList = s_bl?.Courier.GetCouriersList(bossId,null,null)!;
+                CourierList = s_bl?.Courier.GetCouriersList(bossId, null, null)!;
             }
             else if(FilterTypeCourier == PL.FilterTypeCourier.ByActiveStatus)
             {
-                CourierList = s_bl?.Courier.GetCouriersList(bossId, true, null)!;
+                CourierList = s_bl?.Courier.GetCouriersList(bossId, IsFilterActiveStatus, null)!;
             }
             else if(FilterTypeCourier == PL.FilterTypeCourier.ByTransportType)
             {
-                CourierList = s_bl?.Courier.GetCouriersList(bossId, null, CourierDelivery)!;
+                // Only pass filter if it's not "All"
+                var transportFilter = CourierDelivery == DeliveryTransport.All ? null : (Enum?)CourierDelivery;
+                CourierList = s_bl?.Courier.GetCouriersList(bossId, null, transportFilter)!;
             }
             else if(FilterTypeCourier == PL.FilterTypeCourier.ByAdministratorType)
             {
-                CourierList = s_bl?.Courier.GetCouriersList(bossId, null, AdministratorFilter)!;
+                // Only pass filter if it's not "All"  
+                var adminFilter = AdministratorFilter == Administrator.All ? null : (Enum?)AdministratorFilter;
+                CourierList = s_bl?.Courier.GetCouriersList(bossId, null, adminFilter)!;
             }
         }
         catch (Exception ex)
@@ -113,6 +119,116 @@ public partial class CourierListWindow : Window
             queryCourierList(); // refresh the list based on the new filter
         }
     }
+
+    private void ActiveFilter_Changed(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton radioButton && radioButton.IsChecked == true)
+        {
+            if (radioButton.Name == "rbActiveOnly")
+            {
+                FilterTypeCourier = FilterTypeCourier.ByActiveStatus;
+                IsFilterActiveStatus = true;
+            }
+            else if (radioButton.Name == "rbInactiveOnly")
+            {
+                FilterTypeCourier = FilterTypeCourier.ByActiveStatus;
+                IsFilterActiveStatus = false;
+            }
+            else if (radioButton.Name == "rbAll")
+            {
+                // For "All", we need to change the filter type back to All
+                FilterTypeCourier = PL.FilterTypeCourier.All;
+                queryCourierList();
+                return;
+            }
+
+            queryCourierList(); // refresh the list based on the new filter
+        }
+    }
+
+    private void AdministratorFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is BO.Administrator selectedAdmin)
+        {
+            AdministratorFilter = selectedAdmin;
+            queryCourierList(); // refresh the list based on the new filter
+        }
+    }
+
+    private void FilterType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Skip if window is not fully loaded
+        if (!IsLoaded) return;
+        
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is PL.FilterTypeCourier selectedFilter)
+        {
+            FilterTypeCourier = selectedFilter;
+            
+            // Hide all filter controls first
+            lblSpecificFilter.Visibility = Visibility.Collapsed;
+            cmbTransportFilter.Visibility = Visibility.Collapsed;
+            cmbAdministratorFilter.Visibility = Visibility.Collapsed;
+            pnlActiveFilter.Visibility = Visibility.Collapsed;
+            
+            // Show the appropriate filter control based on selection
+            switch (selectedFilter)
+            {
+                case PL.FilterTypeCourier.ByTransportType:
+                    lblSpecificFilter.Visibility = Visibility.Visible;
+                    lblSpecificFilter.Text = "Select Transport:";
+                    cmbTransportFilter.Visibility = Visibility.Visible;
+                    // Reset to show all couriers until a specific transport is selected
+                    CourierDelivery = DeliveryTransport.All;
+                    if (cmbTransportFilter != null)
+                        cmbTransportFilter.SelectedValue = DeliveryTransport.All;
+                    break;
+                
+                case PL.FilterTypeCourier.ByAdministratorType:
+                    lblSpecificFilter.Visibility = Visibility.Visible;
+                    lblSpecificFilter.Text = "Select Administrator:";
+                    cmbAdministratorFilter.Visibility = Visibility.Visible;
+                    // Reset to show all couriers until a specific administrator is selected
+                    AdministratorFilter = Administrator.All;
+                    if (cmbAdministratorFilter != null)
+                        cmbAdministratorFilter.SelectedValue = Administrator.All;
+                    break;
+                
+                case PL.FilterTypeCourier.ByActiveStatus:
+                    lblSpecificFilter.Visibility = Visibility.Visible;
+                    lblSpecificFilter.Text = "Select Status:";
+                    pnlActiveFilter.Visibility = Visibility.Visible;
+                    // Reset radio buttons to "All" state and change filter type to All to show all couriers
+                    if (rbAll != null)
+                        rbAll.IsChecked = true;
+                    // Override the filter type to All so it shows all couriers by default
+                    FilterTypeCourier = PL.FilterTypeCourier.All;
+                    break;
+                
+                case PL.FilterTypeCourier.All:
+                default:
+                    // Reset all filter properties to their default values
+                    CourierDelivery = DeliveryTransport.All;
+                    AdministratorFilter = Administrator.All;
+                    IsFilterActiveStatus = false;
+                    
+                    // Reset ComboBox selections to default values
+                    if (cmbTransportFilter != null)
+                        cmbTransportFilter.SelectedValue = DeliveryTransport.All;
+                    if (cmbAdministratorFilter != null)
+                        cmbAdministratorFilter.SelectedValue = Administrator.All;
+                    
+                    // Reset radio buttons to "All" state
+                    if (rbAll != null)
+                        rbAll.IsChecked = true;
+                    break;
+            }
+            
+            // Always refresh the courier list when filter type changes
+            queryCourierList();
+        }
+    }
+
+    
 
     private void dgCourierList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {

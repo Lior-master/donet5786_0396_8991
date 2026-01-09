@@ -31,6 +31,12 @@ internal class OrderStatusCollection : IEnumerable
     public IEnumerator GetEnumerator() => s_enums.GetEnumerator();
 }
 
+internal class AdministratorTypeCollection : IEnumerable
+{
+    static readonly IEnumerable<BO.Administrator> s_enums =
+        (Enum.GetValues(typeof(BO.Administrator)) as IEnumerable<BO.Administrator>)!;
+    public IEnumerator GetEnumerator() => s_enums.GetEnumerator();
+}
 public enum FilterTypeOrder
 {
     All,
