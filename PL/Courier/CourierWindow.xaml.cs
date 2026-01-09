@@ -65,7 +65,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
             Email = string.Empty,
             Password = string.Empty,
             IsActive = true,
-            Transport = DeliveryTransport.All,
+            Transport = DeliveryTransport.Car,
             MaxDistance = null,
             StartDate = s_bl.Admin.GetClock(),
             Administrator = BO.Administrator.Courier
@@ -179,9 +179,6 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
 
         if (CourierCurrent.StartDate > s_bl.Admin.GetClock().AddDays(1))
             errors.Add("Courier start date cannot be in the future.");
-
-        if (CourierCurrent.Transport == DeliveryTransport.All)
-            errors.Add("Courier transport type cannot be 'All'.");
 
         if (errors.Count > 0)
         {

@@ -2,10 +2,13 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:PL"
-             StartupUri="LoginWindow.xaml">
+             StartupUri="MainWindow.xaml">
     <Application.Resources>
         <local:TransportsCollection x:Key="TransportsCollectionKey" />
         <local:OrderStatusCollection x:Key="OrderStatusCollectionKey" />
+        <local:FilterTypeCourierCollection x:Key="FilterTypeCourierCollectionKey" />
+        <local:FilterTypeOrderCollection x:Key="FilterTypeOrderCollectionKey" />
+
 
     </Application.Resources>
 </Application>

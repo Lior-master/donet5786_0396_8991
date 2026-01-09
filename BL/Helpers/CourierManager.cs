@@ -157,7 +157,7 @@ internal static class CourierManager
         }
     }
 
-    internal static IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, BO.DeliveryTransport? status)
+    internal static IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, Enum? Filter)
     {
         try
         {
@@ -170,8 +170,14 @@ internal static class CourierManager
             if (isActive != null)
                 couriers = couriers.Where(c => c.IsActive == isActive);
 
-            if (status != null)
-                couriers = couriers.Where(c => (BO.DeliveryTransport)c.Transport == status);
+            if (Filter != null)
+            {
+                if(Filter is BO.Administrator adminStatus)
+                    couriers = couriers.Where(c => (BO.Administrator)c.Administrator == adminStatus);
+
+                else if(Filter is BO.DeliveryTransport transportType)
+                    couriers = couriers.Where(c => (BO.DeliveryTransport)c.Transport == transportType);
+            }
 
             var allDeliveries = s_dal.Delivery.ReadAll();
             var config = AdminManager.GetConfig();

@@ -119,14 +119,14 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" 
-                           Text="Transport Type :" 
+                           Text="To Filter By :" 
                            Style="{StaticResource FieldLabelStyle}" 
                            Margin="0,0,15,0"/>
 
                 <ComboBox Grid.Column="1" 
                           Style="{StaticResource ModernComboBoxStyle}"
-                          ItemsSource="{Binding Source={StaticResource TransportsCollectionKey}}"
-                          SelectedValue="{Binding CourierDelivery, Mode=TwoWay}"
+                          ItemsSource="{Binding Source={StaticResource FilterTypeCourierCollectionKey}}"
+                          SelectedValue="{Binding FilterTypeCourier, Mode=TwoWay}"
                           SelectionChanged="TransportFilter_SelectionChanged"/>
             </Grid>
         </Border>

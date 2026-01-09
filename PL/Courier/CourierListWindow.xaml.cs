@@ -38,16 +38,34 @@ public partial class CourierListWindow : Window
     public static readonly DependencyProperty CourierListProperty =
         DependencyProperty.Register("CourierList", typeof(IEnumerable<BO.CourierInList>), typeof(CourierListWindow), new PropertyMetadata(null));
 
-    public BO.DeliveryTransport CourierDelivery { get; set; } = BO.DeliveryTransport.All;
+    public PL.FilterTypeCourier FilterTypeCourier { get; set; } = PL.FilterTypeCourier.All;
+
+    public BO.DeliveryTransport CourierDelivery { get; set; }
+
+    public BO.Administrator AdministratorFilter { get; set; }
 
     private void queryCourierList()
     {
         try
         {
             int bossId = s_bl.Admin.GetConfig().BossId;
-            CourierList = (CourierDelivery == BO.DeliveryTransport.All) ?
-                s_bl?.Courier.GetCouriersList(bossId, null, null)! : 
-                s_bl?.Courier.GetCouriersList(bossId, null, CourierDelivery)!;
+
+            if(FilterTypeCourier == PL.FilterTypeCourier.All)
+            {
+                CourierList = s_bl?.Courier.GetCouriersList(bossId,null,null)!;
+            }
+            else if(FilterTypeCourier == PL.FilterTypeCourier.ByActiveStatus)
+            {
+                CourierList = s_bl?.Courier.GetCouriersList(bossId, true, null)!;
+            }
+            else if(FilterTypeCourier == PL.FilterTypeCourier.ByTransportType)
+            {
+                CourierList = s_bl?.Courier.GetCouriersList(bossId, null, CourierDelivery)!;
+            }
+            else if(FilterTypeCourier == PL.FilterTypeCourier.ByAdministratorType)
+            {
+                CourierList = s_bl?.Courier.GetCouriersList(bossId, null, AdministratorFilter)!;
+            }
         }
         catch (Exception ex)
         {

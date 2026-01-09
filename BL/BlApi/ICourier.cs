@@ -6,7 +6,7 @@ namespace BlApi;
 public interface ICourier : IObservable
 {
     Administrator Login(int Id, string password);
-    IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, DeliveryTransport? status);
+    IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, Enum? status);
     BO.Courier GetCourierDetails(int requesterId, int courierId);
     void UpdateCourier(int requesterId, Courier updatedCourier);
     void removeCourier(int requesterId, int courierId);

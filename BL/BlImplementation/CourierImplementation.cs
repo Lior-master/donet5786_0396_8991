@@ -22,7 +22,7 @@ internal class CourierImplementation : ICourier
     public Courier GetCourierDetails(int requesterId, int courierId)
         => CourierManager.GetCourierDetails(requesterId, courierId);
 
-    public IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, DeliveryTransport? status)
+    public IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, Enum? status)
         => CourierManager.GetCouriersList(requesterId, isActive, status);
 
     public BO.Administrator Login(int Id, string password)

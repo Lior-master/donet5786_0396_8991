@@ -468,14 +468,14 @@ internal class Program
 
     private static void LoginCourier()
     {
-        Console.Write("Username: ");
-        var u = Console.ReadLine() ?? string.Empty;
-        Console.Write("Password: ");
-        var p = Console.ReadLine() ?? string.Empty;
-        var admin = s_bl.Courier.Login(u, p);
-        Console.WriteLine("Login result: " + admin);
-        Console.WriteLine("Press Enter...");
-        Console.ReadLine();
+        //Console.Write("Username: ");
+        //var u = Console.ReadLine() ?? string.Empty;
+        //Console.Write("Password: ");
+        //var p = Console.ReadLine() ?? string.Empty;
+        //var admin = s_bl.Courier.Login(u, p);
+        //Console.WriteLine("Login result: " + admin);
+        //Console.WriteLine("Press Enter...");
+        //Console.ReadLine();
     }
 
     /* ============================================
