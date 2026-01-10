@@ -62,6 +62,10 @@ public partial class LoginWindow : Window
     /// user toggles password visibility via the eye icon button.
     /// </summary>
     private bool _isPasswordVisible = false;
+    
+    /// <summary>
+    /// Prevents multiple director logins simultaneously.
+    /// </summary>
     private bool _directorLoggedIn = false;
 
     /// <summary>
@@ -73,7 +77,7 @@ public partial class LoginWindow : Window
     public LoginWindow()
     {
         InitializeComponent();
-        tbId.Focus();
+        tbId.Focus(); // Start with ID field focused for immediate input
     }
 
     /// <summary>
@@ -110,9 +114,6 @@ public partial class LoginWindow : Window
             // ============================================================
             // STEP 1: VALIDATE ID INPUT
             // ============================================================
-            // Trim whitespace and parse as integer
-            // Requirements: Must be a valid positive integer (> 0)
-            // Rejection Criteria: Non-numeric, zero, or negative values
             var idText = tbId.Text?.Trim() ?? string.Empty;
             if (!int.TryParse(idText, out int id) || id <= 0)
             {
@@ -129,10 +130,7 @@ public partial class LoginWindow : Window
             // ============================================================
             // STEP 2: VALIDATE AND RETRIEVE PASSWORD INPUT
             // ============================================================
-            // Get password from appropriate input control based on visibility mode
-            // If _isPasswordVisible is true, password is in TextBox (tbPasswordVisible)
-            // If _isPasswordVisible is false, password is in PasswordBox (pbPassword)
-            // Coalesce to empty string if null to prevent null reference errors
+            // Get password from active control based on visibility state
             var password = _isPasswordVisible
                 ? (tbPasswordVisible.Text ?? string.Empty)
                 : (pbPassword.Password ?? string.Empty);
@@ -140,7 +138,6 @@ public partial class LoginWindow : Window
             // ============================================================
             // STEP 3: VALIDATE PASSWORD IS NOT EMPTY
             // ============================================================
-            // Password is required - cannot be null, empty, or whitespace only
             if (string.IsNullOrWhiteSpace(password))
             {
                 MessageBox.Show(
@@ -149,7 +146,7 @@ public partial class LoginWindow : Window
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
 
-                // Set focus back to appropriate password field based on current mode
+                // Focus appropriate password field
                 if (_isPasswordVisible)
                     tbPasswordVisible.Focus();
                 else
@@ -161,23 +158,15 @@ public partial class LoginWindow : Window
             // ============================================================
             // STEP 4: CALL BL AUTHENTICATION METHOD
             // ============================================================
-            // THIS IS THE ONLY BL CALL FOR THIS ACTION (Stage 6 Rule)
-            // Delegates all business logic (DB lookup, password validation, etc.) to BL layer
-            // Parameters:
-            //   - id: User identifier (positive integer)
-            //   - password: User credential for authentication
-            // Returns: Administrator enum indicating user role
-            //   - Administrator.Director: Administrative access
-            //   - Administrator.Courier: Courier access
-            //   - Other values: Authentication failure
+            // Single BL call per Stage 6 requirements
             var role = s_bl.Courier.Login(id, password);
 
             // ============================================================
             // STEP 5: HANDLE AUTHENTICATION RESULT - DIRECTOR/ADMIN ROLE
             // ============================================================
-            // If user authenticated as Director, grant access to main admin window
             if (role == BO.Administrator.Director)
             { 
+                // Prevent concurrent director sessions
                 if (_directorLoggedIn)
                 {
                     MessageBox.Show(
@@ -187,9 +176,10 @@ public partial class LoginWindow : Window
                         MessageBoxImage.Information);
                     return;
                 }
+                
+                // Open main admin interface
                 new MainWindow().Show();
                 _directorLoggedIn = true;
-                // Clear the form after successful login
                 ResetLoginForm();
                 return;
             }
@@ -197,12 +187,10 @@ public partial class LoginWindow : Window
             // ============================================================
             // STEP 6: HANDLE COURIER ROLE (FUTURE IMPLEMENTATION)
             // ============================================================
-            // Currently commented out - implement when CourierWindow is ready
-            // Uncomment this section to allow courier login
+            // TODO: Uncomment when CourierWindow is implemented
             //if (role == BO.Administrator.Courier)
             //{
             //    new PL.Courier.CourierWindow(id).Show();
-            //    // Clear the form after successful login
             //    ResetLoginForm();
             //    return;
             //}
@@ -210,8 +198,6 @@ public partial class LoginWindow : Window
             // ============================================================
             // STEP 7: HANDLE LOGIN FAILURE - ACCESS DENIED
             // ============================================================
-            // User authenticated but does not have permission (e.g., is a Courier)
-            // or role is None/unrecognized
             MessageBox.Show(
                 "This account does not have permission to access the system.",
                 "Access denied",
@@ -220,12 +206,7 @@ public partial class LoginWindow : Window
         }
         catch (Exception)
         {
-            // ============================================================
-            // EXCEPTION HANDLING
-            // ============================================================
-            // Catch all exceptions (network issues, DB problems, etc.)
-            // Display generic user-friendly message without technical details
-            // Never display exception message to user for security reasons
+            // Generic error message for security (no technical details exposed)
             MessageBox.Show(
                 "Login failed. Please verify your ID and password and try again.",
                 "Login error",
@@ -234,12 +215,7 @@ public partial class LoginWindow : Window
         }
         finally
         {
-            // ============================================================
-            // SECURITY CLEANUP - ALWAYS EXECUTE
-            // ============================================================
-            // Clear password from memory regardless of login success/failure
-            // Reset UI to default state (hidden password mode)
-            // This ensures sensitive data doesn't remain accessible
+            // Always clear sensitive data regardless of outcome
             ResetPasswordUi();
         }
     }
@@ -280,41 +256,21 @@ public partial class LoginWindow : Window
 
         if (_isPasswordVisible)
         {
-            // ============================================================
-            // TRANSITION TO VISIBLE PASSWORD MODE
-            // ============================================================
-            // Step 1: Copy current password from PasswordBox to TextBox
+            // Switch to visible password mode
             tbPasswordVisible.Text = pbPassword.Password;
-            
-            // Step 2: Show TextBox, hide PasswordBox
             tbPasswordVisible.Visibility = Visibility.Visible;
             pbPassword.Visibility = Visibility.Collapsed;
-
-            // Step 3: Update button appearance to indicate "hide" action
-            // 🙈 = "closed eyes" suggests clicking will hide password
-            btnTogglePassword.Content = "🙈";
-
-            // Step 4: Move focus to TextBox and position cursor at end
+            btnTogglePassword.Content = "🙈"; // Hide password icon
             tbPasswordVisible.Focus();
             tbPasswordVisible.CaretIndex = tbPasswordVisible.Text.Length;
         }
         else
         {
-            // ============================================================
-            // TRANSITION TO HIDDEN PASSWORD MODE
-            // ============================================================
-            // Step 1: Copy current password from TextBox to PasswordBox
+            // Switch to hidden password mode
             pbPassword.Password = tbPasswordVisible.Text ?? string.Empty;
-            
-            // Step 2: Show PasswordBox, hide TextBox
             pbPassword.Visibility = Visibility.Visible;
             tbPasswordVisible.Visibility = Visibility.Collapsed;
-
-            // Step 3: Update button appearance to indicate "show" action
-            // 👁 = "open eye" suggests clicking will reveal password
-            btnTogglePassword.Content = "👁";
-
-            // Step 4: Move focus to PasswordBox
+            btnTogglePassword.Content = "👁"; // Show password icon
             pbPassword.Focus();
         }
     }
@@ -343,41 +299,32 @@ public partial class LoginWindow : Window
     /// </summary>
     private void ResetPasswordUi()
     {
-        // ============================================================
-        // SECURITY: CLEAR PASSWORD FROM BOTH INPUT CONTROLS
-        // ============================================================
-        // PasswordBox - secure control that doesn't expose password to bindings
+        // Clear sensitive data from both controls
         pbPassword.Password = string.Empty;
-        
-        // TextBox - visible control used for "show password" mode
         tbPasswordVisible.Text = string.Empty;
 
-        // ============================================================
-        // RESET UI TO DEFAULT STATE (HIDDEN PASSWORD MODE)
-        // ============================================================
-        // Flag: Password hidden
+        // Reset to secure default state
         _isPasswordVisible = false;
-
-        // Visibility: Show secure PasswordBox, hide plain TextBox
         pbPassword.Visibility = Visibility.Visible;
         tbPasswordVisible.Visibility = Visibility.Collapsed;
-        
-        // Button icon: 👁 (open eye indicates password is hidden)
         btnTogglePassword.Content = "👁";
     }
 
+    /// <summary>
+    /// Clears all login form fields and resets to initial state.
+    /// </summary>
     private void ResetLoginForm()
     {
-        // Clear both ID and password fields
         tbId.Text = string.Empty;
         ResetPasswordUi();
     }
 
+    /// <summary>
+    /// Handles Enter key press in ID field to advance to password field.
+    /// </summary>
     private void TbId_KeyDown(object sender, KeyEventArgs e)
     {
-        // Check if pressed key is Enter (Return)
         if (e.Key == Key.Enter)
-            // Invoke login handler with current sender and new routed event args
             BtnLogin_Click(sender, new RoutedEventArgs());
     }
 
@@ -398,12 +345,13 @@ public partial class LoginWindow : Window
     /// <param name="e">Keyboard event containing key information</param>
     private void PbPassword_KeyDown(object sender, KeyEventArgs e)
     {
-        // Check if pressed key is Enter (Return)
         if (e.Key == Key.Enter)
-            // Invoke login handler with current sender and new routed event args
             BtnLogin_Click(sender, new RoutedEventArgs());
     }
 
+    /// <summary>
+    /// Handles close button click to terminate the application.
+    /// </summary>
     private void BtnClose_Click(object sender, RoutedEventArgs e)
     {
         this.Close();
