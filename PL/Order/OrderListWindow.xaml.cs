@@ -20,6 +20,8 @@ namespace PL.Order;
 /// </summary>
 public partial class OrderListWindow : Window
 {
+    private bool _isOpen = false;
+
     static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
     
     public OrderListWindow()
@@ -84,16 +86,22 @@ public partial class OrderListWindow : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        if (_isOpen) return;
         queryOrderList();
         try
         {
             s_bl.Order.AddObserver(orderListObserver);
+            _isOpen = true;
         }
         catch (Exception ex)
         {
             // Some BL implementations might not support observers
             MessageBox.Show($"Observer registration failed: {ex.Message}", 
                            "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            _isOpen = true;
         }
     }
 
@@ -106,6 +114,10 @@ public partial class OrderListWindow : Window
         catch
         {
             // Ignore errors during cleanup
+        }
+        finally
+        {
+            _isOpen = false;
         }
     }
 

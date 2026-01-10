@@ -11,6 +11,7 @@ public partial class LoginWindow : Window
 
     // Password visibility state
     private bool _isPasswordVisible = false;
+    private bool _directorLoggedIn = false;
 
     public LoginWindow()
     {
@@ -61,9 +62,20 @@ public partial class LoginWindow : Window
             var role = s_bl.Courier.Login(id, password);
 
             if (role == BO.Administrator.Director)
-            {
+            { 
+                if (_directorLoggedIn)
+                {
+                    MessageBox.Show(
+                        "A director is already logged in.",
+                        "Access denied",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
                 new MainWindow().Show();
-                Close();
+                _directorLoggedIn = true;
+                // Clear the form after successful login
+                ResetLoginForm();
                 return;
             }
 
@@ -71,7 +83,8 @@ public partial class LoginWindow : Window
             //{
             //    // Adjust namespace if needed
             //    new PL.Courier.CourierWindow(id).Show();
-            //    Close();
+            //    // Clear the form after successful login
+            //    ResetLoginForm();
             //    return;
             //}
 
@@ -136,6 +149,13 @@ public partial class LoginWindow : Window
         pbPassword.Visibility = Visibility.Visible;
         tbPasswordVisible.Visibility = Visibility.Collapsed;
         btnTogglePassword.Content = "👁";
+    }
+
+    private void ResetLoginForm()
+    {
+        // Clear both ID and password fields
+        tbId.Text = string.Empty;
+        ResetPasswordUi();
     }
 
     private void TbId_KeyDown(object sender, KeyEventArgs e)

@@ -22,6 +22,8 @@ namespace PL.Courier;
 /// </summary>
 public partial class CourierListWindow : Window
 {
+    private bool _isOpen = false;
+
     static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
     
     public CourierListWindow()
@@ -86,6 +88,7 @@ public partial class CourierListWindow : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        if (_isOpen) return;
         queryCourierList();
         try
         {
@@ -96,6 +99,10 @@ public partial class CourierListWindow : Window
             // Some BL implementations might not support observers
             MessageBox.Show($"Observer registration failed: {ex.Message}", 
                            "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            _isOpen = true;
         }
     }
 
@@ -108,6 +115,10 @@ public partial class CourierListWindow : Window
         catch
         {
             // Ignore errors during cleanup
+        }
+        finally
+        {
+            _isOpen = false;
         }
     }
 
