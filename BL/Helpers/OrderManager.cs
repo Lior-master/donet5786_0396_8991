@@ -386,6 +386,8 @@ internal static class OrderManager
                 else if (filter is BO.OrderType ot)
                     // Filter by order type (FastFood, Pizza, etc.)
                     list = list.Where(l => l.Type == ot).ToList();
+                else if (filter is BO.ScheduleStatus ss)
+                    list = list.Where(l => l.ScheduleStatus == ss).ToList();
             }
 
             // Apply optional sorting with ascending/descending direction
@@ -1192,20 +1194,7 @@ internal static class OrderManager
         }
     }
 
-    /// <summary>
-    /// Retrieves a list of open (not yet completed) deliveries for a specific courier with optional filtering
-    /// and sorting capabilities.
-    /// Only includes deliveries without recorded arrival times (active/pending deliveries).
-    /// Calculates estimated delivery time and schedule status based on current time, distance, and transport speed.
-    /// </summary>
-    /// <param name="requesterId">ID of the user requesting this list (must exist in the system).</param>
-    /// <param name="courierId">ID of the courier whose open deliveries are being retrieved.</param>
-    /// <param name="filter">Optional filter by order type (FastFood, Pizza, etc.).</param>
-    /// <param name="sorter">Optional sort key: supports "BirdDistance" and "AddedTime".</param>
-    /// <returns>An enumerable collection of OpenOrderInList objects representing active deliveries.</returns>
-    /// <exception cref="BO.BLNotFoundException">Thrown if the requester or courier does not exist.</exception>
-    /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, BO.OrderType? filter, BO.DeliveredStatus? sorter)
+    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, BO.OrderType? filter, Enum? sorter)
     {
         try
         {

@@ -127,19 +127,7 @@ internal class OrderImplementation : IOrder
     public IEnumerable<ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
         => OrderManager.GetClosedDeliveriesForCourier(requesterId, courierId, filter, sorter);
 
-    /// <summary>
-    /// Retrieves a filtered and sorted list of open (undelivered) orders assigned to or available for a specific courier.
-    /// </summary>
-    /// <param name="requesterId">The ID of the user requesting this operation.</param>
-    /// <param name="courierId">The unique identifier of the courier whose open orders to retrieve.</param>
-    /// <param name="filter">Optional filter by <see cref="OrderType"/>. Pass <c>null</c> to include all order types.</param>
-    /// <param name="sorter">Optional sorting criteria by <see cref="DeliveredStatus"/> or other metrics. Pass <c>null</c> for default sorting.</param>
-    /// <returns>An enumerable collection of <see cref="OpenOrderInList"/> objects representing open orders.</returns>
-    /// <remarks>
-    /// Authorization is validated by the <see cref="OrderManager"/>. Open orders are typically those with status
-    /// <see cref="OrderStatus.Pending"/> or <see cref="OrderStatus.Processing"/>.
-    /// </remarks>
-    public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, OrderType? filter, DeliveredStatus? sorter)
+    public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
         => OrderManager.GetOpenOrdersForCourier(requesterId, courierId, filter, sorter);
 
     /// <summary>

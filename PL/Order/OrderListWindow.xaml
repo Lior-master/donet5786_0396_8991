@@ -112,22 +112,70 @@
         <!-- Filter Section -->
         <Border Grid.Row="1" Background="White" CornerRadius="6" Padding="20" Margin="0,0,0,15">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="250"/>
+                    <ColumnDefinition Width="20"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="250"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" 
-                           Text="Order Status :" 
+                <!-- First Row - Filter Type Selection -->
+                <TextBlock Grid.Row="0" Grid.Column="0" 
+                           Text="Filter By:" 
                            Style="{StaticResource FieldLabelStyle}" 
                            Margin="0,0,15,0"/>
 
-                <ComboBox Grid.Column="1" 
+                <ComboBox Grid.Row="0" Grid.Column="1" 
+                          Name="cmbFilterType"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          ItemsSource="{Binding Source={StaticResource FilterTypeOrderCollectionKey}}"
+                          SelectedValue="{Binding FilterTypeOrder, Mode=TwoWay}"
+                          SelectionChanged="FilterType_SelectionChanged"/>
+
+                <!-- Second Row - Specific Filter Selection (conditionally visible) -->
+                <TextBlock Grid.Row="1" Grid.Column="0" 
+                           Name="lblSpecificFilter"
+                           Text="Select:" 
+                           Style="{StaticResource FieldLabelStyle}" 
+                           Margin="0,15,15,0"
+                           Visibility="Collapsed"/>
+
+                <!-- Order Status ComboBox -->
+                <ComboBox Grid.Row="1" Grid.Column="1" 
+                          Name="cmbOrderStatusFilter"
                           Style="{StaticResource ModernComboBoxStyle}"
                           ItemsSource="{Binding Source={StaticResource OrderStatusCollectionKey}}"
                           SelectedValue="{Binding OrderStatus, Mode=TwoWay}"
-                          SelectionChanged="OrderStatusFilter_SelectionChanged"/>
+                          SelectionChanged="OrderStatusFilter_SelectionChanged"
+                          Margin="0,15,0,0"
+                          Visibility="Collapsed"/>
+
+                <!-- Order Type ComboBox -->
+                <ComboBox Grid.Row="1" Grid.Column="1" 
+                          Name="cmbOrderTypeFilter"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          ItemsSource="{Binding Source={StaticResource OrderTypeCollectionKey}}"
+                          SelectedValue="{Binding OrderType, Mode=TwoWay}"
+                          SelectionChanged="OrderTypeFilter_SelectionChanged"
+                          Margin="0,15,0,0"
+                          Visibility="Collapsed"/>
+
+                <!-- Schedule Status ComboBox -->
+                <ComboBox Grid.Row="1" Grid.Column="1" 
+                          Name="cmbScheduleStatusFilter"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          ItemsSource="{Binding Source={StaticResource ScheduleStatusCollectionKey}}"
+                          SelectedValue="{Binding ScheduleStatus, Mode=TwoWay}"
+                          SelectionChanged="ScheduleStatusFilter_SelectionChanged"
+                          Margin="0,15,0,0"
+                          Visibility="Collapsed"/>
             </Grid>
         </Border>
 
