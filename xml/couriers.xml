@@ -13,18 +13,6 @@
     <MaxDistance>999</MaxDistance>
   </Courier>
   <Courier>
-    <Id>100001</Id>
-    <Name>Courier_1</Name>
-    <Phone>+10000000001</Phone>
-    <Email>Courier_1@gmail.com</Email>
-    <Password>password</Password>
-    <IsActive>true</IsActive>
-    <Transport>Car</Transport>
-    <StartDate>2025-07-30T19:42:41.6833253+03:00</StartDate>
-    <Administrator>Courier</Administrator>
-    <MaxDistance>15</MaxDistance>
-  </Courier>
-  <Courier>
     <Id>100002</Id>
     <Name>Courier_2</Name>
     <Phone>+10000000002</Phone>

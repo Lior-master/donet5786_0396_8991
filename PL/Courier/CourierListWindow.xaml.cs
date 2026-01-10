@@ -239,8 +239,6 @@ public partial class CourierListWindow : Window
         }
     }
 
-    
-
     private void dgCourierList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (sender is not DataGrid dataGrid)
@@ -255,5 +253,67 @@ public partial class CourierListWindow : Window
     private void btnAddCourier_Click(object sender, RoutedEventArgs e)
     {
         new CourierWindow().Show();
+    }
+
+    private void btnRemoveCourier_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button)
+            return;
+
+        if (button.DataContext is not BO.CourierInList selectedCourier)
+            return;
+
+        // Check if courier can be removed (no deliveries)
+        bool canRemove = selectedCourier.NumberOfOnTimeDeliveries == 0 
+                        && selectedCourier.NumberOfLateDeliveries == 0 
+                        && selectedCourier.ActualOrder == null;
+
+        if (!canRemove)
+        {
+            MessageBox.Show(
+                $"Cannot remove courier '{selectedCourier.Name}' because they have delivery history or an active order.",
+                "Removal Not Allowed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        try
+        {
+            // Confirm removal with user
+            var result = MessageBox.Show(
+                $"Are you sure you want to remove courier '{selectedCourier.Name}' (ID: {selectedCourier.Id})?\n\nThis action cannot be undone.",
+                "Confirm Removal",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                int bossId = s_bl.Admin.GetConfig().BossId;
+                s_bl.Courier.removeCourier(bossId, selectedCourier.Id);
+                
+                MessageBox.Show(
+                    $"Courier '{selectedCourier.Name}' has been successfully removed.",
+                    "Removal Successful",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+        }
+        catch (BO.BLInvalidOperationException ex)
+        {
+            MessageBox.Show(
+                $"Cannot remove courier '{selectedCourier.Name}':\n{ex.Message}",
+                "Removal Not Allowed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Error removing courier '{selectedCourier.Name}':\n{ex.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 }

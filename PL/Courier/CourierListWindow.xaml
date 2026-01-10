@@ -55,6 +55,33 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Remove Button Style -->
+        <Style x:Key="RemoveButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#F44336"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D32F2F"/>
+                </Trigger>
+                <DataTrigger Binding="{Binding NumberOfOnTimeDeliveries}" Value="0">
+                    <DataTrigger.Setters>
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger.Setters>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NumberOfLateDeliveries}" Value="0">
+                    <DataTrigger.Setters>
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger.Setters>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ActualOrder}" Value="{x:Null}">
+                    <DataTrigger.Setters>
+                        <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- ComboBox Style -->
         <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Padding" Value="10,8"/>
@@ -249,6 +276,54 @@
                             Binding="{Binding ActualOrder}"
                             Width="Auto" />
 
+                    <!-- Actions Column -->
+                    <DataGridTemplateColumn Header="Actions" Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="🗑️ Remove"
+                                        Click="btnRemoveCourier_Click"
+                                        ToolTip="Remove this courier (only if no deliveries)"
+                                        Background="#F44336"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Padding="8,4"
+                                        FontSize="12"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Hidden"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" 
+                                                                CornerRadius="4"
+                                                                Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" 
+                                                                            VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding NumberOfOnTimeDeliveries}" Value="0"/>
+                                                        <Condition Binding="{Binding NumberOfLateDeliveries}" Value="0"/>
+                                                        <Condition Binding="{Binding ActualOrder}" Value="{x:Null}"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#D32F2F"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -264,4 +339,3 @@
         </Border>
     </Grid>
 </Window>
-    
