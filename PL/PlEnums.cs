@@ -37,13 +37,26 @@ internal class AdministratorTypeCollection : IEnumerable
         (Enum.GetValues(typeof(BO.Administrator)) as IEnumerable<BO.Administrator>)!;
     public IEnumerator GetEnumerator() => s_enums.GetEnumerator();
 }
+
+internal class OrderTypeCollection : IEnumerable
+{
+    static readonly IEnumerable<BO.OrderType> s_enums =
+        (Enum.GetValues(typeof(BO.OrderType)) as IEnumerable<BO.OrderType>)!;
+    public IEnumerator GetEnumerator() => s_enums.GetEnumerator();
+}
+
+internal class ScheduleStatusCollection : IEnumerable
+{
+    static readonly IEnumerable<BO.ScheduleStatus> s_enums =
+        (Enum.GetValues(typeof(BO.ScheduleStatus)) as IEnumerable<BO.ScheduleStatus>)!;
+    public IEnumerator GetEnumerator() => s_enums.GetEnumerator();
+}
+
 public enum FilterTypeOrder
 {
     All,
     ByOrderType,
     ByOrderStatus,
-    ByDeliveryStatus,
-    ByFragilityLevel,
     BySheduleStatus
 }
 

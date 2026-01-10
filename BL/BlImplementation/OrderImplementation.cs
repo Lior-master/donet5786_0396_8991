@@ -33,7 +33,7 @@ internal class OrderImplementation : IOrder
     public IEnumerable<ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
         => OrderManager.GetClosedDeliveriesForCourier(requesterId, courierId, filter, sorter);
 
-    public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, OrderType? filter, DeliveredStatus? sorter)
+    public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
         => OrderManager.GetOpenOrdersForCourier(requesterId, courierId, filter, sorter);
 
     public Order GetOrderDetails(int requesterId, int orderId)

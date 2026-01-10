@@ -36,18 +36,40 @@ public partial class OrderListWindow : Window
     public static readonly DependencyProperty OrderListProperty =
         DependencyProperty.Register("OrderList", typeof(IEnumerable<BO.OrderInList>), typeof(OrderListWindow), new PropertyMetadata(null));
 
+    public PL.FilterTypeOrder FilterTypeOrder { get; set; } = PL.FilterTypeOrder.All;
+
     public BO.OrderStatus OrderStatus { get; set; } = BO.OrderStatus.All;
+
+    // Additional filter properties for the new filtering options
+    public BO.OrderType OrderType { get; set; } = BO.OrderType.All;
+    public BO.FragilityLevel FragilityLevel { get; set; } = BO.FragilityLevel.All;
+    public BO.ScheduleStatus ScheduleStatus { get; set; } = BO.ScheduleStatus.All;
 
     private void queryOrderList()
     {
         try
         {
-            // First, try to find any existing courier to use as requester
             var bossId = s_bl.Admin.GetConfig().BossId;
 
-            OrderList = (OrderStatus == BO.OrderStatus.All) ?
-                s_bl?.Order.orderInLists(bossId, null, null, null)! : 
-                s_bl?.Order.orderInLists(bossId, OrderStatus, null, null)!;
+            if (FilterTypeOrder == PL.FilterTypeOrder.All)
+            {
+                OrderList = s_bl?.Order.orderInLists(bossId, null, null, null)!;
+            }
+            else if (FilterTypeOrder == PL.FilterTypeOrder.ByOrderStatus)
+            {
+                var statusFilter = OrderStatus == BO.OrderStatus.All ? null : (Enum?)OrderStatus;
+                OrderList = s_bl?.Order.orderInLists(bossId, statusFilter, null, null)!;
+            }
+            else if (FilterTypeOrder == PL.FilterTypeOrder.ByOrderType)
+            {
+                var typeFilter = OrderType == BO.OrderType.All ? null : (Enum?)OrderType;
+                OrderList = s_bl?.Order.orderInLists(bossId, typeFilter, null, null)!;
+            }
+            else if (FilterTypeOrder == PL.FilterTypeOrder.BySheduleStatus)
+            {
+                var scheduleFilter = ScheduleStatus == BO.ScheduleStatus.All ? null : (Enum?)ScheduleStatus;
+                OrderList = s_bl?.Order.orderInLists(bossId, scheduleFilter, null, null)!;
+            }
         }
         catch (Exception ex)
         {
@@ -87,12 +109,108 @@ public partial class OrderListWindow : Window
         }
     }
 
+    private void FilterType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Skip if window is not fully loaded
+        if (!IsLoaded) return;
+        
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is PL.FilterTypeOrder selectedFilter)
+        {
+            FilterTypeOrder = selectedFilter;
+            
+            // Hide all filter controls first
+            lblSpecificFilter.Visibility = Visibility.Collapsed;
+            cmbOrderStatusFilter.Visibility = Visibility.Collapsed;
+            cmbOrderTypeFilter.Visibility = Visibility.Collapsed;
+            cmbScheduleStatusFilter.Visibility = Visibility.Collapsed;
+            
+            // Show the appropriate filter control based on selection
+            switch (selectedFilter)
+            {
+                case PL.FilterTypeOrder.ByOrderStatus:
+                    lblSpecificFilter.Visibility = Visibility.Visible;
+                    lblSpecificFilter.Text = "Select Order Status:";
+                    cmbOrderStatusFilter.Visibility = Visibility.Visible;
+                    // Reset to show all orders until a specific status is selected
+                    OrderStatus = BO.OrderStatus.All;
+                    if (cmbOrderStatusFilter != null)
+                        cmbOrderStatusFilter.SelectedValue = BO.OrderStatus.All;
+                    break;
+                
+                case PL.FilterTypeOrder.ByOrderType:
+                    lblSpecificFilter.Visibility = Visibility.Visible;
+                    lblSpecificFilter.Text = "Select Order Type:";
+                    cmbOrderTypeFilter.Visibility = Visibility.Visible;
+                    OrderType = BO.OrderType.All;
+                    if (cmbOrderTypeFilter != null)
+                        cmbOrderTypeFilter.SelectedValue = BO.OrderType.All;
+                    break;
+                                                
+                case PL.FilterTypeOrder.BySheduleStatus:
+                    lblSpecificFilter.Visibility = Visibility.Visible;
+                    lblSpecificFilter.Text = "Select Schedule Status:";
+                    cmbScheduleStatusFilter.Visibility = Visibility.Visible;
+                    ScheduleStatus = BO.ScheduleStatus.All;
+                    if (cmbScheduleStatusFilter != null)
+                        cmbScheduleStatusFilter.SelectedValue = BO.ScheduleStatus.All;
+                    break;
+                
+                case PL.FilterTypeOrder.All:
+                default:
+                    // Reset all filter properties to their default values
+                    OrderStatus = BO.OrderStatus.All;
+                    OrderType = BO.OrderType.All;
+                    FragilityLevel = BO.FragilityLevel.All;
+                    ScheduleStatus = BO.ScheduleStatus.All;
+                    
+                    // Reset ComboBox selections to default values
+                    if (cmbOrderStatusFilter != null)
+                        cmbOrderStatusFilter.SelectedValue = BO.OrderStatus.All;
+                    if (cmbOrderTypeFilter != null)
+                        cmbOrderTypeFilter.SelectedValue = BO.OrderType.All;
+                    if (cmbScheduleStatusFilter != null)
+                        cmbScheduleStatusFilter.SelectedValue = BO.ScheduleStatus.All;
+                    break;
+            }
+            
+            // Always refresh the order list when filter type changes
+            queryOrderList();
+        }
+    }
+
     private void OrderStatusFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (sender is ComboBox comboBox && comboBox.SelectedItem is BO.OrderStatus selectedStatus)
         {
             OrderStatus = selectedStatus;
             queryOrderList(); // reload the list based on new filter
+        }
+    }
+
+    private void OrderTypeFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is BO.OrderType selectedType)
+        {
+            OrderType = selectedType;
+            queryOrderList();
+        }
+    }
+
+    private void FragilityLevelFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is BO.FragilityLevel selectedFragility)
+        {
+            FragilityLevel = selectedFragility;
+            queryOrderList();
+        }
+    }
+
+    private void ScheduleStatusFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is BO.ScheduleStatus selectedSchedule)
+        {
+            ScheduleStatus = selectedSchedule;
+            queryOrderList();
         }
     }
 

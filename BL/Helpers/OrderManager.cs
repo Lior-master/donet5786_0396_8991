@@ -276,6 +276,8 @@ internal static class OrderManager
                     list = list.Where(l => l.Status == os).ToList();
                 else if (filter is BO.OrderType ot)
                     list = list.Where(l => l.Type == ot).ToList();
+                else if (filter is BO.ScheduleStatus ss)
+                    list = list.Where(l => l.ScheduleStatus == ss).ToList();
             }
 
             if (sorter != null)
@@ -890,7 +892,7 @@ internal static class OrderManager
         }
     }
 
-    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, BO.OrderType? filter, BO.DeliveredStatus? sorter)
+    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, BO.OrderType? filter, Enum? sorter)
     {
         try
         {
