@@ -157,6 +157,7 @@
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" Style="{StaticResource FieldLabelStyle}"/>
                 <TextBox Grid.Row="1" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
+                         IsReadOnly="{Binding HaveAssignedOrder}"
                          Text="{Binding CourierCurrent.Name, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,15"/>
 
@@ -164,6 +165,7 @@
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Phone:" Style="{StaticResource FieldLabelStyle}"/>
                 <TextBox Grid.Row="2" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
+                         IsReadOnly="{Binding HaveAssignedOrder}"
                          Text="{Binding CourierCurrent.Phone, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,15"/>
 
@@ -171,6 +173,7 @@
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Email:" Style="{StaticResource FieldLabelStyle}"/>
                 <TextBox Grid.Row="3" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
+                         IsReadOnly="{Binding HaveAssignedOrder}"
                          Text="{Binding CourierCurrent.Email, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,15"/>
 
@@ -178,6 +181,7 @@
                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Password:" Style="{StaticResource FieldLabelStyle}"/>
                 <TextBox Grid.Row="4" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
+                         IsReadOnly="{Binding HaveAssignedOrder}"
                          Text="{Binding CourierCurrent.Password, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,15"/>
 
@@ -185,6 +189,7 @@
                 <TextBlock Grid.Row="5" Grid.Column="0" Text="Active:" Style="{StaticResource FieldLabelStyle}"/>
                 <CheckBox Grid.Row="5" Grid.Column="1"
                           IsChecked="{Binding CourierCurrent.IsActive}"
+                          IsEnabled="{Binding HaveAssignedOrderInverted}"
                           VerticalAlignment="Center"
                           Margin="0,0,0,15"/>
 
@@ -192,6 +197,7 @@
                 <TextBlock Grid.Row="6" Grid.Column="0" Text="Transport:" Style="{StaticResource FieldLabelStyle}"/>
                 <ComboBox Grid.Row="6" Grid.Column="1"
                           Style="{StaticResource ModernComboBoxStyle}"
+                          IsEnabled="{Binding HaveAssignedOrderInverted}"
                           ItemsSource="{Binding Source={StaticResource TransportValues}}"
                           SelectedItem="{Binding CourierCurrent.Transport}"
                           Margin="0,0,0,15"/>
@@ -200,6 +206,7 @@
                 <TextBlock Grid.Row="7" Grid.Column="0" Text="Max Distance (km):" Style="{StaticResource FieldLabelStyle}"/>
                 <TextBox Grid.Row="7" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
+                         IsReadOnly="{Binding HaveAssignedOrder}"
                          Text="{Binding CourierCurrent.MaxDistance}"
                          Margin="0,0,0,15"/>
 

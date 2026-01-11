@@ -21,6 +21,28 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     private readonly int? _courierId;
     private readonly Action? _courierObserver;
 
+    private bool _haveAssignedOrder;
+    public bool HaveAssignedOrder
+    {
+        get => _haveAssignedOrder;
+        set
+        {
+            _haveAssignedOrder = value;
+            OnPropertyChanged(nameof(HaveAssignedOrderInverted));
+        }
+    }
+
+    private bool _haveAssignedOrderInverted;
+    public bool HaveAssignedOrderInverted
+    {
+        get => !_haveAssignedOrder;
+        set
+        {
+            _haveAssignedOrderInverted = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool _isReadOnly;
     public bool IsReadOnly
     {
@@ -137,6 +159,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         _isCreateMode = false;
         IsReadOnly = true;
+        
 
         _courierId = courierId;
         _courierObserver = RefreshCourierFromBl;
@@ -153,6 +176,16 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
                 s_bl.Courier.AddObserver(courierId, _courierObserver);
                 CourierCurrent = await Task.Run(() =>
                     s_bl.Courier.GetCourierDetails(bossId, courierId));
+                if (CourierCurrent.CurrentOrder is not null)
+                {
+                    HaveAssignedOrder = true;
+                    OnPropertyChanged(nameof(HaveAssignedOrder));
+                }
+                else
+                {
+                    HaveAssignedOrder = false;
+                    OnPropertyChanged(nameof(HaveAssignedOrder));
+                }
             }
             catch (Exception ex)
             {
