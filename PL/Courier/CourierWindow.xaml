@@ -230,7 +230,7 @@
                          VerticalScrollBarVisibility="Auto"
                          VerticalContentAlignment="Top"
                          IsReadOnly="True"
-                         Text="{Binding CurrentOrderDisplay}"
+                         Text="{Binding CurrentOrderDisplay, Mode=OneWay}"
                          Background="#F9F9F9"/>
             </Grid>
         </Border>

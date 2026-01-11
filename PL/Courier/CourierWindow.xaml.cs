@@ -48,6 +48,29 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
             _courierCurrent = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanRemoveCourier));
+            OnPropertyChanged(nameof(CurrentOrderDisplay)); // Notify UI that CurrentOrderDisplay has changed
+        }
+    }
+
+    /// <summary>
+    /// Gets a formatted string representation of the current order for display in the UI.
+    /// Returns "No current order" if the courier is not currently assigned to any delivery.
+    /// </summary>
+    public string CurrentOrderDisplay
+    {
+        get
+        {
+            if (CourierCurrent?.CurrentOrder == null)
+                return "No current order assigned.";
+
+            var order = CourierCurrent.CurrentOrder;
+            return $"Order ID: {order.OrderId}\n" +
+                   $"Customer: {order.CustomerName}\n" +
+                   $"Address: {order.CustomerAddress}\n" +
+                   $"Phone: {order.CustomerPhone}\n" +
+                   $"Status: {order.OrderStatusEnum}\n" +
+                   $"Pickup Time: {order.PickupTime:dd/MM/yyyy HH:mm}\n" +
+                   $"Distance: {(order.Distance?.ToString("F1") ?? "Unknown")} km";
         }
     }
 
