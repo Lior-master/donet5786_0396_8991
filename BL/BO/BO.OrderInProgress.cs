@@ -22,7 +22,7 @@ public class OrderInProgress
     /// Numeric representation of the order status.
     /// This value can be used when a numeric code is required (for example when interacting with lower-level DAL).
     /// </summary>
-    public OrderStatus OrderStatus { get; init; } 
+    public OrderType OrderType { get; init; } 
 
     /// <summary>
     /// Calculated or measured route distance for the delivery, in kilometers when available.
@@ -48,7 +48,7 @@ public class OrderInProgress
     /// Typed enum representation of the order status.
     /// Use this property in business logic when the enum form is required.
     /// </summary>
-    public OrderStatus OrderStatusEnum { get; init; }
+    public OrderStatus OrderStatus { get; init; }
 
     /// <summary>
     /// Optional textual description of the order or delivery notes.

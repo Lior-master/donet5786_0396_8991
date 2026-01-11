@@ -36,7 +36,7 @@ public class DeliveryPerOrderInList
     /// <summary>
     /// Current status of the order, or <c>null</c> when not available.
     /// </summary>
-    public OrderStatus? OrderStatus { get; init; }
+    public DeliveredStatus? DeliveredStatus { get; init; }
 
     /// <summary>
     /// Time when the delivery arrived at the destination, or <c>null</c> if not yet arrived.

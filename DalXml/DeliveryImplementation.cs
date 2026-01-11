@@ -16,7 +16,7 @@ internal class DeliveryImplementation : IDelivery
             PickupTime = d.ToDateTimeNullable("PickupTime") ?? DateTime.Now,
             ArrivalTime = d.ToDateTimeNullable("ArrivalTime"),
             Distance = d.ToDoubleNullable("Distance"),
-            Status = d.ToEnumNullable<OrderStatus>("Status")
+            DeliveredStatus = d.ToEnumNullable<DeliveredStatus>("DeliveredStatus")
         };
     }
 

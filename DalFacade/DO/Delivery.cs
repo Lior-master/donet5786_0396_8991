@@ -30,7 +30,7 @@
         DateTime PickupTime,
         DateTime? ArrivalTime = null,
         double? Distance = null,
-        OrderStatus? Status = null
+        DeliveredStatus? DeliveredStatus = null
     )
     {
         /// <summary>
@@ -45,7 +45,7 @@
         /// - ArrivalTime = null
         /// - Distance = null
         /// - Transport = <see cref="DeliveryTransport.Car"/>
-        /// - Status = <see cref="OrderStatus.Pending"/> (may be null depending on caller)
+        /// - Status = <see cref="DeliveredStatus.Pending"/> (may be null depending on caller)
         /// </remarks>
         public Delivery() : this(0, 0,DeliveryTransport.Car, 0, DateTime.Now) { }
     }

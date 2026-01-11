@@ -106,7 +106,7 @@ public static class Initialization
                 CustomerPhone: $"+200000000{i + 1:D2}",
                 Type: Type,
                 // use DAL clock to keep all dates consistent with BL clock
-                OrderDate: s_dal.Config.Clock.AddMinutes(-s_rand.Next(0, 48)),
+                OrderDate: s_dal!.Config.Clock.AddMinutes(-s_rand.Next(0, 48)),
                 Latitude: adress.Latitude,
                 Longitude: adress.Longitude
             );
@@ -152,7 +152,7 @@ public static class Initialization
             DateTime pickup = order.OrderDate.AddMinutes(s_rand.Next(3, 20)); // 3-20 minutes après commande
 
             // Determine delivery status and timing
-            DO.OrderStatus? deliveryStatus;
+            DO.DeliveredStatus? deliveryStatus;
             DateTime? arrivalTime = null;
             
             // Create different scenarios plus équilibrés:
@@ -161,7 +161,7 @@ public static class Initialization
             
             if (statusRoll <= 60) // 60% - Delivered
             {
-                deliveryStatus = DO.OrderStatus.Delivered;
+                deliveryStatus = DO.DeliveredStatus.Delivered;
                 
                 // Temps de livraison basés sur le type de transport pour être plus réalistes
                 int deliveryTime = courier.Transport switch
@@ -175,21 +175,24 @@ public static class Initialization
                 
                 arrivalTime = pickup.AddMinutes(deliveryTime);
             }
-            else if (statusRoll <= 80) // 20% - Processing (picked up but not delivered yet)
+            else if (statusRoll <= 80) // 20% - Canceled (picked up but not delivered yet)
             {
-                deliveryStatus = DO.OrderStatus.Processing;
+                deliveryStatus = DO.DeliveredStatus.Canceled;
+                pickup = s_dal.Config.Clock.AddMinutes(s_rand.Next(0, 10)); // picked up in the past
                 arrivalTime = null; // still in transit
             }
             else if (statusRoll <= 95) // 15% - Pending (not picked up yet)
             {
-                deliveryStatus = null; // not yet started
+                deliveryStatus = DO.DeliveredStatus.Absent; // not yet started
                 // Pickup dans le futur proche pour certains pending
-                pickup = s_dal.Config.Clock.AddMinutes(s_rand.Next(-2, 15));
+                pickup = s_dal.Config.Clock.AddMinutes(s_rand.Next(2, 15));
+                arrivalTime = null;
             }
-            else // 5% - Canceled
+            else // 5% - Failed
             {
-                deliveryStatus = DO.OrderStatus.Canceled;
-                arrivalTime = pickup.AddMinutes(s_rand.Next(5, 15));
+                deliveryStatus = DO.DeliveredStatus.Failed;
+                pickup = s_dal.Config.Clock.AddMinutes(s_rand.Next(0, 10));
+                arrivalTime = null;
             }
 
             // Calculate distance for completed deliveries
@@ -210,7 +213,7 @@ public static class Initialization
                 Transport: courier.Transport,
                 ArrivalTime: arrivalTime,
                 Distance: distance,
-                Status: deliveryStatus
+                DeliveredStatus: deliveryStatus
             );
 
             s_dal!.Delivery.Create(delivery);
