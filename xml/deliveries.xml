@@ -2,452 +2,452 @@
 <ArrayOfDelivery xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Delivery>
     <Id>5000</Id>
-    <OrderId>1010</OrderId>
-    <Transport>Foot</Transport>
-    <CourierId>100016</CourierId>
-    <PickupTime>2026-01-07T19:08:41</PickupTime>
+    <OrderId>1001</OrderId>
+    <Transport>Motorcycle</Transport>
+    <CourierId>100029</CourierId>
+    <PickupTime>2026-01-11T22:18:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <DeliveredStatus>Failed</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5001</Id>
-    <OrderId>1027</OrderId>
-    <Transport>Foot</Transport>
-    <CourierId>100006</CourierId>
-    <PickupTime>2026-01-07T19:36:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:59:41</ArrivalTime>
-    <Distance>1.0022567194901877</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1040</OrderId>
+    <Transport>Car</Transport>
+    <CourierId>100012</CourierId>
+    <PickupTime>2026-01-11T21:36:18</PickupTime>
+    <ArrivalTime>2026-01-11T21:50:18</ArrivalTime>
+    <Distance>2.3481821994066037</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5002</Id>
-    <OrderId>1030</OrderId>
-    <Transport>Car</Transport>
-    <CourierId>100022</CourierId>
-    <PickupTime>2026-01-07T19:14:41</PickupTime>
+    <OrderId>1031</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100028</CourierId>
+    <PickupTime>2026-01-11T22:16:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <DeliveredStatus>Absent</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5003</Id>
-    <OrderId>1019</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100008</CourierId>
-    <PickupTime>2026-01-07T19:30:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:48:41</ArrivalTime>
-    <Distance>0.8878389751525565</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1021</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100030</CourierId>
+    <PickupTime>2026-01-11T21:46:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:09:18</ArrivalTime>
+    <Distance>1.4038629313934008</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5004</Id>
-    <OrderId>1024</OrderId>
-    <Transport>Car</Transport>
-    <CourierId>100011</CourierId>
-    <PickupTime>2026-01-07T19:37:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:47:41</ArrivalTime>
-    <Distance>1.1413729036469287</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1005</OrderId>
+    <Transport>Bike</Transport>
+    <CourierId>100023</CourierId>
+    <PickupTime>2026-01-11T22:22:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:39:18</ArrivalTime>
+    <Distance>1.8385210171134234</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5005</Id>
-    <OrderId>1035</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100032</CourierId>
-    <PickupTime>2026-01-07T19:34:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:53:41</ArrivalTime>
-    <Distance>1.4129635086562689</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1000</OrderId>
+    <Transport>Car</Transport>
+    <CourierId>100004</CourierId>
+    <PickupTime>2026-01-11T21:49:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:05:18</ArrivalTime>
+    <Distance>1.7755945114288063</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5006</Id>
     <OrderId>1037</OrderId>
     <Transport>Car</Transport>
-    <CourierId>100028</CourierId>
-    <PickupTime>2026-01-07T19:29:41</PickupTime>
+    <CourierId>100012</CourierId>
+    <PickupTime>2026-01-11T22:22:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <DeliveredStatus>Canceled</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5007</Id>
-    <OrderId>1042</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100036</CourierId>
-    <PickupTime>2026-01-07T19:45:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <OrderId>1045</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100025</CourierId>
+    <PickupTime>2026-01-11T22:11:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:32:18</ArrivalTime>
+    <Distance>1.9630119339212362</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5008</Id>
-    <OrderId>1032</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100026</CourierId>
-    <PickupTime>2026-01-07T19:13:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:23:41</ArrivalTime>
-    <Distance>1.4690394680829224</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1012</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100027</CourierId>
+    <PickupTime>2026-01-11T22:08:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:38:18</ArrivalTime>
+    <Distance>1.1254212966380097</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5009</Id>
-    <OrderId>1058</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100037</CourierId>
-    <PickupTime>2026-01-07T19:44:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:59:41</ArrivalTime>
-    <Distance>0.8416858129439357</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1002</OrderId>
+    <Transport>Motorcycle</Transport>
+    <CourierId>100029</CourierId>
+    <PickupTime>2026-01-11T22:18:18</PickupTime>
+    <ArrivalTime xsi:nil="true" />
+    <Distance xsi:nil="true" />
+    <DeliveredStatus>Canceled</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5010</Id>
-    <OrderId>1021</OrderId>
-    <Transport>Foot</Transport>
-    <CourierId>100035</CourierId>
-    <PickupTime>2026-01-07T19:13:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:42:41</ArrivalTime>
-    <Distance>1.07263113479811</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1051</OrderId>
+    <Transport>Car</Transport>
+    <CourierId>100032</CourierId>
+    <PickupTime>2026-01-11T22:17:18</PickupTime>
+    <ArrivalTime xsi:nil="true" />
+    <Distance xsi:nil="true" />
+    <DeliveredStatus>Canceled</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5011</Id>
-    <OrderId>1016</OrderId>
+    <OrderId>1018</OrderId>
     <Transport>Car</Transport>
-    <CourierId>100038</CourierId>
-    <PickupTime>2026-01-07T19:38:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <CourierId>100011</CourierId>
+    <PickupTime>2026-01-11T21:44:18</PickupTime>
+    <ArrivalTime>2026-01-11T21:59:18</ArrivalTime>
+    <Distance>2.7796221167516286</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5012</Id>
-    <OrderId>1034</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100031</CourierId>
-    <PickupTime>2026-01-07T19:49:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <OrderId>1009</OrderId>
+    <Transport>Motorcycle</Transport>
+    <CourierId>100024</CourierId>
+    <PickupTime>2026-01-11T22:05:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:18:18</ArrivalTime>
+    <Distance>0.9682467776514688</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5013</Id>
-    <OrderId>1022</OrderId>
+    <OrderId>1020</OrderId>
     <Transport>Bike</Transport>
-    <CourierId>100031</CourierId>
-    <PickupTime>2026-01-07T19:37:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:55:41</ArrivalTime>
-    <Distance>1.3835568945541137</Distance>
-    <Status>Delivered</Status>
+    <CourierId>100009</CourierId>
+    <PickupTime>2026-01-11T21:59:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:18:18</ArrivalTime>
+    <Distance>2.024267073558452</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5014</Id>
-    <OrderId>1017</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100036</CourierId>
-    <PickupTime>2026-01-07T19:40:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <OrderId>1043</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100016</CourierId>
+    <PickupTime>2026-01-11T22:19:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:44:18</ArrivalTime>
+    <Distance>2.255195759524292</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5015</Id>
-    <OrderId>1009</OrderId>
-    <Transport>Foot</Transport>
-    <CourierId>100006</CourierId>
-    <PickupTime>2026-01-07T19:42:41</PickupTime>
+    <OrderId>1041</OrderId>
+    <Transport>Car</Transport>
+    <CourierId>100032</CourierId>
+    <PickupTime>2026-01-11T22:17:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <DeliveredStatus>Failed</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5016</Id>
-    <OrderId>1044</OrderId>
-    <Transport>Foot</Transport>
-    <CourierId>100005</CourierId>
-    <PickupTime>2026-01-07T19:30:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:59:41</ArrivalTime>
-    <Distance>1.573450253749097</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1013</OrderId>
+    <Transport>Motorcycle</Transport>
+    <CourierId>100034</CourierId>
+    <PickupTime>2026-01-11T22:07:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:17:18</ArrivalTime>
+    <Distance>0.9547561953059802</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5017</Id>
-    <OrderId>1028</OrderId>
-    <Transport>Car</Transport>
-    <CourierId>100038</CourierId>
-    <PickupTime>2026-01-07T19:31:41</PickupTime>
+    <OrderId>1006</OrderId>
+    <Transport>Bike</Transport>
+    <CourierId>100026</CourierId>
+    <PickupTime>2026-01-11T22:17:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <DeliveredStatus>Canceled</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5018</Id>
-    <OrderId>1059</OrderId>
+    <OrderId>1046</OrderId>
     <Transport>Car</Transport>
-    <CourierId>100004</CourierId>
-    <PickupTime>2026-01-07T19:43:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:53:41</ArrivalTime>
-    <Distance>0.9067156240912213</Distance>
-    <Status>Delivered</Status>
+    <CourierId>100011</CourierId>
+    <PickupTime>2026-01-11T22:17:18</PickupTime>
+    <ArrivalTime xsi:nil="true" />
+    <Distance xsi:nil="true" />
+    <DeliveredStatus>Failed</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5019</Id>
-    <OrderId>1054</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100036</CourierId>
-    <PickupTime>2026-01-07T19:49:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <OrderId>1024</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100003</CourierId>
+    <PickupTime>2026-01-11T21:47:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:14:18</ArrivalTime>
+    <Distance>0.8098071729152263</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5020</Id>
-    <OrderId>1020</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100040</CourierId>
-    <PickupTime>2026-01-07T19:45:41</PickupTime>
-    <ArrivalTime>2026-01-07T20:01:41</ArrivalTime>
-    <Distance>2.36239349871469</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1004</OrderId>
+    <Transport>Bike</Transport>
+    <CourierId>100038</CourierId>
+    <PickupTime>2026-01-11T22:13:18</PickupTime>
+    <ArrivalTime xsi:nil="true" />
+    <Distance xsi:nil="true" />
+    <DeliveredStatus>Failed</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5021</Id>
-    <OrderId>1002</OrderId>
+    <OrderId>1029</OrderId>
     <Transport>Bike</Transport>
-    <CourierId>100033</CourierId>
-    <PickupTime>2026-01-07T19:48:41</PickupTime>
-    <ArrivalTime>2026-01-07T20:11:41</ArrivalTime>
-    <Distance>0.9122453416148022</Distance>
-    <Status>Delivered</Status>
+    <CourierId>100039</CourierId>
+    <PickupTime>2026-01-11T22:13:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:28:18</ArrivalTime>
+    <Distance>2.0220661698986833</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5022</Id>
-    <OrderId>1001</OrderId>
-    <Transport>Car</Transport>
-    <CourierId>100024</CourierId>
-    <PickupTime>2026-01-07T19:34:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:43:41</ArrivalTime>
-    <Distance>1.6962182847894964</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1036</OrderId>
+    <Transport>Motorcycle</Transport>
+    <CourierId>100007</CourierId>
+    <PickupTime>2026-01-11T22:20:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:39:18</ArrivalTime>
+    <Distance>1.4451465105432728</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5023</Id>
-    <OrderId>1040</OrderId>
+    <OrderId>1026</OrderId>
     <Transport>Bike</Transport>
-    <CourierId>100032</CourierId>
-    <PickupTime>2026-01-07T19:29:41</PickupTime>
+    <CourierId>100015</CourierId>
+    <PickupTime>2026-01-11T22:27:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <DeliveredStatus>Absent</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5024</Id>
-    <OrderId>1004</OrderId>
-    <Transport>Car</Transport>
-    <CourierId>100022</CourierId>
-    <PickupTime>2026-01-07T19:52:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <OrderId>1028</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100028</CourierId>
+    <PickupTime>2026-01-11T22:19:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:50:18</ArrivalTime>
+    <Distance>1.7466117160527688</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5025</Id>
-    <OrderId>1029</OrderId>
+    <OrderId>1056</OrderId>
     <Transport>Car</Transport>
-    <CourierId>100011</CourierId>
-    <PickupTime>2026-01-07T19:43:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <CourierId>100012</CourierId>
+    <PickupTime>2026-01-11T22:19:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:36:18</ArrivalTime>
+    <Distance>1.0097191712423312</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5026</Id>
-    <OrderId>1052</OrderId>
+    <OrderId>1010</OrderId>
     <Transport>Foot</Transport>
-    <CourierId>100035</CourierId>
-    <PickupTime>2026-01-07T19:04:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:09:41</ArrivalTime>
-    <Distance>1.1509747846189047</Distance>
-    <Status>Canceled</Status>
+    <CourierId>100025</CourierId>
+    <PickupTime>2026-01-11T22:24:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:52:18</ArrivalTime>
+    <Distance>2.4255851076148995</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5027</Id>
-    <OrderId>1038</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100009</CourierId>
-    <PickupTime>2026-01-07T19:46:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <OrderId>1023</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100013</CourierId>
+    <PickupTime>2026-01-11T21:37:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:03:18</ArrivalTime>
+    <Distance>1.6708036686033085</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5028</Id>
-    <OrderId>1000</OrderId>
+    <OrderId>1042</OrderId>
     <Transport>Foot</Transport>
-    <CourierId>100035</CourierId>
-    <PickupTime>2026-01-07T19:33:41</PickupTime>
-    <ArrivalTime>2026-01-07T20:00:41</ArrivalTime>
-    <Distance>1.130489829951678</Distance>
-    <Status>Delivered</Status>
+    <CourierId>100016</CourierId>
+    <PickupTime>2026-01-11T22:05:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:38:18</ArrivalTime>
+    <Distance>0.8915669332776871</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5029</Id>
-    <OrderId>1014</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100031</CourierId>
-    <PickupTime>2026-01-07T19:21:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <OrderId>1019</OrderId>
+    <Transport>Car</Transport>
+    <CourierId>100011</CourierId>
+    <PickupTime>2026-01-11T21:46:18</PickupTime>
+    <ArrivalTime>2026-01-11T21:58:18</ArrivalTime>
+    <Distance>1.2129685932539092</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5030</Id>
     <OrderId>1011</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100003</CourierId>
-    <PickupTime>2026-01-07T19:34:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:48:41</ArrivalTime>
-    <Distance>1.1042060644240697</Distance>
-    <Status>Delivered</Status>
+    <Transport>Bike</Transport>
+    <CourierId>100026</CourierId>
+    <PickupTime>2026-01-11T21:46:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:04:18</ArrivalTime>
+    <Distance>2.0443111784371135</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5031</Id>
-    <OrderId>1045</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100031</CourierId>
-    <PickupTime>2026-01-07T19:09:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:30:41</ArrivalTime>
-    <Distance>1.0859419473436687</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1038</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100006</CourierId>
+    <PickupTime>2026-01-11T22:03:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:26:18</ArrivalTime>
+    <Distance>2.9944077622249345</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5032</Id>
-    <OrderId>1047</OrderId>
-    <Transport>Foot</Transport>
-    <CourierId>100030</CourierId>
-    <PickupTime>2026-01-07T19:08:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <OrderId>1039</OrderId>
+    <Transport>Motorcycle</Transport>
+    <CourierId>100007</CourierId>
+    <PickupTime>2026-01-11T22:20:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:36:18</ArrivalTime>
+    <Distance>1.315236545086887</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5033</Id>
-    <OrderId>1025</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100026</CourierId>
-    <PickupTime>2026-01-07T19:43:41</PickupTime>
-    <ArrivalTime>2026-01-07T20:00:41</ArrivalTime>
-    <Distance>0.9648694485503795</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1017</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100002</CourierId>
+    <PickupTime>2026-01-11T22:06:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:36:18</ArrivalTime>
+    <Distance>1.4604011861525434</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5034</Id>
-    <OrderId>1006</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100036</CourierId>
-    <PickupTime>2026-01-07T19:08:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <OrderId>1015</OrderId>
+    <Transport>Bike</Transport>
+    <CourierId>100009</CourierId>
+    <PickupTime>2026-01-11T21:56:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:12:18</ArrivalTime>
+    <Distance>1.9927133167979927</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5035</Id>
-    <OrderId>1003</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100009</CourierId>
-    <PickupTime>2026-01-07T19:08:41</PickupTime>
+    <OrderId>1050</OrderId>
+    <Transport>Car</Transport>
+    <CourierId>100032</CourierId>
+    <PickupTime>2026-01-11T22:20:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status>Processing</Status>
+    <DeliveredStatus>Absent</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5036</Id>
-    <OrderId>1012</OrderId>
-    <Transport>Car</Transport>
-    <CourierId>100028</CourierId>
-    <PickupTime>2026-01-07T19:44:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <OrderId>1044</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100006</CourierId>
+    <PickupTime>2026-01-11T21:47:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:07:18</ArrivalTime>
+    <Distance>1.46394938436965</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5037</Id>
     <OrderId>1055</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100036</CourierId>
-    <PickupTime>2026-01-07T19:49:41</PickupTime>
+    <Transport>Car</Transport>
+    <CourierId>100011</CourierId>
+    <PickupTime>2026-01-11T22:22:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <DeliveredStatus>Canceled</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5038</Id>
-    <OrderId>1051</OrderId>
+    <OrderId>1059</OrderId>
     <Transport>Bike</Transport>
     <CourierId>100037</CourierId>
-    <PickupTime>2026-01-07T19:40:41</PickupTime>
+    <PickupTime>2026-01-11T22:24:18</PickupTime>
     <ArrivalTime xsi:nil="true" />
     <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <DeliveredStatus>Absent</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5039</Id>
-    <OrderId>1005</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100037</CourierId>
-    <PickupTime>2026-01-07T19:05:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:20:41</ArrivalTime>
-    <Distance>1.2852710247938743</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1030</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100003</CourierId>
+    <PickupTime>2026-01-11T22:13:18</PickupTime>
+    <ArrivalTime xsi:nil="true" />
+    <Distance xsi:nil="true" />
+    <DeliveredStatus>Canceled</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5040</Id>
-    <OrderId>1033</OrderId>
-    <Transport>Car</Transport>
-    <CourierId>100024</CourierId>
-    <PickupTime>2026-01-07T19:48:41</PickupTime>
-    <ArrivalTime>2026-01-07T20:03:41</ArrivalTime>
-    <Distance>1.4286276982779604</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1014</OrderId>
+    <Transport>Bike</Transport>
+    <CourierId>100023</CourierId>
+    <PickupTime>2026-01-11T22:01:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:20:18</ArrivalTime>
+    <Distance>1.30165313587728</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5041</Id>
-    <OrderId>1049</OrderId>
-    <Transport>Bike</Transport>
-    <CourierId>100033</CourierId>
-    <PickupTime>2026-01-07T19:53:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <OrderId>1025</OrderId>
+    <Transport>Motorcycle</Transport>
+    <CourierId>100034</CourierId>
+    <PickupTime>2026-01-11T21:53:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:09:18</ArrivalTime>
+    <Distance>1.4205704957444087</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5042</Id>
-    <OrderId>1008</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100040</CourierId>
-    <PickupTime>2026-01-07T19:46:41</PickupTime>
-    <ArrivalTime xsi:nil="true" />
-    <Distance xsi:nil="true" />
-    <Status xsi:nil="true" />
+    <OrderId>1052</OrderId>
+    <Transport>Car</Transport>
+    <CourierId>100008</CourierId>
+    <PickupTime>2026-01-11T21:43:18</PickupTime>
+    <ArrivalTime>2026-01-11T21:51:18</ArrivalTime>
+    <Distance>1.1647745119523225</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5043</Id>
-    <OrderId>1046</OrderId>
+    <OrderId>1007</OrderId>
     <Transport>Foot</Transport>
-    <CourierId>100035</CourierId>
-    <PickupTime>2026-01-07T19:34:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:56:41</ArrivalTime>
-    <Distance>1.5378595036053344</Distance>
-    <Status>Delivered</Status>
+    <CourierId>100002</CourierId>
+    <PickupTime>2026-01-11T22:02:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:24:18</ArrivalTime>
+    <Distance>1.21442249085751</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
   <Delivery>
     <Id>5044</Id>
-    <OrderId>1013</OrderId>
-    <Transport>Motorcycle</Transport>
-    <CourierId>100008</CourierId>
-    <PickupTime>2026-01-07T19:23:41</PickupTime>
-    <ArrivalTime>2026-01-07T19:41:41</ArrivalTime>
-    <Distance>2.513944003173884</Distance>
-    <Status>Delivered</Status>
+    <OrderId>1053</OrderId>
+    <Transport>Foot</Transport>
+    <CourierId>100036</CourierId>
+    <PickupTime>2026-01-11T22:16:18</PickupTime>
+    <ArrivalTime>2026-01-11T22:41:18</ArrivalTime>
+    <Distance>2.28738168135701</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
   </Delivery>
 </ArrayOfDelivery>

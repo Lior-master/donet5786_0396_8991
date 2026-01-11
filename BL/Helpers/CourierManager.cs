@@ -494,7 +494,7 @@ internal static class CourierManager
                         CustomerPhone = orderDO.CustomerPhone,
                         PickupTime = currentDelivery.PickupTime,
                         Distance = currentDelivery.Distance,
-                        OrderStatusEnum = ordStatus
+                        OrderStatus = ordStatus
                     };
                 }
             }

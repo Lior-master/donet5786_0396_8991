@@ -133,7 +133,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
                    $"Customer: {order.CustomerName}\n" +
                    $"Address: {order.CustomerAddress}\n" +
                    $"Phone: {order.CustomerPhone}\n" +
-                   $"Status: {order.OrderStatusEnum}\n" +
+                   $"Status: {order.OrderStatus}\n" +
                    $"Pickup Time: {order.PickupTime:dd/MM/yyyy HH:mm}\n" +
                    $"Distance: {(order.Distance?.ToString("F1") ?? "Unknown")} km";
         }
