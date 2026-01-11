@@ -6,7 +6,6 @@
 /// Use the primary constructor to create instances or the generated `with` expression to create modified copies.
 /// </summary>
 /// <param name="Id">Unique identifier of the order (database id or similar).</param>
-/// <param name="Status">Status of the order/delivery service. See <see cref="OrderStatus"/>.</param>
 /// <param name="CustomerName">Full name of the customer.</param>
 /// <param name="CustomerAddress">Delivery address for the customer.</param>
 /// <param name="CustomerPhone">Contact phone number for the customer (stored as string; prefer E.164 format).</param>

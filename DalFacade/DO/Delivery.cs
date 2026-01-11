@@ -14,7 +14,7 @@
     /// <param name="ArrivalTime">Optional arrival / completion time. Null until delivery is completed or recorded.</param>
     /// <param name="Distance">Optional measured distance of the delivery in kilometers. Null when not measured.</param>
     /// <param name="Transport">Transport mode used for the delivery. See <see cref="DeliveryTransport"/>.</param>
-    /// <param name="Status">Current delivery status. See <see cref="OrderStatus"/>; null if not set.</param>
+    /// <param name="Status">Current delivery status. See <see cref="DeliveredStatus"/>; null if not set.</param>
     /// <remarks>
     /// - Nullable fields (<see cref="ArrivalTime"/>, <see cref="Distance"/>, <see cref="Status"/>) indicate values
     ///   that may not be known at creation time and can be populated later.

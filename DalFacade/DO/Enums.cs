@@ -1,27 +1,6 @@
 ﻿namespace DO;
 
 /// <summary>
-/// Status of an order in the system.
-/// </summary>
-public enum OrderStatus
-{
-    /// <summary>Order has been created but not yet processed.</summary>
-    Pending,
-
-    /// <summary>Order is currently being processed.</summary>
-    Processing,
-
-    /// <summary>Order has been delivered to the recipient.</summary>
-    Delivered,
-
-    /// <summary>Order was cancelled before shipment.</summary>
-    Canceled,
-
-    /// <summary>Order was returned after delivery.</summary>
-    Returned
-}
-
-/// <summary>
 /// Outcome of a delivery attempt as reported by the courier or delivery subsystem.
 /// </summary>
 public enum DeliveredStatus
