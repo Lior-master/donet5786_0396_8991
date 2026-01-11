@@ -53,30 +53,40 @@ public partial class OrderListWindow : Window
         {
             var bossId = s_bl.Admin.GetConfig().BossId;
 
-            if (FilterTypeOrder == PL.FilterTypeOrder.All)
+            switch (FilterTypeOrder)
             {
-                OrderList = s_bl?.Order.orderInLists(bossId, null, null, null)!;
-            }
-            else if (FilterTypeOrder == PL.FilterTypeOrder.ByOrderStatus)
-            {
-                var statusFilter = OrderStatus == BO.OrderStatus.All ? null : (Enum?)OrderStatus;
-                OrderList = s_bl?.Order.orderInLists(bossId, statusFilter, null, null)!;
-            }
-            else if (FilterTypeOrder == PL.FilterTypeOrder.ByOrderType)
-            {
-                var typeFilter = OrderType == BO.OrderType.All ? null : (Enum?)OrderType;
-                OrderList = s_bl?.Order.orderInLists(bossId, typeFilter, null, null)!;
-            }
-            else if (FilterTypeOrder == PL.FilterTypeOrder.BySheduleStatus)
-            {
-                var scheduleFilter = ScheduleStatus == BO.ScheduleStatus.All ? null : (Enum?)ScheduleStatus;
-                OrderList = s_bl?.Order.orderInLists(bossId, scheduleFilter, null, null)!;
+                case PL.FilterTypeOrder.All:
+                    OrderList = s_bl.Order.orderInLists(bossId, null, null, null);
+                    break;
+
+                case PL.FilterTypeOrder.ByOrderStatus:
+                    OrderList = (OrderStatus == BO.OrderStatus.All)
+                        ? s_bl.Order.orderInLists(bossId, null, null, null)
+                        : s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.ByOrderStatus, OrderStatus, null);
+                    break;
+
+                case PL.FilterTypeOrder.ByOrderType:
+                    OrderList = (OrderType == BO.OrderType.All)
+                        ? s_bl.Order.orderInLists(bossId, null, null, null)
+                        : s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.ByOrderType, OrderType, null);
+                    break;
+
+                case PL.FilterTypeOrder.BySheduleStatus:
+                    OrderList = (ScheduleStatus == BO.ScheduleStatus.All)
+                        ? s_bl.Order.orderInLists(bossId, null, null, null)
+                        : s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.BySheduleStatus, ScheduleStatus, null);
+                    break;
+
+                default:
+                    OrderList = s_bl.Order.orderInLists(bossId, null, null, null);
+                    break;
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error loading orders: {ex.Message}", 
-                           "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Error loading orders: {ex.Message}",
+                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
             OrderList = new List<BO.OrderInList>();
         }
     }

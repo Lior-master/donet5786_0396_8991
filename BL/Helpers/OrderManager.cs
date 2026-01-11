@@ -353,15 +353,15 @@ internal static class OrderManager
 
                 list = fKey switch
                 {
-                    "Status" => Object is BO.OrderStatus os
+                    "ByOrderStatus" => Object is BO.OrderStatus os
                         ? list.Where(l => l.Status == os).ToList()
                         : throw new BO.BLInvalidInputException("Invalid filter value type for Status."),
 
-                    "Type" => Object is BO.OrderType ot
+                    "ByOrderType" => Object is BO.OrderType ot
                         ? list.Where(l => l.Type == ot).ToList()
                         : throw new BO.BLInvalidInputException("Invalid filter value type for Type."),
 
-                    "ScheduleStatus" => Object is BO.ScheduleStatus ss
+                    "BySheduleStatus" => Object is BO.ScheduleStatus ss
                         ? list.Where(l => l.ScheduleStatus == ss).ToList()
                         : throw new BO.BLInvalidInputException("Invalid filter value type for ScheduleStatus."),
 
