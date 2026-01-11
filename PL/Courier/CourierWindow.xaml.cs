@@ -45,6 +45,11 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Gets the text to display on the save/add button based on the mode.
+    /// </summary>
+    public string SaveButtonText => _isCreateMode ? "➕ Add" : "💾 Save";
+
+    /// <summary>
     /// Determines if the current courier can be removed.
     /// A courier can only be removed if they have no delivery history and no current order.
     /// </summary>
@@ -88,6 +93,9 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
             StartDate = s_bl.Admin.GetClock(),
             Administrator = BO.Administrator.Courier
         };
+
+        // Notify the UI that SaveButtonText should be refreshed
+        OnPropertyChanged(nameof(SaveButtonText));
     }
 
     /// <summary>
@@ -101,6 +109,9 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
 
         _courierId = courierId;
         _courierObserver = RefreshCourierFromBl;
+
+        // Notify the UI that SaveButtonText should be refreshed
+        OnPropertyChanged(nameof(SaveButtonText));
 
         Loaded += async (_, __) =>
         {
@@ -156,8 +167,6 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
                 if (!courierExists)
                 {
                     // Courier was deleted - close this window
-                    MessageBox.Show("This courier has been deleted.", "Courier Removed", 
-                        MessageBoxButton.OK, MessageBoxImage.Information);
                     Close();
                     return;
                 }
