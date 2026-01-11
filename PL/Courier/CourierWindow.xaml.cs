@@ -40,6 +40,24 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         {
             _courierCurrent = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CanRemoveCourier));
+        }
+    }
+
+    /// <summary>
+    /// Determines if the current courier can be removed.
+    /// A courier can only be removed if they have no delivery history and no current order.
+    /// </summary>
+    public bool CanRemoveCourier
+    {
+        get
+        {
+            if (_isCreateMode || CourierCurrent == null)
+                return false;
+
+            return CourierCurrent.NumberOfOnTimeDeliveries == 0
+                   && CourierCurrent.NumberOfLateDeliveries == 0
+                   && CourierCurrent.CurrentOrder == null;
         }
     }
 
@@ -119,8 +137,41 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
             if (_isCreateMode || _courierId is null)
                 return;
 
-            CourierCurrent = await Task.Run(() =>
-                s_bl.Courier.GetCourierDetails(bossId, _courierId.Value));
+            try 
+            {
+                // Add defensive check to prevent race condition
+                var courierExists = await Task.Run(() =>
+                {
+                    try
+                    {
+                        s_bl.Courier.GetCourierDetails(bossId, _courierId.Value);
+                        return true;
+                    }
+                    catch (BO.BLNotFoundException)
+                    {
+                        return false;
+                    }
+                });
+
+                if (!courierExists)
+                {
+                    // Courier was deleted - close this window
+                    MessageBox.Show("This courier has been deleted.", "Courier Removed", 
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    Close();
+                    return;
+                }
+
+                CourierCurrent = await Task.Run(() =>
+                    s_bl.Courier.GetCourierDetails(bossId, _courierId.Value));
+            }
+            catch (BO.BLNotFoundException)
+            {
+                // Courier was deleted - close this window
+                MessageBox.Show("This courier has been deleted.", "Courier Removed", 
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                Close();
+            }
         });
     }
 
@@ -155,6 +206,54 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         {
             MessageBox.Show($"Save failed: {ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void btnRemove_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isCreateMode || _courierId == null)
+            return;
+
+        try
+        {
+            // Confirm removal with user
+            var result = MessageBox.Show(
+                $"Are you sure you want to remove courier '{CourierCurrent.Name}' (ID: {CourierCurrent.Id})?\n\nThis action cannot be undone.",
+                "Confirm Removal",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                int bossId = s_bl.Admin.GetConfig().BossId;
+                int courierId = CourierCurrent.Id;
+                string courierName = CourierCurrent.Name;
+                s_bl.Courier.removeCourier(bossId, courierId);
+                Close();
+
+                MessageBox.Show(
+                    $"Courier '{courierName}' has been successfully removed.",
+                    "Removal Successful",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+        }
+        catch (BO.BLInvalidOperationException ex)
+        {
+            MessageBox.Show(
+                $"Cannot remove courier '{CourierCurrent.Name}':\n{ex.Message}",
+                "Removal Not Allowed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Error removing courier '{CourierCurrent.Name}':\n{ex.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
     }
 

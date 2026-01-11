@@ -105,6 +105,16 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Remove Button Style -->
+        <Style x:Key="RemoveButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#FF5722"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E64A19"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </Window.Resources>
 
     <Grid Margin="20">
@@ -216,7 +226,26 @@
                     Width="120" Height="45"
                     Style="{StaticResource SaveButtonStyle}"
                     Click="btnSave_Click"
-                    Margin="0,0,15,0"/>
+                    Margin="0,0,10,0"/>
+            
+            <!-- Remove Button - Only visible when courier can be removed -->
+            <Button Content="🗑️ Remove"
+                    Width="120" Height="45"
+                    Click="btnRemove_Click"
+                    ToolTip="Remove this courier (only if no deliveries)"
+                    Margin="0,0,10,0">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource RemoveButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CanRemoveCourier}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            
             <Button Content="❌ Cancel"
                     Style="{StaticResource CancelButtonStyle}"
                     Width="120" Height="45"

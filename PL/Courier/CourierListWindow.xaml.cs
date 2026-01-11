@@ -263,20 +263,6 @@ public partial class CourierListWindow : Window
         if (button.DataContext is not BO.CourierInList selectedCourier)
             return;
 
-        // Check if courier can be removed (no deliveries)
-        bool canRemove = selectedCourier.NumberOfOnTimeDeliveries == 0 
-                        && selectedCourier.NumberOfLateDeliveries == 0 
-                        && selectedCourier.ActualOrder == null;
-
-        if (!canRemove)
-        {
-            MessageBox.Show(
-                $"Cannot remove courier '{selectedCourier.Name}' because they have delivery history or an active order.",
-                "Removal Not Allowed",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-            return;
-        }
 
         try
         {
