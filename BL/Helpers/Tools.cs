@@ -96,21 +96,28 @@ internal static class Tools
     /// </remarks>
     public static BO.OrderStatus CalculateOrderStatus(List<DO.Delivery> deliveries)
     {
-        // Handle null or empty delivery list
+        // No deliveries => order not yet started
         if (deliveries == null || deliveries.Count == 0)
             return BO.OrderStatus.Pending;
 
-        // Find the most recent delivery by pickup time
-        var last = deliveries.OrderByDescending(d => d.PickupTime).First();
+        // If there exists at least one delivery that is not finished yet
+        // (DeliveredStatus is the delivery END type; null = still in progress)
+        if (deliveries.Any(d => d.DeliveredStatus == null))
+            return BO.OrderStatus.Processing;
 
-        // Map data object status to business object status
-        return last.Status switch
+        // All deliveries are finished -> determine status by the last finished delivery
+        var lastFinished = deliveries
+            .Where(d => d.DeliveredStatus != null)
+            .OrderByDescending(d => d.ArrivalTime)
+            .First();
+
+        return lastFinished.DeliveredStatus switch
         {
-            DO.OrderStatus.Pending => BO.OrderStatus.Pending,
-            DO.OrderStatus.Processing => BO.OrderStatus.Processing,
-            DO.OrderStatus.Delivered => BO.OrderStatus.Delivered,
-            DO.OrderStatus.Canceled => BO.OrderStatus.Canceled,
-            DO.OrderStatus.Returned => BO.OrderStatus.Returned,
+            DO.DeliveredStatus.Delivered => BO.OrderStatus.Delivered,
+            DO.DeliveredStatus.Rejected => BO.OrderStatus.Returned,
+            DO.DeliveredStatus.Canceled => BO.OrderStatus.Canceled,
+            DO.DeliveredStatus.Absent => BO.OrderStatus.Returned,
+            DO.DeliveredStatus.Failed => BO.OrderStatus.Canceled,
             _ => BO.OrderStatus.Pending
         };
     }
