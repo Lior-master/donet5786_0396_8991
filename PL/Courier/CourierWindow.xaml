@@ -8,7 +8,7 @@
         xmlns:bo="clr-namespace:BO;assembly=BL"
         mc:Ignorable="d"
         Title="Courier Details"
-        Height="750" Width="600"
+        Height="769" Width="696"
         WindowStartupLocation="CenterScreen"
         Background="#F5F5F5"
         DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}">
@@ -137,6 +137,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -149,7 +150,7 @@
                 <TextBox Grid.Row="0" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
                          Text="{Binding CourierCurrent.Id}"
-                         IsReadOnly="{Binding isReadOnly}"
+                         IsReadOnly="{Binding IsReadOnly}"
                          Margin="0,0,0,15"/>
 
                 <!-- Name (editable) -->
@@ -206,7 +207,7 @@
                 <TextBlock Grid.Row="8" Grid.Column="0" Text="Role:" Style="{StaticResource FieldLabelStyle}"/>
                 <ComboBox Grid.Row="8" Grid.Column="1"
                           Style="{StaticResource ModernComboBoxStyle}"
-                          IsReadOnly="{Binding isReadOnly}"
+                          IsEnabled="{Binding IsReadOnlyInverted}"
                           ItemsSource="{Binding Source={StaticResource AdministratorValues}}"
                           SelectedItem="{Binding CourierCurrent.Administrator}"
                           Margin="0,0,0,15"/>
@@ -215,8 +216,22 @@
                 <TextBlock Grid.Row="9" Grid.Column="0" Text="Start Date:" Style="{StaticResource FieldLabelStyle}"/>
                 <TextBox Grid.Row="9" Grid.Column="1"
                          Style="{StaticResource ModernTextBoxStyle}"
-                         IsReadOnly="{Binding isReadOnly}"
-                         Text="{Binding CourierCurrent.StartDate, StringFormat={}{0:dd/MM/yyyy}}"/>
+                         IsReadOnly="{Binding IsReadOnly}"
+                         Text="{Binding CourierCurrent.StartDate, StringFormat={}{0:dd/MM/yyyy}}"
+                         Margin="0,0,0,15"/>
+
+                <!-- Current Order (read-only) -->
+                <TextBlock Grid.Row="10" Grid.Column="0" Text="Current Order:" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top" Margin="0,5,15,0"/>
+                <TextBox Grid.Row="10" Grid.Column="1"
+                         Style="{StaticResource ModernTextBoxStyle}"
+                         Height="80"
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         VerticalScrollBarVisibility="Auto"
+                         VerticalContentAlignment="Top"
+                         IsReadOnly="True"
+                         Text="{Binding CurrentOrderDisplay}"
+                         Background="#F9F9F9"/>
             </Grid>
         </Border>
 
@@ -227,7 +242,7 @@
                     Style="{StaticResource SaveButtonStyle}"
                     Click="btnSave_Click"
                     Margin="0,0,10,0"/>
-            
+
             <!-- Remove Button - Only visible when courier can be removed -->
             <Button Content="🗑️ Remove"
                     Width="120" Height="45"
@@ -245,7 +260,7 @@
                     </Style>
                 </Button.Style>
             </Button>
-            
+
             <Button Content="❌ Cancel"
                     Style="{StaticResource CancelButtonStyle}"
                     Width="120" Height="45"

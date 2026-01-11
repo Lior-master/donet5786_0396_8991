@@ -3,6 +3,7 @@ using DalApi;
 using DO;
 using System.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Helpers;
@@ -25,6 +26,63 @@ internal static class CourierManager
     /// </summary>
     internal static ObserverManager Observers = new();
     
+    /// <summary>
+    /// Cache for delivery data to prevent concurrent file access issues.
+    /// Thread-safe collection that stores deliveries with timestamp for cache invalidation.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, (DateTime timestamp, IEnumerable<Delivery> data)> _deliveryCache = new();
+    
+    /// <summary>
+    /// Cache expiration time in minutes. Deliveries are cached for 5 minutes to balance performance and data freshness.
+    /// </summary>
+    private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Thread-safe method to get delivery data, using cache when available and valid.
+    /// Falls back to database access when cache is expired or missing.
+    /// </summary>
+    /// <returns>Current delivery data from cache or database</returns>
+    private static IEnumerable<Delivery> GetDeliveries()
+    {
+        const string cacheKey = "all_deliveries";
+        var now = DateTime.Now;
+
+        // Try to get from cache first
+        if (_deliveryCache.TryGetValue(cacheKey, out var cached) && 
+            (now - cached.timestamp) < CacheExpiration)
+        {
+            return cached.data;
+        }
+
+        // Cache miss or expired - refresh from database
+        try
+        {
+            var deliveries = s_dal.Delivery.ReadAll().ToList(); // Materialize to avoid multiple enumerations
+            _deliveryCache.AddOrUpdate(cacheKey, 
+                (now, deliveries), 
+                (key, old) => (now, deliveries));
+            return deliveries;
+        }
+        catch (Exception ex) when (ex is DO.DalXMLFileLoadCreateException)
+        {
+            // If we have stale cache data, return it rather than failing
+            if (_deliveryCache.TryGetValue(cacheKey, out var staleCache))
+            {
+                return staleCache.data;
+            }
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Invalidates the delivery cache to ensure fresh data is loaded on next access.
+    /// Call this method whenever delivery data is modified.
+    /// </summary>
+    private static void InvalidateDeliveryCache()
+    {
+        _deliveryCache.Clear();
+    }
+
     /// <summary>
     /// Adds a new courier to the system after validating the requester's existence.
     /// Automatically generates a unique courier ID if not provided, and sets a valid start date.
@@ -123,8 +181,8 @@ internal static class CourierManager
             // Retrieve the configured inactivity threshold from system settings
             TimeSpan inactivityThreshold = s_dal.Config.Inactivity;
 
-            // Get all delivery records to analyze courier activity
-            var allDeliveries = s_dal.Delivery.ReadAll();
+            // Get all delivery records to analyze courier activity using cached data
+            var allDeliveries = GetDeliveries();
 
             // Process all active couriers to check for inactivity
             var updatedCouriers = s_dal.Courier.ReadAll()
@@ -270,8 +328,8 @@ internal static class CourierManager
                     couriers = couriers.Where(c => (BO.DeliveryTransport)c.Transport == transportType);
             }
 
-            // Retrieve all deliveries and configuration for performance calculations
-            var allDeliveries = s_dal.Delivery.ReadAll();
+            // Retrieve all deliveries and configuration for performance calculations using cached data
+            var allDeliveries = GetDeliveries();
             var config = AdminManager.GetConfig();
 
             /// <summary>
@@ -368,8 +426,8 @@ internal static class CourierManager
             if (courierDO == null)
                 throw new BLNotFoundException("Courier ID does not exist.");
 
-            // Get all deliveries handled by this courier for performance analysis
-            var courierDeliveries = s_dal.Delivery.ReadAll().Where(d => d.CourierId == courierId);
+            // Get all deliveries handled by this courier for performance analysis using cached data
+            var courierDeliveries = GetDeliveries().Where(d => d.CourierId == courierId);
 
             // Initialize counters for on-time and late deliveries
             int onTime = 0;
@@ -423,8 +481,8 @@ internal static class CourierManager
 
                 if (orderDO != null)
                 {
-                    // Get all delivery records for this order to calculate its status
-                    var deliveriesForOrder = s_dal.Delivery.ReadAll(d => d.OrderId == orderDO.Id).ToList();
+                    // Get all delivery records for this order to calculate its status using cached data
+                    var deliveriesForOrder = GetDeliveries().Where(d => d.OrderId == orderDO.Id).ToList();
                     var ordStatus = Tools.CalculateOrderStatus(deliveriesForOrder);
 
                     // Build the order-in-progress view model
@@ -595,7 +653,7 @@ internal static class CourierManager
     /// <summary>
     /// Removes a courier from the system with validation checks.
     /// Prevents deletion if the courier has any associated deliveries or is currently handling an active delivery.
-    /// Notifies observers of the removal.
+    /// Notifies observers of the removal and invalidates delivery cache.
     /// </summary>
     /// <param name="requesterId">ID of the user requesting the removal (must exist in the system).</param>
     /// <param name="courierId">ID of the courier to be deleted.</param>
@@ -616,9 +674,8 @@ internal static class CourierManager
             if (courier == null)
                 throw new BLNotFoundException($"Courier ID {courierId} does not exist.");
 
-            // Retrieve all deliveries handled by this courier
-            var deliveries = s_dal.Delivery.ReadAll()
-                                           .Where(d => d.CourierId == courierId);
+            // Retrieve all deliveries handled by this courier using cached data
+            var deliveries = GetDeliveries().Where(d => d.CourierId == courierId);
 
             // Prevent deletion if the courier has any deliveries in the system
             if (deliveries.Any())
@@ -630,6 +687,9 @@ internal static class CourierManager
 
             // Delete the courier from the data layer
             s_dal.Courier.Delete(courierId);
+            
+            // Invalidate delivery cache since courier relationships may have changed
+            InvalidateDeliveryCache();
             
             // Notify subscribers that this item has been deleted and the list has changed
             Observers.NotifyItemUpdated(courierId);

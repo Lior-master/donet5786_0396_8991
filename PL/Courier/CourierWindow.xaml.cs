@@ -21,16 +21,23 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     private readonly int? _courierId;
     private readonly Action? _courierObserver;
 
-    private bool _isIdReadOnly;
+    private bool _isReadOnly;
     public bool IsReadOnly
     {
-        get => _isIdReadOnly;
+        get => _isReadOnly;
         private set
         {
-            _isIdReadOnly = value;
+            _isReadOnly = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsReadOnlyInverted));
         }
     }
+
+    /// <summary>
+    /// Gets the inverted value of IsReadOnly for use with IsEnabled binding.
+    /// When IsReadOnly is true, IsEnabled should be false, and vice versa.
+    /// </summary>
+    public bool IsReadOnlyInverted => !IsReadOnly;
 
     private BO.Courier? _courierCurrent;
     public BO.Courier CourierCurrent
@@ -79,6 +86,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         _isCreateMode = true;
         IsReadOnly = false;
+        OnPropertyChanged(nameof(IsReadOnly));
 
         CourierCurrent = new BO.Courier
         {
@@ -111,6 +119,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         _courierObserver = RefreshCourierFromBl;
 
         // Notify the UI that SaveButtonText should be refreshed
+        OnPropertyChanged(nameof(IsReadOnly));
         OnPropertyChanged(nameof(SaveButtonText));
 
         Loaded += async (_, __) =>
