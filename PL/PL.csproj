@@ -6,11 +6,10 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
+		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 		<BaseOutputPath>$(SolutionDir)\bin\</BaseOutputPath>
 		<OutputPath>$(SolutionDir)\bin\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-		<UseCommonOutputDirectory>true</UseCommonOutputDirectory>
 	</PropertyGroup>
 
 	<ItemGroup>
