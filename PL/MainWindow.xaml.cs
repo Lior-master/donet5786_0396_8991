@@ -114,24 +114,50 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             var bossId = s_bl.Admin.GetConfig().BossId;
-            var summaryData = s_bl.Order.GetOrdersBySummary(bossId).ToArray();
-            
-            // Ensure we have exactly 20 elements (4 schedules × 5 statuses)
-            if (summaryData.Length >= 20)
+
+            // BL returns status-major layout:
+            // idx = OrderStatus * 4 + ScheduleStatus
+            var raw = s_bl.Order.GetOrdersBySummary(bossId).ToArray();
+
+            // We expect 5 statuses (Pending..Returned) and 4 schedules (OnTime, InRisk, Late, Unknown)
+            // UI wants schedule-major by ROWS in this order: OnTime, Late, InRisk, Unknown
+            const int statusCount = 5;
+            const int scheduleCount = 4;
+
+            var ui = new int[statusCount * scheduleCount]; // 20
+
+            // UI row -> enum schedule index mapping
+            // Row0 OnTime   -> 0
+            // Row1 Late     -> 2
+            // Row2 InRisk   -> 1
+            // Row3 Unknown  -> 3
+            int[] scheduleMap = { 0, 2, 1, 3 };
+
+            if (raw.Length >= 20)
             {
-                OrderSummaryData = summaryData.Take(20).ToArray();
+                for (int row = 0; row < scheduleCount; row++)
+                {
+                    int scheduleEnumIdx = scheduleMap[row];
+
+                    for (int col = 0; col < statusCount; col++)
+                    {
+                        int blIdx = col * scheduleCount + scheduleEnumIdx; // status-major
+                        int uiIdx = row * statusCount + col;               // schedule-major (row blocks)
+
+                        ui[uiIdx] = raw[blIdx];
+                    }
+                }
+
+                OrderSummaryData = ui;
             }
             else
             {
-                // Pad with zeros if we have fewer elements
-                var paddedData = new int[20];
-                Array.Copy(summaryData, paddedData, Math.Min(summaryData.Length, 20));
-                OrderSummaryData = paddedData;
+                // Fallback: pad with zeros
+                OrderSummaryData = new int[20];
             }
         }
         catch (Exception ex)
         {
-            // On error, initialize with zeros
             OrderSummaryData = new int[20];
             System.Diagnostics.Debug.WriteLine($"Error refreshing order summary: {ex.Message}");
         }

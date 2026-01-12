@@ -147,13 +147,9 @@ internal static class OrderManager
     {
         try
         {
-            var requester = s_dal.Courier.Read(requesterId);
-            if (requester == null)
-                throw new BO.BLNotFoundException("Requester does not exist.");
-
-            var orders = s_dal.Order.ReadAll().ToList();
-            var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
             var config = AdminManager.GetConfig();
+            if (requesterId != config.BossId)
+                throw new BO.BLInvalidOperationException("Requester is not authorized for order management operations.");
 
             var orderStatuses = Enum.GetValues(typeof(BO.OrderStatus))
                 .Cast<BO.OrderStatus>()
@@ -170,76 +166,21 @@ internal static class OrderManager
 
             int[] summary = new int[statusCount * scheduleCount];
 
-            var projections = orders.Select(o =>
-            {
-                var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
+            var list = orderInLists(requesterId, null, null, null).ToList();
 
-                var lastFinished = orderDeliveries
-                    .Where(d => d.ArrivalTime != null)
-                    .OrderByDescending(d => d.ArrivalTime)
-                    .FirstOrDefault();
-
-                DateTime? realArrival = lastFinished?.ArrivalTime;
-
-                double lat = o.Latitude ?? 0;
-                double lon = o.Longitude ?? 0;
-
-                if (lat == 0 && lon == 0)
-                {
-                    try
-                    {
-                        var coords = Tools.GetCoordinatesFromAddressAsync(o.CustomerAddress).GetAwaiter().GetResult();
-                        lat = coords.Latitude;
-                        lon = coords.Longitude;
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                double distance = Tools.BirdDistance(
-                    config.CompanyLatitude,
-                    config.CompanyLongitude,
-                    lat,
-                    lon
-                );
-
-                var deliveryForSpeed =
-                    orderDeliveries.FirstOrDefault(d => d.DeliveredStatus == null) ??
-                    orderDeliveries.OrderByDescending(d => d.PickupTime).FirstOrDefault();
-
-                double speed = config.CarSpeed;
-                if (deliveryForSpeed != null)
-                    speed = Tools.GetSpeed(deliveryForSpeed.Transport, config);
-
-                DateTime? estArrival = distance > 0
-                    ? Tools.CalculateEstimatedArrival(o.OrderDate, distance, speed)
-                    : null;
-
-                DateTime maxArrival = o.OrderDate.Add(config.MaxDeliveryTime);
-
-                var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
-                var scheduleStatus = Tools.CalculateScheduleStatus(
-                    orderStatus,
-                    o.OrderDate,
-                    estArrival,
-                    maxArrival,
-                    realArrival
-                );
-
-                return new { Status = orderStatus, Schedule = scheduleStatus };
-            })
-            .Where(p => p.Status != BO.OrderStatus.All &&
-                        p.Schedule != BO.ScheduleStatus.All);
-
-            var groups = projections.GroupBy(p => new { p.Status, p.Schedule });
+            var groups = list
+                .Where(l => l.Status != BO.OrderStatus.All && l.ScheduleStatus != BO.ScheduleStatus.All)
+                .GroupBy(l => new { l.Status, l.ScheduleStatus });
 
             foreach (var g in groups)
             {
-                int statusIndex = orderStatuses.IndexOf(g.Key.Status);
-                int scheduleIndex = scheduleStatuses.IndexOf(g.Key.Schedule);
+                int sIdx = orderStatuses.IndexOf(g.Key.Status);
+                int schIdx = scheduleStatuses.IndexOf(g.Key.ScheduleStatus);
 
-                int idx = statusIndex * scheduleCount + scheduleIndex;
+                if (sIdx < 0 || schIdx < 0)
+                    continue;
+
+                int idx = sIdx * scheduleCount + schIdx;
                 summary[idx] = g.Count();
             }
 
@@ -256,8 +197,7 @@ internal static class OrderManager
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
             if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
-            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException)
-                throw new BO.BLFailedOperation(ex.Message, ex);
+            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
 
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
@@ -279,27 +219,32 @@ internal static class OrderManager
     {
         try
         {
-            // Validate requester is the "main admin"
             var config = AdminManager.GetConfig();
             if (requesterId != config.BossId)
                 throw new BO.BLInvalidOperationException("Requester is not authorized for order management operations.");
 
-            // Read all data once to minimize DAL calls
             var doOrders = s_dal.Order.ReadAll().ToList();
             var deliveriesDO = s_dal.Delivery.ReadAll().ToList();
 
-            // Get current time for elapsed time calculations
             var now = AdminManager.Now;
 
-            // Project each order to an OrderInList view model with computed metrics
             var list = doOrders.Select(order =>
             {
-                // Get all deliveries for this order
                 var orderDeliveries = deliveriesDO.Where(d => d.OrderId == order.Id).ToList();
-                var lastDelivery = orderDeliveries.OrderByDescending(d => d.PickupTime).FirstOrDefault();
-                int? deliveryId = lastDelivery?.Id;
 
-                // Retrieve or geocode coordinates for distance calculation
+                var lastByPickup = orderDeliveries
+                    .OrderByDescending(d => d.PickupTime)
+                    .FirstOrDefault();
+
+                int? deliveryId = lastByPickup?.Id;
+
+                var lastFinished = orderDeliveries
+                    .Where(d => d.ArrivalTime != null)
+                    .OrderByDescending(d => d.ArrivalTime)
+                    .FirstOrDefault();
+
+                DateTime? realArrival = lastFinished?.ArrivalTime;
+
                 double lat = order.Latitude ?? 0;
                 double lon = order.Longitude ?? 0;
                 if (lat == 0 && lon == 0)
@@ -316,7 +261,6 @@ internal static class OrderManager
                     }
                 }
 
-                // Calculate straight-line distance from company to customer
                 double distance = Tools.BirdDistance(
                     config.CompanyLatitude,
                     config.CompanyLongitude,
@@ -324,24 +268,18 @@ internal static class OrderManager
                     lon
                 );
 
-                // Choose speed based on the last delivery's transport method, or default to car speed
                 double speed = config.CarSpeed;
-                if (lastDelivery != null)
-                    speed = Tools.GetSpeed(lastDelivery.Transport, config);
+                if (lastByPickup != null)
+                    speed = Tools.GetSpeed(lastByPickup.Transport, config);
 
-                // Calculate estimated arrival time based on distance and speed
                 DateTime? estArrival = distance > 0
                     ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, speed)
                     : null;
 
-                // Add risk range to determine maximum acceptable arrival time
-                DateTime? maxArrival = estArrival?.Add(config.RiskRange);
-                DateTime? realArrival = lastDelivery?.ArrivalTime;
+                DateTime maxArrival = order.OrderDate.Add(config.MaxDeliveryTime);
 
-                // Calculate order status from delivery records
                 var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
 
-                // Determine schedule status based on arrival estimates
                 var schedule = Tools.CalculateScheduleStatus(
                     orderStatus,
                     order.OrderDate,
@@ -359,13 +297,11 @@ internal static class OrderManager
                     Status = orderStatus,
                     ScheduleStatus = schedule,
                     OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : now - order.OrderDate,
-                    TreatmentEndTime = lastDelivery != null ? lastDelivery.PickupTime - order.OrderDate : TimeSpan.Zero,
+                    TreatmentEndTime = lastByPickup != null ? lastByPickup.PickupTime - order.OrderDate : TimeSpan.Zero,
                     NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
                 };
             }).ToList();
 
-            // Apply optional filter:
-            // filter = property selector (Enum?), Object = value (object?)
             if (filter != null)
             {
                 if (Object == null)
@@ -391,8 +327,6 @@ internal static class OrderManager
                 };
             }
 
-            // Apply sorting:
-            // If sorter is null -> return list sorted by Status (spec requirement)
             if (sorter == null)
             {
                 list = list
