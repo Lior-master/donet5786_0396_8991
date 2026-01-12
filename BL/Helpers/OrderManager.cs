@@ -369,6 +369,136 @@ internal static class OrderManager
         }
     }
 
+    internal static IEnumerable<BO.OrderInList> orderInListsDoubleFilter(int requesterId, Enum? filter1, Enum? filter2)
+    {
+        try
+        {
+            var config = AdminManager.GetConfig();
+            if (requesterId != config.BossId)
+                throw new BO.BLInvalidOperationException("Requester is not authorized for order management operations.");
+
+            // Base list (même logique que orderInLists)
+            var doOrders = s_dal.Order.ReadAll().ToList();
+            var deliveriesDO = s_dal.Delivery.ReadAll().ToList();
+            var now = AdminManager.Now;
+
+            var list = doOrders.Select(order =>
+            {
+                var orderDeliveries = deliveriesDO.Where(d => d.OrderId == order.Id).ToList();
+
+                var lastByPickup = orderDeliveries
+                    .OrderByDescending(d => d.PickupTime)
+                    .FirstOrDefault();
+
+                int? deliveryId = lastByPickup?.Id;
+
+                var lastFinished = orderDeliveries
+                    .Where(d => d.ArrivalTime != null)
+                    .OrderByDescending(d => d.ArrivalTime)
+                    .FirstOrDefault();
+
+                DateTime? realArrival = lastFinished?.ArrivalTime;
+
+                double lat = order.Latitude ?? 0;
+                double lon = order.Longitude ?? 0;
+                if (lat == 0 && lon == 0)
+                {
+                    try
+                    {
+                        var coords = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
+                        lat = coords.Latitude;
+                        lon = coords.Longitude;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new BO.BLFailedOperation(ex.Message, ex);
+                    }
+                }
+
+                double distance = Tools.BirdDistance(
+                    config.CompanyLatitude,
+                    config.CompanyLongitude,
+                    lat,
+                    lon
+                );
+
+                double speed = config.CarSpeed;
+                if (lastByPickup != null)
+                    speed = Tools.GetSpeed(lastByPickup.Transport, config);
+
+                DateTime? estArrival = distance > 0
+                    ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, speed)
+                    : null;
+
+                DateTime maxArrival = order.OrderDate.Add(config.MaxDeliveryTime);
+
+                var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
+
+                var schedule = Tools.CalculateScheduleStatus(
+                    orderStatus,
+                    order.OrderDate,
+                    estArrival,
+                    maxArrival,
+                    realArrival
+                );
+
+                return new BO.OrderInList
+                {
+                    DeliveryId = deliveryId,
+                    OrderId = order.Id,
+                    Type = (BO.OrderType)order.Type,
+                    Distance = distance,
+                    Status = orderStatus,
+                    ScheduleStatus = schedule,
+                    OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : now - order.OrderDate,
+                    TreatmentEndTime = lastByPickup != null ? lastByPickup.PickupTime - order.OrderDate : TimeSpan.Zero,
+                    NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
+                };
+            }).ToList();
+
+            // --- Double filtre ---
+            // Applique un filtre si non-null, en déduisant la propriété à filtrer selon le type de l'enum
+            static List<BO.OrderInList> ApplyOneFilter(List<BO.OrderInList> src, Enum? f)
+            {
+                if (f is null) return src;
+
+                return f switch
+                {
+                    BO.OrderStatus os => src.Where(x => x.Status == os).ToList(),
+                    BO.OrderType ot => src.Where(x => x.Type == ot).ToList(),
+                    BO.ScheduleStatus ss => src.Where(x => x.ScheduleStatus == ss).ToList(),
+                    _ => throw new BO.BLInvalidInputException($"Unsupported filter enum type: {f.GetType().Name}")
+                };
+            }
+
+            // Important: si un des deux est null, on applique juste l'autre (et si les deux null => aucun filtre)
+            list = ApplyOneFilter(list, filter1);
+            list = ApplyOneFilter(list, filter2);
+
+            // Tri par défaut (comme ton cas sorter == null dans orderInLists)
+            list = list
+                .OrderBy(l => l.Status)
+                .ThenBy(l => l.OrderId)
+                .ToList();
+
+            return list;
+        }
+        catch (Exception ex)
+        {
+            if (ex is BO.BLNotFoundException ||
+                ex is BO.BLInvalidInputException ||
+                ex is BO.BLAlreadyExistsException ||
+                ex is BO.BLInvalidOperationException) throw;
+
+            if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
+            if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
+            if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
+            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
+
+            throw new BO.BLFailedOperation(ex.Message, ex);
+        }
+    }
+
     /// <summary>
     /// Retrieves comprehensive details for a specific order, including all associated deliveries,
     /// performance metrics, and delivery person information.

@@ -242,11 +242,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             // Apply filters based on the clicked cell
             // First, set ScheduleStatus filter
-            _orderListWindowInstance.FilterTypeOrder = PL.FilterTypeOrder.BySheduleStatus;
+            _orderListWindowInstance.FilterTypeOrder = PL.FilterTypeOrder.ByOrderAndSchedulStatus;
             _orderListWindowInstance.ScheduleStatus = scheduleStatus;
-
-            // Then apply OrderStatus filter by updating the order list with both filters
-            ApplyDualFilter(_orderListWindowInstance, scheduleStatus, orderStatus);
+            _orderListWindowInstance.OrderStatus = orderStatus;
 
             // Show the window if it's not already visible
             if (!_orderListWindowInstance.IsLoaded)
@@ -258,37 +256,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             MessageBox.Show($"Error opening order list: {ex.Message}", 
                           "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
-    // ================================
-    //   DUAL FILTER HELPER METHOD
-    // ================================
-    private void ApplyDualFilter(OrderListWindow window, BO.ScheduleStatus scheduleStatus, BO.OrderStatus orderStatus)
-    {
-        try
-        {
-            var bossId = s_bl.Admin.GetConfig().BossId;
-            
-            // Get all orders and manually filter by both criteria
-            var allOrders = s_bl.Order.orderInLists(bossId, null, null, null);
-            
-            // Filter by both ScheduleStatus and OrderStatus
-            var filteredOrders = allOrders.Where(order => 
-                order.ScheduleStatus == scheduleStatus && 
-                order.Status == orderStatus).ToList();
-            
-            // Set the filtered orders directly
-            window.OrderList = filteredOrders;
-            
-            // Update the UI filters to reflect the current state
-            window.FilterTypeOrder = PL.FilterTypeOrder.BySheduleStatus;
-            window.ScheduleStatus = scheduleStatus;
-            window.OrderStatus = orderStatus;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error applying dual filter: {ex.Message}");
         }
     }
 

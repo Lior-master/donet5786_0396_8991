@@ -16,4 +16,6 @@ public interface IOrder : IObservable
     void AssignOrderToCourier(int requesterId,int orderId,int courierId);
     IEnumerable<BO.ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId,int courierId,OrderType? filter,Enum? sorter);
     IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId,int courierId, OrderType? filter,Enum? sorter);
+    IEnumerable<BO.OrderInList> orderInListsDoubleFilter(int requesterId, Enum? filter1, Enum? filter2);
+
 }

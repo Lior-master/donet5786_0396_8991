@@ -57,7 +57,8 @@ public enum FilterTypeOrder
     All,
     ByOrderType,
     ByOrderStatus,
-    BySheduleStatus
+    BySheduleStatus,
+    ByOrderAndSchedulStatus
 }
 
 public enum FilterTypeCourier

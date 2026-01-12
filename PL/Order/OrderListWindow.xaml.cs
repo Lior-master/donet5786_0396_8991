@@ -196,6 +196,28 @@ public partial class OrderListWindow : Window
                         : s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.BySheduleStatus, ScheduleStatus, null);
                     break;
 
+                case PL.FilterTypeOrder.ByOrderAndSchedulStatus:
+                    // Filter by schedule status and by Order status
+                    if (ScheduleStatus == BO.ScheduleStatus.All && OrderStatus == BO.OrderStatus.All)
+                    {
+                        OrderList = s_bl.Order.orderInLists(bossId, null, null, null);
+                        break;
+                    }
+                    else if(ScheduleStatus == BO.ScheduleStatus.All)
+                    {
+                        OrderList = s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.ByOrderType, OrderType, null);
+                        break;
+                    }                    
+                    else if(OrderType == BO.OrderType.All)
+                    {
+                        OrderList = s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.BySheduleStatus, ScheduleStatus, null);
+                        break;
+                    }
+                    else
+                    {
+                        OrderList = s_bl.Order.orderInListsDoubleFilter(bossId, ScheduleStatus, OrderType);
+                        break;
+                    }
                 default:
                     // Fallback: retrieve all orders for unknown filter types
                     OrderList = s_bl.Order.orderInLists(bossId, null, null, null);
