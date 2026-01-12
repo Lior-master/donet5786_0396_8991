@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:PL.Order"
         mc:Ignorable="d"
         Title="Order Management" 
-        Height="700" Width="1000"
+        Height="700" Width="1200"
         WindowStartupLocation="CenterScreen"
         Background="#F5F5F5"
         DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}"
@@ -45,6 +45,23 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Cancel Button Style -->
+        <Style x:Key="CancelButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#F44336"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Width" Value="70"/>
+            <Setter Property="Height" Value="30"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E53935"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#C62828"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Add Button Style -->
         <Style x:Key="AddButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
             <Setter Property="Background" Value="#4CAF50"/>
@@ -75,7 +92,7 @@
             <Setter Property="HorizontalGridLinesBrush" Value="#E0E0E0"/>
             <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="AutoGenerateColumns" Value="True"/>
-            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="IsReadOnly" Value="False"/>
             <Setter Property="SelectionMode" Value="Single"/>
             <Setter Property="FontSize" Value="13"/>
         </Style>
@@ -184,7 +201,6 @@
             <DataGrid Style="{StaticResource ModernDataGridStyle}"
                       ItemsSource="{Binding OrderList}"
                       AutoGenerateColumns="False"
-                      IsReadOnly="True"
                       MouseDoubleClick="dgOrderList_MouseDoubleClick">
 
                 <DataGrid.Columns>
@@ -233,6 +249,30 @@
                     <DataGridTextColumn Header="Couriers"
                             Binding="{Binding NumberOfCouriers}"
                             Width="90"/>
+
+                    <!-- Cancel Button Column -->
+                    <DataGridTemplateColumn Header="Action" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Name="btnCancelOrder"
+                                        Content="❌ Cancel"
+                                        Click="btnCancelOrder_Click"
+                                        Tag="{Binding OrderId}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource CancelButtonStyle}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <!-- Show only for Pending orders -->
+                                                <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
                 </DataGrid.Columns>
             </DataGrid>
