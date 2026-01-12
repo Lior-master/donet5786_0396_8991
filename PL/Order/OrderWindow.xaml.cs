@@ -102,6 +102,26 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         {
             if (_isCreateMode || _orderId is null)
                 return;
+            // Add defensive check to prevent race condition
+            var orderExists = await Task.Run(() =>
+            {
+                try
+                {
+                    s_bl.Order.GetOrderDetails(bossId, _orderId.Value);
+                    return true;
+                }
+                catch (BO.BLNotFoundException)
+                {
+                    return false;
+                }
+            });
+
+            if (!orderExists)
+            {
+                // Order was canceled - close this window gracefully
+                Close();
+                return;
+            }
 
             OrderCurrent = await Task.Run(() =>
                 s_bl.Order.GetOrderDetails(bossId, _orderId.Value));
@@ -139,6 +159,39 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         {
             MessageBox.Show($"Save failed: {ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void btnCancelOrder_Click(object sender, RoutedEventArgs e)
+    {
+        if (OrderCurrent is null)
+            return;
+
+        try
+        {
+            var orderId = OrderCurrent.Id;
+            var result = MessageBox.Show(
+                $"Are you sure you want to cancel order #{orderId}?\nCustomer: {OrderCurrent.CustomerName}\nAddress: {OrderCurrent.CustomerAddress}",
+                "Confirm Order Cancellation",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            s_bl.Order.CancelOrder(bossId, orderId);
+
+            MessageBox.Show(
+                $"Order #{orderId} has been successfully cancelled.",
+                "Order Cancelled",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            
+            Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error cancelling order: {ex.Message}", "Cancellation Failed", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

@@ -200,8 +200,9 @@
         <Border Grid.Row="2" Background="White" CornerRadius="6" Padding="15" Margin="0,0,0,15">
             <DataGrid Style="{StaticResource ModernDataGridStyle}"
                       ItemsSource="{Binding OrderList}"
+                      IsReadOnly="True"
                       AutoGenerateColumns="False"
-                      MouseDoubleClick="dgOrderList_MouseDoubleClick">
+                      MouseDoubleClick="dgOrderList_MouseDoubleClick" SelectionChanged="DataGrid_SelectionChanged">
 
                 <DataGrid.Columns>
 

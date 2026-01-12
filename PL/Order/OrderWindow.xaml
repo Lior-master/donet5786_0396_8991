@@ -325,7 +325,26 @@
                         Width="120" Height="45"
                         Click="btnSave_Click"
                         Margin="0,0,15,0"/>
-                <Button Content="❌ Cancel"
+
+                <!-- Cancel Order button: visible only when OrderCurrent.Status == Pending -->
+                <Button Content="❌ Cancel Order"
+                        Width="140" Height="45"
+                        Click="btnCancelOrder_Click"
+                        Margin="0,0,15,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource CancelButtonStyle}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding OrderCurrent.Status}" Value="Pending">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Close button (always available) -->
+                <Button Content="❌ Close"
                         Style="{StaticResource CancelButtonStyle}"
                         Width="120" Height="45"
                         Click="btnCancel_Click"/>

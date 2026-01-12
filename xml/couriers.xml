@@ -49,18 +49,6 @@
     <MaxDistance>27</MaxDistance>
   </Courier>
   <Courier>
-    <Id>100004</Id>
-    <Name>Courier_4</Name>
-    <Phone>+10000000004</Phone>
-    <Email>Courier_4@gmail.com</Email>
-    <Password>password</Password>
-    <IsActive>true</IsActive>
-    <Transport>Bike</Transport>
-    <StartDate>2025-10-13T16:15:54.8469032+03:00</StartDate>
-    <Administrator>Courier</Administrator>
-    <MaxDistance>5</MaxDistance>
-  </Courier>
-  <Courier>
     <Id>100005</Id>
     <Name>Courier_5</Name>
     <Phone>+10000000005</Phone>

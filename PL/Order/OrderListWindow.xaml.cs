@@ -655,4 +655,6 @@ public partial class OrderListWindow : Window
         // Create and display a new OrderWindow for creating a new order
         new OrderWindow().Show();
     }
+
+    
 }
