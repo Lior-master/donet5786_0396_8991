@@ -40,19 +40,6 @@
     <Fragility xsi:nil="true" />
   </Order>
   <Order>
-    <Id>1003</Id>
-    <Type>FastFood</Type>
-    <CustomerName>Customer_4</CustomerName>
-    <CustomerAddress>21 HaVaad Leumi israel</CustomerAddress>
-    <CustomerPhone>+20000000004</CustomerPhone>
-    <OrderDate>2026-01-11T21:44:18</OrderDate>
-    <size xsi:nil="true" />
-    <weight xsi:nil="true" />
-    <Latitude>31.76577</Latitude>
-    <Longitude>35.1931724</Longitude>
-    <Fragility xsi:nil="true" />
-  </Order>
-  <Order>
     <Id>1004</Id>
     <Type>FastFood</Type>
     <CustomerName>Customer_5</CustomerName>
@@ -349,19 +336,6 @@
     <weight xsi:nil="true" />
     <Latitude>31.76577</Latitude>
     <Longitude>35.1931724</Longitude>
-    <Fragility xsi:nil="true" />
-  </Order>
-  <Order>
-    <Id>1027</Id>
-    <Type>Pizza</Type>
-    <CustomerName>Customer_28</CustomerName>
-    <CustomerAddress>2, Kadish Luz, Holyland</CustomerAddress>
-    <CustomerPhone>+20000000028</CustomerPhone>
-    <OrderDate>2026-01-11T21:47:18</OrderDate>
-    <size xsi:nil="true" />
-    <weight xsi:nil="true" />
-    <Latitude>31.7587739</Latitude>
-    <Longitude>35.1842047</Longitude>
     <Fragility xsi:nil="true" />
   </Order>
   <Order>
