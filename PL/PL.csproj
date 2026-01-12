@@ -14,6 +14,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="doodles-262500633.webp" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\BL\BL.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Resource Include="doodles-262500633.webp">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Resource>
 	</ItemGroup>
 </Project>
