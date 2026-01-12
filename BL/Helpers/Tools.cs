@@ -590,28 +590,38 @@ internal static class Tools
         DateTime? maxArrival,
         DateTime? realArrival)
     {
-        // If required timing information is missing, assume on-time
-        if (estimatedArrival == null || maxArrival == null)
-            return BO.ScheduleStatus.OnTime;
+        // maxArrival represents the maximum allowed delivery time (orderDate + MaxDeliveryTime)
+        if (maxArrival == null)
+            return BO.ScheduleStatus.Unknown;
 
-        // For delivered orders: compare actual arrival against estimated arrival
-        if (status == BO.OrderStatus.Delivered && realArrival != null)
-            return realArrival <= estimatedArrival
+        var config = AdminManager.GetConfig();
+        DateTime now = config.Clock;
+        DateTime maxSupplyTime = maxArrival.Value;
+        DateTime riskThreshold = maxSupplyTime - config.RiskRange;
+
+        bool isClosed =
+            status == BO.OrderStatus.Delivered ||
+            status == BO.OrderStatus.Returned ||
+            status == BO.OrderStatus.Canceled;
+
+        // Closed orders: compare actual finish time to max supply time
+        if (isClosed)
+        {
+            if (realArrival == null)
+                return BO.ScheduleStatus.Unknown;
+
+            return realArrival.Value <= maxSupplyTime
                 ? BO.ScheduleStatus.OnTime
                 : BO.ScheduleStatus.Late;
+        }
 
-        // For pending/in-progress orders: compare current time against time thresholds
-        DateTime now = AdminManager.Now;
-
-        // If current time exceeds the maximum allowed arrival time, the delivery is late
-        if (now > maxArrival)
+        // Open orders: compare current system time to thresholds
+        if (now >= maxSupplyTime)
             return BO.ScheduleStatus.Late;
 
-        // If current time is past estimated arrival but before max arrival, at risk
-        if (now > estimatedArrival)
+        if (now >= riskThreshold)
             return BO.ScheduleStatus.InRisk;
 
-        // Otherwise, delivery is on time
         return BO.ScheduleStatus.OnTime;
     }
 }

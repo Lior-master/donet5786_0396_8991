@@ -50,24 +50,63 @@
 
         <!-- Time Control Button Style -->
         <Style x:Key="TimeButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
-            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Background" Value="#4A6572" />
+            <Setter Property="Foreground" Value="White" />
+
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#45a049"/>
+                    <Setter Property="Background" Value="#344955"/>
+                </Trigger>
+
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#232F34"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Initialize Style Button -->
+        <Style x:Key="InitButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#F57C00" />
+            <Setter Property="Foreground" Value="White" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E65100"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#BF360C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Reset Style Button -->
+        <Style x:Key="ResetButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#C62828" />
+            <Setter Property="Foreground" Value="White" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#B71C1C"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#7F0000"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- Action Button Style -->
-        <Style x:Key="ActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
-            <Setter Property="Background" Value="#607D8B"/>
+        <Style x:Key="ListButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#607D8B" />
+            <Setter Property="Foreground" Value="White" />
+
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#546E7A"/>
+                    <Setter Property="Background" Value="#455A64"/>
+                </Trigger>
+
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#37474F"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
-
         <!-- TextBox Style -->
         <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="8,6"/>
@@ -246,25 +285,25 @@
         </Border>
 
         <!-- ======================================================= -->
-        <!--   CENTER PANEL — CLOCK & TIME CONTROLS                 -->
+        <!--   CENTER PANEL — CLOCK AT TOP & TIME CONTROLS          -->
         <!-- ======================================================= -->
-        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,20,0,0">
             
-            <!-- Clock Display -->
+            <!-- Clock Display at the top -->
             <Border Background="White" 
                     BorderBrush="#E0E0E0" BorderThickness="2"
                     CornerRadius="8"
-                    Padding="30,20"
-                    Margin="0,0,0,30" Opacity="0.95">
+                    Padding="25,15"
+                    Margin="0,0,0,40" Opacity="0.95">
                 <StackPanel>
                     <TextBlock Text="🕐 System Clock" 
-                               FontSize="16" FontWeight="SemiBold"
+                               FontSize="14" FontWeight="SemiBold"
                                Foreground="#546E7A"
                                HorizontalAlignment="Center"
-                               Margin="0,0,0,15"/>
+                               Margin="0,0,0,10"/>
                     
                     <TextBlock Text="{Binding CurrentTime, StringFormat={}{0:dd/MM/yyyy HH:mm:ss}}"
-                               FontSize="32" FontWeight="Bold"
+                               FontSize="28" FontWeight="Bold"
                                Foreground="#37474F"
                                HorizontalAlignment="Center"
                                FontFamily="Consolas"/>
@@ -276,21 +315,22 @@
                        FontSize="16" FontWeight="SemiBold"
                        Foreground="#546E7A"
                        HorizontalAlignment="Center"
-                       Margin="0,0,0,15"/>
+                       Margin="0,0,0,20"/>
 
-            <UniformGrid Columns="2" Rows="3" Width="450">
+            <!-- 2 Rows x 3 Columns Grid for buttons -->
+            <UniformGrid Columns="3" Rows="2" Width="600">
                 <Button Content="+ 1 Second" Style="{StaticResource TimeButtonStyle}"
-                        Height="45" Margin="5" Click="AddOneSecond_Click"/>
+                        Height="50" Margin="8" Click="AddOneSecond_Click"/>
                 <Button Content="+ 1 Minute" Style="{StaticResource TimeButtonStyle}"
-                        Height="45" Margin="5" Click="AddOneMinute_Click"/>
+                        Height="50" Margin="8" Click="AddOneMinute_Click"/>
                 <Button Content="+ 1 Hour" Style="{StaticResource TimeButtonStyle}"
-                        Height="45" Margin="5" Click="AddOneHour_Click"/>
+                        Height="50" Margin="8" Click="AddOneHour_Click"/>
                 <Button Content="+ 1 Day" Style="{StaticResource TimeButtonStyle}"
-                        Height="45" Margin="5" Click="AddOneDay_Click"/>
+                        Height="50" Margin="8" Click="AddOneDay_Click"/>
                 <Button Content="+ 1 Month" Style="{StaticResource TimeButtonStyle}"
-                        Height="45" Margin="5" Click="AddOneMonth_Click"/>
+                        Height="50" Margin="8" Click="AddOneMonth_Click"/>
                 <Button Content="+ 1 Year" Style="{StaticResource TimeButtonStyle}"
-                        Height="45" Margin="5" Click="AddOneYear_Click"/>
+                        Height="50" Margin="8" Click="AddOneYear_Click"/>
             </UniformGrid>
         </StackPanel>
 
@@ -305,12 +345,12 @@
                 <TextBlock Text="📊 Management" Style="{StaticResource SectionHeaderStyle}"/>
 
                 <Button Content="👥 Couriers List"
-                        Style="{StaticResource ActionButtonStyle}"
+                        Style="{StaticResource ListButtonStyle}"
                         Height="70" Margin="0,10"
                         Click="CouriersList_Click"/>
 
                 <Button Content="📦 Orders List"
-                        Style="{StaticResource ActionButtonStyle}"
+                        Style="{StaticResource ListButtonStyle}"
                         Height="70" Margin="0,10"
                         Click="OrdersList_Click"/>
 
@@ -319,14 +359,12 @@
                 <TextBlock Text="🗄️ Database" Style="{StaticResource SectionHeaderStyle}"/>
 
                 <Button Content="🔄 Initialize DB"
-                        Style="{StaticResource ActionButtonStyle}"
-                        Background="#FF9800"
+                        Style="{StaticResource InitButtonStyle}"
                         Height="55" Margin="0,10"
                         Click="InitDB_Click"/>
 
                 <Button Content="⚠️ Reset DB"
-                        Style="{StaticResource ActionButtonStyle}"
-                        Background="#F44336"
+                        Style="{StaticResource ResetButtonStyle}"
                         Height="55" Margin="0,10"
                         Click="ResetDB_Click"/>
 
