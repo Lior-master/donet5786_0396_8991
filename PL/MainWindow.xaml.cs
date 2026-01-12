@@ -4,14 +4,15 @@ using PL.Courier;
 using PL.Order;
 using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace PL;
 
-public partial class MainWindow : Window
+public partial class MainWindow : Window, INotifyPropertyChanged
 {
-
-
     // ================================
     //  ACCESS TO BL LAYER (REQUIRED)
     // ================================
@@ -48,6 +49,27 @@ public partial class MainWindow : Window
         DependencyProperty.Register("Configuration", typeof(Config), typeof(MainWindow));
 
     // ================================
+    //   ORDER SUMMARY DATA BINDING
+    // ================================
+    private int[] _orderSummaryData = new int[20]; // 4 ScheduleStatus × 5 OrderStatus
+    public int[] OrderSummaryData
+    {
+        get => _orderSummaryData;
+        set
+        {
+            _orderSummaryData = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    // ================================
     //           CONSTRUCTOR
     // ================================
     public MainWindow()
@@ -66,6 +88,8 @@ public partial class MainWindow : Window
         try
         {
             CurrentTime = s_bl.Admin.GetClock();
+            // Refresh order summary when clock updates
+            RefreshOrderSummary();
         }
         catch { }
     }
@@ -83,6 +107,37 @@ public partial class MainWindow : Window
     }
 
     // ================================
+    //   ORDER SUMMARY REFRESH
+    // ================================
+    private void RefreshOrderSummary()
+    {
+        try
+        {
+            var bossId = s_bl.Admin.GetConfig().BossId;
+            var summaryData = s_bl.Order.GetOrdersBySummary(bossId).ToArray();
+            
+            // Ensure we have exactly 20 elements (4 schedules × 5 statuses)
+            if (summaryData.Length >= 20)
+            {
+                OrderSummaryData = summaryData.Take(20).ToArray();
+            }
+            else
+            {
+                // Pad with zeros if we have fewer elements
+                var paddedData = new int[20];
+                Array.Copy(summaryData, paddedData, Math.Min(summaryData.Length, 20));
+                OrderSummaryData = paddedData;
+            }
+        }
+        catch (Exception ex)
+        {
+            // On error, initialize with zeros
+            OrderSummaryData = new int[20];
+            System.Diagnostics.Debug.WriteLine($"Error refreshing order summary: {ex.Message}");
+        }
+    }
+
+    // ================================
     //   INITIALIZATION ON OPENING
     // ================================
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -90,6 +145,9 @@ public partial class MainWindow : Window
         // Load current data
         CurrentTime = s_bl.Admin.GetClock();
         Configuration = s_bl.Admin.GetConfig();
+        
+        // Load order summary
+        RefreshOrderSummary();
 
         // Register observers
         s_bl.Admin.AddClockObserver(ClockObserver);
@@ -109,6 +167,102 @@ public partial class MainWindow : Window
         catch
         {
             // Some BL versions do not implement RemoveObserver — ignore.
+        }
+    }
+
+    // ================================
+    //   ORDER SUMMARY CELL CLICK
+    // ================================
+    private void SummaryCell_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not string tagString)
+            return;
+
+        try
+        {
+            // Parse the Tag string to extract ScheduleStatus and OrderStatus
+            var parts = tagString.Split(',');
+            if (parts.Length != 2) return;
+
+            // Parse ScheduleStatus from the first part
+            if (!Enum.TryParse<BO.ScheduleStatus>(parts[0].Trim(), out var scheduleStatus))
+                return;
+
+            // Parse OrderStatus from the second part
+            if (!Enum.TryParse<BO.OrderStatus>(parts[1].Trim(), out var orderStatus))
+                return;
+
+            // Check if OrderListWindow instance exists and is loaded
+            if (_orderListWindowInstance != null && _orderListWindowInstance.IsLoaded)
+            {
+                // If window is minimized, restore it
+                if (_orderListWindowInstance.WindowState == WindowState.Minimized)
+                {
+                    _orderListWindowInstance.WindowState = WindowState.Normal;
+                }
+                
+                // Bring window to front and activate it
+                _orderListWindowInstance.Activate();
+                _orderListWindowInstance.Focus();
+            }
+            else
+            {
+                // Create new instance
+                _orderListWindowInstance = new OrderListWindow();
+                
+                // Handle window closed event to reset instance
+                _orderListWindowInstance.Closed += (s, args) => _orderListWindowInstance = null;
+            }
+
+            // Apply filters based on the clicked cell
+            // First, set ScheduleStatus filter
+            _orderListWindowInstance.FilterTypeOrder = PL.FilterTypeOrder.BySheduleStatus;
+            _orderListWindowInstance.ScheduleStatus = scheduleStatus;
+
+            // Then apply OrderStatus filter by updating the order list with both filters
+            ApplyDualFilter(_orderListWindowInstance, scheduleStatus, orderStatus);
+
+            // Show the window if it's not already visible
+            if (!_orderListWindowInstance.IsLoaded)
+            {
+                _orderListWindowInstance.Show();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error opening order list: {ex.Message}", 
+                          "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    // ================================
+    //   DUAL FILTER HELPER METHOD
+    // ================================
+    private void ApplyDualFilter(OrderListWindow window, BO.ScheduleStatus scheduleStatus, BO.OrderStatus orderStatus)
+    {
+        try
+        {
+            var bossId = s_bl.Admin.GetConfig().BossId;
+            
+            // Get all orders and manually filter by both criteria
+            var allOrders = s_bl.Order.orderInLists(bossId, null, null, null);
+            
+            // Filter by both ScheduleStatus and OrderStatus
+            var filteredOrders = allOrders.Where(order => 
+                order.ScheduleStatus == scheduleStatus && 
+                order.Status == orderStatus).ToList();
+            
+            // Set the filtered orders directly
+            window.OrderList = filteredOrders;
+            
+            // Update the UI filters to reflect the current state
+            window.FilterTypeOrder = PL.FilterTypeOrder.BySheduleStatus;
+            window.ScheduleStatus = scheduleStatus;
+            window.OrderStatus = orderStatus;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error applying dual filter: {ex.Message}");
         }
     }
 
@@ -181,6 +335,8 @@ public partial class MainWindow : Window
         {
             s_bl.Admin.InitializeDB();
             MessageBox.Show("Database initialized.");
+            // Refresh order summary after DB initialization
+            RefreshOrderSummary();
         }
     }
 
@@ -191,6 +347,8 @@ public partial class MainWindow : Window
         {
             s_bl.Admin.ResetDB();
             MessageBox.Show("Database reset.");
+            // Refresh order summary after DB reset
+            RefreshOrderSummary();
         }
     }
 

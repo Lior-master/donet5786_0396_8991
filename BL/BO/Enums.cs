@@ -96,8 +96,8 @@ public enum PriorityLevel
 
     /// <summary>Critical priority — immediate action required.</summary>
     Critical,
-    All
 
+    All
 }
 
 /// <summary>
@@ -135,6 +135,10 @@ public enum ScheduleStatus
 
     /// <summary>Schedule status cannot be determined due to lack of information.</summary>
     Unknown,
+
+    /// <summary>
+    /// Specifies that all available options or items are selected. (Used for filtering or querying.)
+    /// </summary>
     All
 
 

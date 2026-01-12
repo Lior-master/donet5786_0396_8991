@@ -251,4 +251,23 @@ public partial class OrderListWindow : Window
     {
         new OrderWindow().Show();
     }
+
+    /// <summary>
+    /// Public method to apply filters and refresh the order list from external calls
+    /// </summary>
+    /// <param name="filterType">The filter type to apply</param>
+    /// <param name="scheduleStatus">Schedule status filter</param>
+    /// <param name="orderStatus">Order status filter</param>
+    public void ApplyFiltersAndRefresh(PL.FilterTypeOrder filterType, BO.ScheduleStatus? scheduleStatus = null, BO.OrderStatus? orderStatus = null)
+    {
+        FilterTypeOrder = filterType;
+        
+        if (scheduleStatus.HasValue)
+            ScheduleStatus = scheduleStatus.Value;
+        
+        if (orderStatus.HasValue)
+            OrderStatus = orderStatus.Value;
+        
+        queryOrderList();
+    }
 }
