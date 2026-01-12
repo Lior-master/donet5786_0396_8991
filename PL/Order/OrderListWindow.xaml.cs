@@ -205,17 +205,17 @@ public partial class OrderListWindow : Window
                     }
                     else if(ScheduleStatus == BO.ScheduleStatus.All)
                     {
-                        OrderList = s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.ByOrderType, OrderType, null);
+                        OrderList = s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.ByOrderStatus, OrderStatus, null);
                         break;
                     }                    
-                    else if(OrderType == BO.OrderType.All)
+                    else if(OrderStatus == BO.OrderStatus.All)
                     {
                         OrderList = s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.BySheduleStatus, ScheduleStatus, null);
                         break;
                     }
                     else
                     {
-                        OrderList = s_bl.Order.orderInListsDoubleFilter(bossId, ScheduleStatus, OrderType);
+                        OrderList = s_bl.Order.orderInListsDoubleFilter(bossId, ScheduleStatus, OrderStatus);
                         break;
                     }
                 default:
@@ -328,6 +328,7 @@ public partial class OrderListWindow : Window
     /// - <see cref="PL.FilterTypeOrder.ByOrderStatus"/>: Shows order status filter combo box
     /// - <see cref="PL.FilterTypeOrder.ByOrderType"/>: Shows order type filter combo box
     /// - <see cref="PL.FilterTypeOrder.BySheduleStatus"/>: Shows schedule status filter combo box
+    /// - <see cref="PL.FilterTypeOrder.ByOrderAndSchedulStatus"/>: Shows both order status and schedule status filter combo boxes
     /// </summary>
     /// <param name="sender">The ComboBox control that changed selection.</param>
     /// <param name="e">The event arguments containing the old and new selected items.</param>
@@ -349,9 +350,11 @@ public partial class OrderListWindow : Window
             
             // Hide all filter-specific UI elements initially
             lblSpecificFilter.Visibility = Visibility.Collapsed;
+            lblSecondaryFilter.Visibility = Visibility.Collapsed;
             cmbOrderStatusFilter.Visibility = Visibility.Collapsed;
             cmbOrderTypeFilter.Visibility = Visibility.Collapsed;
             cmbScheduleStatusFilter.Visibility = Visibility.Collapsed;
+            cmbScheduleStatusFilterSecondary.Visibility = Visibility.Collapsed;
             
             // Show the appropriate filter controls based on the selected filter type
             switch (selectedFilter)
@@ -388,6 +391,22 @@ public partial class OrderListWindow : Window
                     if (cmbScheduleStatusFilter != null)
                         cmbScheduleStatusFilter.SelectedValue = BO.ScheduleStatus.All;
                     break;
+
+                case PL.FilterTypeOrder.ByOrderAndSchedulStatus:
+                    // Display both order status and schedule status filters
+                    lblSpecificFilter.Visibility = Visibility.Visible;
+                    lblSpecificFilter.Text = "Order Status:";
+                    lblSecondaryFilter.Visibility = Visibility.Visible;
+                    cmbOrderStatusFilter.Visibility = Visibility.Visible;
+                    cmbScheduleStatusFilterSecondary.Visibility = Visibility.Visible;
+                    // Reset to show all orders until specific statuses are selected
+                    OrderStatus = BO.OrderStatus.All;
+                    ScheduleStatus = BO.ScheduleStatus.All;
+                    if (cmbOrderStatusFilter != null)
+                        cmbOrderStatusFilter.SelectedValue = BO.OrderStatus.All;
+                    if (cmbScheduleStatusFilterSecondary != null)
+                        cmbScheduleStatusFilterSecondary.SelectedValue = BO.ScheduleStatus.All;
+                    break;
                 
                 case PL.FilterTypeOrder.All:
                 default:
@@ -404,6 +423,8 @@ public partial class OrderListWindow : Window
                         cmbOrderTypeFilter.SelectedValue = BO.OrderType.All;
                     if (cmbScheduleStatusFilter != null)
                         cmbScheduleStatusFilter.SelectedValue = BO.ScheduleStatus.All;
+                    if (cmbScheduleStatusFilterSecondary != null)
+                        cmbScheduleStatusFilterSecondary.SelectedValue = BO.ScheduleStatus.All;
                     break;
             }
             

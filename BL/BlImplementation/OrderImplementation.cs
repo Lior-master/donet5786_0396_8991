@@ -171,7 +171,7 @@ internal class OrderImplementation : IOrder
     public IEnumerable<OrderInList> orderInLists(int requesterId, Enum? filter, object? Object, Enum? sorter)
         => OrderManager.orderInLists(requesterId, filter, Object, sorter);
 
-    public static IEnumerable<BO.OrderInList> orderInListsDoubleFilter(int requesterId, Enum? filter1, Enum? filter2)
+    public IEnumerable<BO.OrderInList> orderInListsDoubleFilter(int requesterId, Enum? filter1, Enum? filter2)
         => OrderManager.orderInListsDoubleFilter(requesterId,filter1,filter2);
 
     /// <summary>

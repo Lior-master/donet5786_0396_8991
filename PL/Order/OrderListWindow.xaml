@@ -184,7 +184,7 @@
                           Margin="0,15,0,0"
                           Visibility="Collapsed"/>
 
-                <!-- Schedule Status ComboBox -->
+                <!-- Schedule Status ComboBox (moved to column 4 when both filters are shown) -->
                 <ComboBox Grid.Row="1" Grid.Column="1" 
                           Name="cmbScheduleStatusFilter"
                           Style="{StaticResource ModernComboBoxStyle}"
@@ -193,6 +193,24 @@
                           SelectionChanged="ScheduleStatusFilter_SelectionChanged"
                           Margin="0,15,0,0"
                           Visibility="Collapsed"/>
+
+                <!-- Schedule Status ComboBox for dual filter (positioned in column 4) -->
+                <ComboBox Grid.Row="1" Grid.Column="4" 
+                          Name="cmbScheduleStatusFilterSecondary"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          ItemsSource="{Binding Source={StaticResource ScheduleStatusCollectionKey}}"
+                          SelectedValue="{Binding ScheduleStatus, Mode=TwoWay}"
+                          SelectionChanged="ScheduleStatusFilter_SelectionChanged"
+                          Margin="0,15,0,0"
+                          Visibility="Collapsed"/>
+
+                <!-- Label for second filter position -->
+                <TextBlock Grid.Row="1" Grid.Column="3" 
+                           Name="lblSecondaryFilter"
+                           Text="Schedule Status:" 
+                           Style="{StaticResource FieldLabelStyle}" 
+                           Margin="0,15,15,0"
+                           Visibility="Collapsed"/>
             </Grid>
         </Border>
 
