@@ -147,43 +147,56 @@ internal static class OrderManager
     {
         try
         {
-            // Validate requester exists in the system
-            var requester = s_dal.Courier.Read(requesterId) ?? throw new BLNotFoundException($"Requester with id {requesterId} does not exist.");
+            var requester = s_dal.Courier.Read(requesterId);
+            if (requester == null)
+                throw new BO.BLNotFoundException("Requester does not exist.");
 
-            // Read data once to minimize DAL calls
             var orders = s_dal.Order.ReadAll().ToList();
             var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
             var config = AdminManager.GetConfig();
 
-            // Calculate array dimensions based on enum sizes
-            int statusCount = Enum.GetValues(typeof(BO.OrderStatus)).Length;
-            int scheduleCount = Enum.GetValues(typeof(BO.ScheduleStatus)).Length;
+            var orderStatuses = Enum.GetValues(typeof(BO.OrderStatus))
+                .Cast<BO.OrderStatus>()
+                .Where(s => s != BO.OrderStatus.All)
+                .ToList();
+
+            var scheduleStatuses = Enum.GetValues(typeof(BO.ScheduleStatus))
+                .Cast<BO.ScheduleStatus>()
+                .Where(s => s != BO.ScheduleStatus.All)
+                .ToList();
+
+            int statusCount = orderStatuses.Count;
+            int scheduleCount = scheduleStatuses.Count;
+
             int[] summary = new int[statusCount * scheduleCount];
 
-            // Project orders to their status combinations
             var projections = orders.Select(o =>
             {
-                // Get all deliveries for this order
                 var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
-                var lastDelivery = orderDeliveries.OrderByDescending(d => d.PickupTime).FirstOrDefault();
-                DateTime? realArrival = lastDelivery?.ArrivalTime;
 
-                // Retrieve or geocode coordinates
+                var lastFinished = orderDeliveries
+                    .Where(d => d.ArrivalTime != null)
+                    .OrderByDescending(d => d.ArrivalTime)
+                    .FirstOrDefault();
+
+                DateTime? realArrival = lastFinished?.ArrivalTime;
+
                 double lat = o.Latitude ?? 0;
                 double lon = o.Longitude ?? 0;
+
                 if (lat == 0 && lon == 0)
                 {
                     try
                     {
-                        // Attempt to geocode the customer address if coordinates are missing
                         var coords = Tools.GetCoordinatesFromAddressAsync(o.CustomerAddress).GetAwaiter().GetResult();
                         lat = coords.Latitude;
                         lon = coords.Longitude;
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
 
-                // Calculate straight-line distance from company to customer
                 double distance = Tools.BirdDistance(
                     config.CompanyLatitude,
                     config.CompanyLongitude,
@@ -191,37 +204,42 @@ internal static class OrderManager
                     lon
                 );
 
-                // Choose speed based on the last delivery's transport method, or default to car speed
-                double speed = config.CarSpeed;
-                if (lastDelivery != null)
-                    speed = Tools.GetSpeed(lastDelivery.Transport, config);
+                var deliveryForSpeed =
+                    orderDeliveries.FirstOrDefault(d => d.DeliveredStatus == null) ??
+                    orderDeliveries.OrderByDescending(d => d.PickupTime).FirstOrDefault();
 
-                // Calculate estimated arrival time based on distance and speed
+                double speed = config.CarSpeed;
+                if (deliveryForSpeed != null)
+                    speed = Tools.GetSpeed(deliveryForSpeed.Transport, config);
+
                 DateTime? estArrival = distance > 0
                     ? Tools.CalculateEstimatedArrival(o.OrderDate, distance, speed)
                     : null;
 
-                // Add risk range to estimated arrival to get maximum acceptable arrival time
-                DateTime? maxArrival = estArrival?.Add(config.RiskRange);
+                DateTime maxArrival = o.OrderDate.Add(config.MaxDeliveryTime);
 
-                // Calculate order status from delivery records
                 var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
-                
-                // Determine schedule status (OnTime, InRisk, Late, Unknown)
-                var scheduleStatus = Tools.CalculateScheduleStatus(orderStatus, o.OrderDate, estArrival, maxArrival, realArrival);
+                var scheduleStatus = Tools.CalculateScheduleStatus(
+                    orderStatus,
+                    o.OrderDate,
+                    estArrival,
+                    maxArrival,
+                    realArrival
+                );
 
                 return new { Status = orderStatus, Schedule = scheduleStatus };
-            });
+            })
+            .Where(p => p.Status != BO.OrderStatus.All &&
+                        p.Schedule != BO.ScheduleStatus.All);
 
-            // Group projections by status combination and count occurrences
             var groups = projections.GroupBy(p => new { p.Status, p.Schedule });
 
             foreach (var g in groups)
             {
-                // Map status combinations to array indices
-                int sIdx = (int)g.Key.Status;
-                int schIdx = (int)g.Key.Schedule;
-                int idx = sIdx * scheduleCount + schIdx;
+                int statusIndex = orderStatuses.IndexOf(g.Key.Status);
+                int scheduleIndex = scheduleStatuses.IndexOf(g.Key.Schedule);
+
+                int idx = statusIndex * scheduleCount + scheduleIndex;
                 summary[idx] = g.Count();
             }
 
@@ -229,14 +247,18 @@ internal static class OrderManager
         }
         catch (Exception ex)
         {
-            // Re-throw business logic exceptions without modification
-            if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
-            
-            // Map Data Access Layer exceptions to Business Logic Layer exceptions
+            if (ex is BO.BLNotFoundException ||
+                ex is BO.BLInvalidInputException ||
+                ex is BO.BLAlreadyExistsException ||
+                ex is BO.BLInvalidOperationException)
+                throw;
+
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
             if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
-            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
+            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException)
+                throw new BO.BLFailedOperation(ex.Message, ex);
+
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
     }

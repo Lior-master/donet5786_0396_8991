@@ -107,6 +107,25 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Summary Cell Button Style -->
+        <Style x:Key="SummaryCellStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Background" Value="#FAFAFA"/>
+            <Setter Property="Foreground" Value="#37474F"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E3F2FD"/>
+                    <Setter Property="BorderBrush" Value="#2196F3"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#BBDEFB"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- TextBox Style -->
         <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="8,6"/>
@@ -332,6 +351,253 @@
                 <Button Content="+ 1 Year" Style="{StaticResource TimeButtonStyle}"
                         Height="50" Margin="8" Click="AddOneYear_Click"/>
             </UniformGrid>
+
+            <!-- ======================================================= -->
+            <!--   ORDER SUMMARY SECTION                                 -->
+            <!-- ======================================================= -->
+            <Border Background="White" 
+                    BorderBrush="#E0E0E0" BorderThickness="2"
+                    CornerRadius="8"
+                    Padding="20"
+                    Margin="0,30,0,0" Opacity="0.95"
+                    MinWidth="650">
+                <StackPanel>
+                    <!-- Summary Title -->
+                    <TextBlock Text="📊 Order Summary" 
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="#546E7A"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,20"/>
+
+                    <!-- Summary Grid -->
+                    <Grid Name="OrderSummaryGrid">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header Row -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" 
+                                   Text="Schedule\Status" 
+                                   FontWeight="SemiBold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <TextBlock Grid.Row="0" Grid.Column="1" 
+                                   Text="Pending" 
+                                   FontWeight="SemiBold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <TextBlock Grid.Row="0" Grid.Column="2" 
+                                   Text="Processing" 
+                                   FontWeight="SemiBold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <TextBlock Grid.Row="0" Grid.Column="3" 
+                                   Text="Delivered" 
+                                   FontWeight="SemiBold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <TextBlock Grid.Row="0" Grid.Column="4" 
+                                   Text="Canceled" 
+                                   FontWeight="SemiBold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <TextBlock Grid.Row="0" Grid.Column="5" 
+                                   Text="Returned" 
+                                   FontWeight="SemiBold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Margin="5" Padding="8,6"/>
+
+                        <!-- OnTime Row -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" 
+                                   Text="OnTime" 
+                                   FontWeight="Medium" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="#4CAF50"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <Button Grid.Row="1" Grid.Column="1" 
+                                Content="{Binding OrderSummaryData[0]}"
+                                Tag="OnTime,Pending"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="1" Grid.Column="2" 
+                                Content="{Binding OrderSummaryData[1]}"
+                                Tag="OnTime,Processing"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="1" Grid.Column="3" 
+                                Content="{Binding OrderSummaryData[2]}"
+                                Tag="OnTime,Delivered"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="1" Grid.Column="4" 
+                                Content="{Binding OrderSummaryData[3]}"
+                                Tag="OnTime,Canceled"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="1" Grid.Column="5" 
+                                Content="{Binding OrderSummaryData[4]}"
+                                Tag="OnTime,Returned"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+
+                        <!-- Late Row -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" 
+                                   Text="Late" 
+                                   FontWeight="Medium" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="#F44336"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <Button Grid.Row="2" Grid.Column="1" 
+                                Content="{Binding OrderSummaryData[5]}"
+                                Tag="Late,Pending"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="2" Grid.Column="2" 
+                                Content="{Binding OrderSummaryData[6]}"
+                                Tag="Late,Processing"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="2" Grid.Column="3" 
+                                Content="{Binding OrderSummaryData[7]}"
+                                Tag="Late,Delivered"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="2" Grid.Column="4" 
+                                Content="{Binding OrderSummaryData[8]}"
+                                Tag="Late,Canceled"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="2" Grid.Column="5" 
+                                Content="{Binding OrderSummaryData[9]}"
+                                Tag="Late,Returned"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+
+                        <!-- InRisk Row -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" 
+                                   Text="InRisk" 
+                                   FontWeight="Medium" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="#FF9800"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <Button Grid.Row="3" Grid.Column="1" 
+                                Content="{Binding OrderSummaryData[10]}"
+                                Tag="InRisk,Pending"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="3" Grid.Column="2" 
+                                Content="{Binding OrderSummaryData[11]}"
+                                Tag="InRisk,Processing"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="3" Grid.Column="3" 
+                                Content="{Binding OrderSummaryData[12]}"
+                                Tag="InRisk,Delivered"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="3" Grid.Column="4" 
+                                Content="{Binding OrderSummaryData[13]}"
+                                Tag="InRisk,Canceled"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="3" Grid.Column="5" 
+                                Content="{Binding OrderSummaryData[14]}"
+                                Tag="InRisk,Returned"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+
+                        <!-- Unknown Row -->
+                        <TextBlock Grid.Row="4" Grid.Column="0" 
+                                   Text="Unknown" 
+                                   FontWeight="Medium" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="#9E9E9E"
+                                   Margin="5" Padding="8,6"/>
+                        
+                        <Button Grid.Row="4" Grid.Column="1" 
+                                Content="{Binding OrderSummaryData[15]}"
+                                Tag="Unknown,Pending"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="4" Grid.Column="2" 
+                                Content="{Binding OrderSummaryData[16]}"
+                                Tag="Unknown,Processing"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="4" Grid.Column="3" 
+                                Content="{Binding OrderSummaryData[17]}"
+                                Tag="Unknown,Delivered"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="4" Grid.Column="4" 
+                                Content="{Binding OrderSummaryData[18]}"
+                                Tag="Unknown,Canceled"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                        
+                        <Button Grid.Row="4" Grid.Column="5" 
+                                Content="{Binding OrderSummaryData[19]}"
+                                Tag="Unknown,Returned"
+                                Click="SummaryCell_Click"
+                                Style="{StaticResource SummaryCellStyle}"
+                                Margin="2" Height="35" FontSize="13"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
         </StackPanel>
 
         <!-- ======================================================= -->

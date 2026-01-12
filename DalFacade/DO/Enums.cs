@@ -87,20 +87,6 @@ public enum FragilityLevel
     ExtremelyFragile
 }
 
-/// <summary>
-/// Schedule status indicating whether a delivery is on time, at risk of delay, or late.
-/// </summary>
-public enum ScheduleStatus
-{
-    /// <summary>Delivery is on schedule or ahead of expected time.</summary>
-    OnTime,
-
-    /// <summary>Delivery is at risk of being delayed;</summary>
-    InRisk,
-
-    /// <summary>Delivery has exceeded acceptable time thresholds and is considered late.</summary>
-    Late
-}
 
 /// <summary>
 /// say type of administrator
