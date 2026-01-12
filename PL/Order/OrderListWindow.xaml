@@ -202,7 +202,7 @@
                       ItemsSource="{Binding OrderList}"
                       IsReadOnly="True"
                       AutoGenerateColumns="False"
-                      MouseDoubleClick="dgOrderList_MouseDoubleClick" SelectionChanged="DataGrid_SelectionChanged">
+                      MouseDoubleClick="dgOrderList_MouseDoubleClick">
 
                 <DataGrid.Columns>
 
