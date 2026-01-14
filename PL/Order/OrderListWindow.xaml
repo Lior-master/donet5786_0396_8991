@@ -281,8 +281,12 @@
                                         <Style TargetType="Button" BasedOn="{StaticResource CancelButtonStyle}">
                                             <Setter Property="Visibility" Value="Collapsed"/>
                                             <Style.Triggers>
-                                                <!-- Show only for Pending orders -->
+                                                <!-- Show for Pending orders -->
                                                 <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                                <!-- Show for Processing orders -->
+                                                <DataTrigger Binding="{Binding Status}" Value="Processing">
                                                     <Setter Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
                                             </Style.Triggers>

@@ -116,7 +116,7 @@ internal static class Tools
             DO.DeliveredStatus.Delivered => BO.OrderStatus.Delivered,
             DO.DeliveredStatus.Rejected => BO.OrderStatus.Returned,
             DO.DeliveredStatus.Canceled => BO.OrderStatus.Canceled,
-            DO.DeliveredStatus.Absent => BO.OrderStatus.Returned,
+            DO.DeliveredStatus.Absent => BO.OrderStatus.Pending,
             DO.DeliveredStatus.Failed => BO.OrderStatus.Canceled,
             _ => BO.OrderStatus.Pending
         };

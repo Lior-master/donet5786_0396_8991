@@ -126,20 +126,6 @@ public partial class OrderListWindow : Window
     public BO.ScheduleStatus ScheduleStatus { get; set; } = BO.ScheduleStatus.All;
 
     /// <summary>
-    /// Determines if an order can be cancelled based on its status.
-    /// An order can be cancelled only if it is Pending or Processing.
-    /// </summary>
-    /// <param name="status">The order status to check.</param>
-    /// <returns>True if the order can be cancelled, false otherwise.</returns>
-    /// <remarks>
-    /// Orders with status Delivered, Canceled, or Returned are considered "closed" and cannot be cancelled.
-    /// </remarks>
-    private bool CanCancelOrder(BO.OrderStatus status)
-    {
-        return status == BO.OrderStatus.Pending || status == BO.OrderStatus.Processing;
-    }
-
-    /// <summary>
     /// Queries the business logic layer to retrieve the order list based on current filter settings.
     /// Updates the <see cref="OrderList"/> property with the retrieved results.
     /// 
@@ -567,57 +553,17 @@ public partial class OrderListWindow : Window
 
             // Retrieve the order details to check status and delivery info
             var bossId = s_bl.Admin.GetConfig().BossId;
-            var orderDetails = s_bl.Order.GetOrderDetails(bossId, orderId);
 
-            // Verify the order can be cancelled
-            if (!CanCancelOrder(orderDetails.Status))
-            {
-                MessageBox.Show(
-                    $"This order cannot be cancelled because its status is '{orderDetails.Status}'.",
-                    "Cannot Cancel Order",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
-                return;
-            }
 
             // Confirm cancellation with the user
             var result = MessageBox.Show(
-                $"Are you sure you want to cancel order #{orderId}?\n" +
-                $"Customer: {orderDetails.CustomerName}\n" +
-                $"Address: {orderDetails.CustomerAddress}",
+                $"Are you sure you want to cancel order #{orderId}?\n",
                 "Confirm Order Cancellation",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 
             if (result != MessageBoxResult.Yes)
                 return;
-
-            // If order is in delivery, retrieve courier info and send email notification
-            if (orderDetails.Status == BO.OrderStatus.Processing && orderDetails.DeliveriesPerOrder.Count > 0)
-            {
-                // Get the last (most recent) delivery for this order
-                var lastDelivery = orderDetails.DeliveriesPerOrder
-                    .Where(d => d.CourierId.HasValue)
-                    .OrderByDescending(d => d.PickupTime)
-                    .FirstOrDefault();
-
-                if (lastDelivery?.CourierId.HasValue == true)
-                {
-                    try
-                    {
-                        // Retrieve courier details to get email address
-                        var courierDetails = s_bl.Courier.GetCourierDetails(bossId, lastDelivery.CourierId.Value);
-                        
-                        // Send email notification to courier about order cancellation
-                        SendEmailToCourier(courierDetails.Email, courierDetails.Name, orderId, orderDetails.CustomerName);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log error but continue with cancellation
-                        System.Diagnostics.Debug.WriteLine($"Failed to send email to courier: {ex.Message}");
-                    }
-                }
-            }
 
             // Cancel the order through the business logic layer
             s_bl.Order.CancelOrder(bossId, orderId);
@@ -637,49 +583,6 @@ public partial class OrderListWindow : Window
                 "Cancellation Failed",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
-        }
-    }
-
-    /// <summary>
-    /// Sends an email notification to a courier about an order cancellation.
-    /// This method simulates email sending for demonstration purposes.
-    /// In a production environment, this would integrate with an actual email service (SMTP, SendGrid, etc.).
-    /// </summary>
-    /// <param name="courierEmail">The email address of the courier.</param>
-    /// <param name="courierName">The name of the courier.</param>
-    /// <param name="orderId">The ID of the cancelled order.</param>
-    /// <param name="customerName">The name of the customer who placed the order.</param>
-    /// <remarks>
-    /// This method currently logs the email to the debug output.
-    /// For production use, integrate with an actual email service.
-    /// </remarks>
-    private void SendEmailToCourier(string courierEmail, string courierName, int orderId, string customerName)
-    {
-        try
-        {
-            // Email subject and body
-            string subject = $"Order Cancellation Notification - Order #{orderId}";
-            string body = $"Dear {courierName},\n\n" +
-                         $"The order #{orderId} for customer {customerName} has been cancelled.\n" +
-                         $"Please stop the delivery and return to the hub.\n\n" +
-                         $"Best regards,\n" +
-                         $"Delivery Management System";
-
-            // Log email details for demonstration
-            System.Diagnostics.Debug.WriteLine($"Sending email to {courierEmail}:");
-            System.Diagnostics.Debug.WriteLine($"Subject: {subject}");
-            System.Diagnostics.Debug.WriteLine($"Body: {body}");
-
-            // TODO: Implement actual email sending using SMTP or third-party service
-            // Example pseudocode:
-            // using (var smtpClient = new SmtpClient("smtp.example.com"))
-            // {
-            //     smtpClient.Send(new MailMessage("noreply@company.com", courierEmail, subject, body));
-            // }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Email sending error: {ex.Message}");
         }
     }
 

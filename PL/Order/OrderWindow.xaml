@@ -338,6 +338,9 @@
                                 <DataTrigger Binding="{Binding OrderCurrent.Status}" Value="Pending">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
+                                <DataTrigger Binding="{Binding OrderCurrent.Status}" Value="Processing">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Button.Style>

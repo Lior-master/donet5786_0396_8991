@@ -4,6 +4,8 @@ using DO;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Net.Mail;
+using System.Net;
 
 namespace Helpers;
 
@@ -733,12 +735,82 @@ internal static class OrderManager
     {
         try
         {
-            // Delete the order from the data layer
-            s_dal.Order.Delete(orderId);
-            
-            // Notify subscribers that this order has been deleted and the list has changed
-            Observers.NotifyItemUpdated(orderId);
-            Observers.NotifyListUpdated();
+            if(s_dal.Courier.Read(requesterId) == null)
+                throw new BLNotFoundException($"Requester with id {requesterId} does not exist.");
+
+            var existingOrder = s_dal.Order.Read(orderId);
+            if (existingOrder == null)
+                throw new BLNotFoundException($"Order with id {orderId} does not exist.");
+
+            var deliveries = s_dal.Delivery.ReadAll(d => d.OrderId == orderId).ToList();
+            BO.OrderStatus status = Tools.CalculateOrderStatus(deliveries);
+            if (status == BO.OrderStatus.Returned ||
+                status == BO.OrderStatus.Delivered)
+                throw new BO.BLInvalidOperationException($"Order {orderId} has already been delivered or returned.");
+
+            if(status == OrderStatus.Canceled)
+                throw new BO.BLInvalidOperationException($"Order {orderId} has already been cancelled.");
+
+            if(status == OrderStatus.Pending)
+            {
+                s_dal.Delivery.Create(new DO.Delivery
+                {
+                    OrderId = orderId,
+                    CourierId = 0,
+                    PickupTime = AdminManager.Now,
+                    DeliveredStatus = (DO.DeliveredStatus)BO.DeliveredStatus.Canceled,
+                    ArrivalTime = AdminManager.Now
+                });
+                Observers.NotifyItemUpdated(orderId);
+                Observers.NotifyListUpdated();
+                return;
+            }
+
+            if(status == OrderStatus.Processing)
+            {
+                DO.Delivery lastDelivery = deliveries
+                    .OrderByDescending(d => d.PickupTime)
+                    .First();
+                s_dal.Delivery.Update(new DO.Delivery(
+                    Id: lastDelivery.Id,
+                    OrderId: lastDelivery.OrderId,
+                    Transport: lastDelivery.Transport,
+                    CourierId: lastDelivery.CourierId,
+                    PickupTime: lastDelivery.PickupTime,
+                    ArrivalTime: AdminManager.Now,
+                    DeliveredStatus: DO.DeliveredStatus.Canceled
+                    ));
+                Observers.NotifyListUpdated();
+                Observers.NotifyItemUpdated(orderId);
+
+                // to send email to courier about cancellation - commented out because i don't want to spam my own email
+
+                //var courier = s_dal.Courier.Read(lastDelivery.CourierId);
+                //if (courier != null)
+                //{
+                //    // Notify the courier about the cancellation
+                //    string subject = $"Order Cancellation Notification - Order #{orderId}";
+                //    string body = $"Dear {courier.Name},\n\n" +
+                //                  $"We regret to inform you that Order #{orderId} has been cancelled while it was in processing.\n" +
+                //                  $"Please stop the delivery and return to the hub.\n\n" +
+                //                  $"Best regards,\n" +
+                //                  $"Delivery Management Team";
+
+                //    using var message = new MailMessage(
+                //        from: "noreply@wolt2.0.com",
+                //        to: courier.Email,
+                //        subject: subject,
+                //        body: body);
+
+                //    using var smtpClient = new SmtpClient("smtp.wolt2.0.com")
+                //    {
+                //        EnableSsl = true,
+                //        Credentials = new NetworkCredential("noreply@wolt2.0", "securepassword")
+                //    };
+                //    smtpClient.Send(message);
+                //}
+                return;
+            }
         }
         catch (Exception ex)
         {
@@ -770,7 +842,10 @@ internal static class OrderManager
             // Validate requester exists in the system
             var requester = s_dal.Courier.Read(requesterId);
             if (requester == null)
-                throw new BLNotFoundException("Requester does not exist.");
+                throw new BLNotFoundException($"Requester with id {requesterId} does not exist.");
+
+            if(s_dal.Order.Read(orderId) == null)
+                throw new BLNotFoundException($"Order with id {orderId} does not exist.");
 
             // Get all deliveries associated with this order
             var deliveries = s_dal.Delivery.ReadAll(d => d.OrderId == orderId).ToList();
