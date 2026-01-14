@@ -185,15 +185,14 @@ public partial class LoginWindow : Window
             }
 
             // ============================================================
-            // STEP 6: HANDLE COURIER ROLE (FUTURE IMPLEMENTATION)
+            // STEP 6: HANDLE COURIER ROLE(FUTURE IMPLEMENTATION)
             // ============================================================
-            // TODO: Uncomment when CourierWindow is implemented
-            //if (role == BO.Administrator.Courier)
-            //{
-            //    new PL.Courier.CourierWindow(id).Show();
-            //    ResetLoginForm();
-            //    return;
-            //}
+            if (role == BO.Administrator.Courier)
+            {
+                new CourierPersonalWindow(id).Show();
+                ResetLoginForm();
+                return;
+            }
 
             // ============================================================
             // STEP 7: HANDLE LOGIN FAILURE - ACCESS DENIED
