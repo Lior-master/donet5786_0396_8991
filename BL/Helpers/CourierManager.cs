@@ -570,6 +570,7 @@ internal static class CourierManager
                     IsActive = updatedCourier.IsActive,
                     Transport = (DO.DeliveryTransport)updatedCourier.Transport,
                     Administrator = (DO.Administrator)updatedCourier.Administrator,
+                    Password = updatedCourier.Password,
                     // MaxDistance may be nullable on both sides
                     MaxDistance = updatedCourier.MaxDistance
                 };
