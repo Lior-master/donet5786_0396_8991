@@ -230,7 +230,7 @@
 
                 <!-- GroupBox with Order Details -->
                 <GroupBox Header="Current Delivery" Foreground="#DC3545"
-                          Visibility="{Binding IsOrderInProgress, Converter={StaticResource BoolToVis}}">
+                          Visibility="{Binding IsAnOrderInProgress}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -330,7 +330,7 @@
                 <StackPanel VerticalAlignment="Center"
                             HorizontalAlignment="Center"
                             Margin="20"
-                            Visibility="{Binding IsOrderInProgress, Converter={StaticResource InverseBoolToVis}}">
+                            Visibility="{Binding IsNoOrderInProgress}">
                     <TextBlock Text="No Active Delivery" 
                                FontSize="16" 
                                FontWeight="Bold"

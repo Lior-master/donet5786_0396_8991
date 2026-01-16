@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -29,6 +30,21 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
     #region Properties for Data Binding
 
+    private Visibility _isAnOrderInProgress;
+    public Visibility IsAnOrderInProgress
+    {
+        get => _isAnOrderInProgress;
+        set
+        {
+            _isAnOrderInProgress = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private Visibility _isNoOrderInProgress;
+    public Visibility IsNoOrderInProgress =>
+        IsAnOrderInProgress == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+
     private int _courierId_Display;
     public int CourierId
     {
@@ -58,6 +74,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         set
         {
             _orderInProgress = value;
+            IsAnOrderInProgress = value == null ? Visibility.Collapsed : Visibility.Visible;
             OnPropertyChanged();
         }
     }
@@ -125,7 +142,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         _courierId = courierId;
         CourierId = courierId;
         _bossId = s_bl.Admin.GetConfig().BossId;
-        _courierObserver = RefreshCourierData;
+        _courierObserver = RefreshCourierData!;
 
         DeliveryTypes = new ObservableCollection<DeliveryTransport>
         {
@@ -162,8 +179,15 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
             try
             {
-                s_bl.Courier.AddObserver(_courierId, _courierObserver);
-                StatusMessage = $"Welcome, {Courier?.Name}! Ready to go.";
+                if (_courierObserver != null)
+                {
+                    s_bl.Courier.AddObserver(_courierId, _courierObserver);
+                    StatusMessage = $"Welcome, {Courier?.Name}! Ready to go.";
+                }
+                else
+                {
+                    StatusMessage = $"Welcome, {Courier?.Name}! (auto-refresh disabled)";
+                }
             }
             catch
             {
@@ -212,7 +236,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             Mouse.OverrideCursor = Cursors.Wait;
             StatusMessage = "Updating profile...";
 
-            s_bl.Courier.UpdateCourier(_bossId, Courier);
+            s_bl.Courier.UpdateCourier(CourierId, Courier);
 
             StatusMessage = "Profile updated successfully!";
             MessageBox.Show("Your profile has been updated successfully.", 
@@ -357,16 +381,46 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
     private void RefreshCourierData()
     {
-        Dispatcher.Invoke(() =>
+        Dispatcher.Invoke(async () =>
         {
             try
             {
-                LoadCourierData();
+                // Add defensive check to prevent race condition - verify courier still exists
+                var courierExists = await Task.Run(() =>
+                {
+                    try
+                    {
+                        s_bl.Courier.GetCourierDetails(_bossId, _courierId);
+                        return true;
+                    }
+                    catch (BO.BLNotFoundException)
+                    {
+                        return false;
+                    }
+                });
+
+                if (!courierExists)
+                {
+                    // Courier was deleted - close this window gracefully
+                    MessageBox.Show("Your courier profile has been removed by an administrator.", 
+                        "Profile Removed", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Close();
+                    return;
+                }
+
+                // Load updated courier data asynchronously
+                var updatedCourier = await Task.Run(() => 
+                    s_bl.Courier.GetCourierDetails(_bossId, _courierId));
+                
+                Courier = updatedCourier;
+                OrderInProgress = updatedCourier.CurrentOrder;
                 StatusMessage = "Data refreshed from server";
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Refresh failed: {ex.Message}";
+                // Don't show error message box for refresh failures as they might be frequent
+                // The user can see the error in the status message
             }
         });
     }
