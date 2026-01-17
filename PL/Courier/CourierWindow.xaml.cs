@@ -175,7 +175,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     /// Raises PropertyChanged event for the specified property
     /// Uses CallerMemberName attribute to automatically get calling property name
     /// </summary>
-    /// <param name="propertyName">Name of the property that changed</param>
+    /// <param name="propertyName">CourierName of the property that changed</param>
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 

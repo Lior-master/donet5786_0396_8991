@@ -166,7 +166,7 @@ internal class Program
     {
         Console.WriteLine("Enter minimal order fields (press Enter to accept default):");
         var order = new BO.Order();
-        Console.Write("Customer Name: ");
+        Console.Write("Customer CourierName: ");
         var name = Console.ReadLine();
         if (!string.IsNullOrWhiteSpace(name)) order.CustomerName = name;
         Console.Write("Customer Address: ");
@@ -188,7 +188,7 @@ internal class Program
 
         var current = s_bl.Order.GetOrderDetails(TestRequesterId, id);
         Console.WriteLine("Current: " + current);
-        Console.Write("New Customer Name (blank = keep): ");
+        Console.Write("New Customer CourierName (blank = keep): ");
         var name = Console.ReadLine();
         if (!string.IsNullOrWhiteSpace(name)) current.CustomerName = name;
         Console.Write("New Address (blank = keep): ");
@@ -359,7 +359,7 @@ internal class Program
     {
         Console.WriteLine("Enter courier fields (press Enter to accept default):");
 
-        Console.Write("Name: ");
+        Console.Write("CourierName: ");
         var name = Console.ReadLine();
 
         Console.Write("Phone: ");
@@ -436,7 +436,7 @@ internal class Program
         if (!int.TryParse(Console.ReadLine(), out int id)) return;
         var cur = s_bl.Courier.GetCourierDetails(TestRequesterId, id);
         Console.WriteLine("Current: " + cur);
-        Console.Write("New Name (blank = keep): ");
+        Console.Write("New CourierName (blank = keep): ");
         var name = Console.ReadLine();
         if (!string.IsNullOrWhiteSpace(name)) cur.Name = name;
         Console.Write("New Phone (blank = keep): ");

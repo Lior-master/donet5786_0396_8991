@@ -21,7 +21,7 @@ public class DeliveryPerOrderInList
     /// <summary>
     /// Display name of the courier assigned to the delivery.
     /// </summary>
-    public string Name { get; init; }
+    public string CourierName { get; init; }
 
     /// <summary>
     /// Type of the order associated with this delivery.

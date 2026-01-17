@@ -575,7 +575,7 @@ internal static class OrderManager
                 {
                     DeliveryId = d.Id,
                     CourierId = d.CourierId == 0 ? null : (int?)d.CourierId,
-                    Name = courier?.Name ?? string.Empty,
+                    CourierName = courier?.Name ?? string.Empty,
                     PickupTime = d.PickupTime,
                     DeliveredStatus = d.DeliveredStatus.HasValue ? (BO.DeliveredStatus?)(BO.DeliveredStatus)d.DeliveredStatus.Value : null,
                     ArrivalTime = d.ArrivalTime
@@ -790,7 +790,7 @@ internal static class OrderManager
                 //{
                 //    // Notify the courier about the cancellation
                 //    string subject = $"Order Cancellation Notification - Order #{orderId}";
-                //    string body = $"Dear {courier.Name},\n\n" +
+                //    string body = $"Dear {courier.CourierName},\n\n" +
                 //                  $"We regret to inform you that Order #{orderId} has been cancelled while it was in processing.\n" +
                 //                  $"Please stop the delivery and return to the hub.\n\n" +
                 //                  $"Best regards,\n" +

@@ -143,7 +143,7 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
 
-        <ObjectDataProvider x:Key="ShedulStatus"
+        <ObjectDataProvider x:Key="ScheduleStatusValues"
                             MethodName="GetValues"
                             ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
@@ -169,6 +169,8 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -225,6 +227,7 @@
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Delivery Address:" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="4" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
+                             Height="80"
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
                              VerticalScrollBarVisibility="Auto"
@@ -235,14 +238,14 @@
                     <TextBlock Grid.Row="5" Grid.Column="0" Text="Weight (kg):" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="5" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
-                             Text="{Binding OrderCurrent.Weight, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding OrderCurrent.Weight, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                              Margin="0,0,0,15"/>
 
                     <!-- Volume (set -> editable, nullable) -->
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="Volume:" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="6" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
-                             Text="{Binding OrderCurrent.Volume, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding OrderCurrent.Volume, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                              Margin="0,0,0,15"/>
 
                     <!-- Fragility Level (set -> editable, nullable enum) -->
@@ -261,7 +264,7 @@
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
                              VerticalScrollBarVisibility="Auto"
-                             Text="{Binding OrderCurrent.OrderDescription, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding OrderCurrent.OrderDescription, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                              Margin="0,0,0,15"/>
 
                     <!-- Order Date (init -> readonly display) -->
@@ -275,18 +278,18 @@
                     <!-- Status (init -> readonly display) -->
                     <TextBlock Grid.Row="10" Grid.Column="0" Text="Status:" Style="{StaticResource FieldLabelStyle}"/>
                     <ComboBox Grid.Row="10" Grid.Column="1"
-                             Style="{StaticResource ModernComboBoxStyle}"
-                             IsEnabled="False"
-                             ItemsSource="{StaticResource OrderStatusCollectionKey}"
-                             Text="{Binding OrderCurrent.Status}"
-                             Margin="0,0,0,15"/>
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              IsEnabled="False"
+                              ItemsSource="{Binding Source={StaticResource OrderStatusValues}}"
+                              SelectedItem="{Binding OrderCurrent.Status}"
+                              Margin="0,0,0,15"/>
 
                     <!-- Distance (init -> readonly display) -->
                     <TextBlock Grid.Row="11" Grid.Column="0" Text="Distance (km):" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="11" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
                              IsReadOnly="True"
-                             Text="{Binding OrderCurrent.Distance, StringFormat={}{0:0.0}}"
+                             Text="{Binding OrderCurrent.Distance, StringFormat={}{0:0.00}}"
                              Margin="0,0,0,15"/>
 
                     <!-- Estimated Arrival (init -> readonly display) -->
@@ -294,7 +297,7 @@
                     <TextBox Grid.Row="12" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
                              IsReadOnly="True"
-                             Text="{Binding OrderCurrent.ArrivalDateEstimeted, StringFormat={}{0:dd/MM/yyyy HH:mm}}"
+                             Text="{Binding OrderCurrent.ArrivalDateEstimeted, StringFormat={}{0:dd/MM/yyyy HH:mm}, TargetNullValue='Not scheduled'}"
                              Margin="0,0,0,15"/>
 
                     <!-- Max Arrival Date (init -> readonly display) -->
@@ -302,7 +305,7 @@
                     <TextBox Grid.Row="13" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
                              IsReadOnly="True"
-                             Text="{Binding OrderCurrent.ArrivalDateMax, StringFormat={}{0:dd/MM/yyyy HH:mm}}"
+                             Text="{Binding OrderCurrent.ArrivalDateMax, StringFormat={}{0:dd/MM/yyyy HH:mm}, TargetNullValue='Not set'}"
                              Margin="0,0,0,15"/>
 
                     <!-- Schedule Status (init -> readonly display) -->
@@ -310,9 +313,64 @@
                     <ComboBox Grid.Row="14" Grid.Column="1"
                               Style="{StaticResource ModernComboBoxStyle}"
                               IsEnabled="False"
-                              ItemsSource="{Binding Source={StaticResource ShedulStatus}}"
+                              ItemsSource="{Binding Source={StaticResource ScheduleStatusCollectionKey}}"
                               SelectedItem="{Binding OrderCurrent.ScheduleStatus}"
-                              Margin="0,0,0,0"/>
+                              Margin="0,0,0,15"/>
+                    
+                    <!-- Arrival Estimate time -->
+                    <TextBlock Grid.Row="15" Grid.Column="0" Text="Arrival Estimate Time:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="15" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.ArrivalTimeEstimeted, StringFormat={}{0:hh\\:mm\\:ss}}"
+                             Margin="0,0,0,15"/>
+                    
+                    <!-- All Deliveries of this Order (if exist) -->
+                    <TextBlock Grid.Row="16" Grid.Column="0" Text="Deliveries:" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                    <ListBox Grid.Row="16" Grid.Column="1"
+                             Height="100"
+                             Background="White"
+                             BorderBrush="#BDBDBD"
+                             BorderThickness="1"
+                             ItemsSource="{Binding OrderCurrent.DeliveriesPerOrder}"
+                             DisplayMemberPath="Id"
+                             Margin="0,0,0,0">
+                        <ListBox.Style>
+                            <Style TargetType="ListBox">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding OrderCurrent.DeliveriesPerOrder}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.Style>
+                    </ListBox>
+                    
+                    <!-- Show message when no deliveries -->
+                    <TextBox Grid.Row="16" Grid.Column="1"
+                             Height="100"
+                             IsReadOnly="True"
+                             Text="No deliveries assigned yet"
+                             VerticalContentAlignment="Center"
+                             HorizontalContentAlignment="Center"
+                             Background="#F9F9F9"
+                             Foreground="#666666"
+                             FontStyle="Italic"
+                             Margin="0,0,0,0">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding OrderCurrent.DeliveriesPerOrder}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding OrderCurrent.DeliveriesPerOrder.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
                 </Grid>
             </ScrollViewer>
         </Border>

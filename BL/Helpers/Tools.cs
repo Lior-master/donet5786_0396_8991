@@ -24,8 +24,8 @@ internal static class Tools
     /// Returns an empty string if the input is null.
     /// </returns>
     /// <example>
-    /// If <paramref name="t"/> is a Courier object with Id=1 and Name="John",
-    /// returns: "Courier { Id = 1, Name = John, ... }".
+    /// If <paramref name="t"/> is a Courier object with Id=1 and CourierName="John",
+    /// returns: "Courier { Id = 1, CourierName = John, ... }".
     /// </example>
     public static string ToStringProperty<T>(this T t)
     {

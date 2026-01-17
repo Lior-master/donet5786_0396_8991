@@ -433,7 +433,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         var errors = new List<string>();
 
         if (string.IsNullOrWhiteSpace(Courier.Name))
-            errors.Add("Name is required");
+            errors.Add("CourierName is required");
 
         if (string.IsNullOrWhiteSpace(Courier.Phone))
             errors.Add("Phone number is required");
