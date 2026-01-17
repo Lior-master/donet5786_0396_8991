@@ -450,4 +450,24 @@
     <Distance xsi:nil="true" />
     <DeliveredStatus>Canceled</DeliveredStatus>
   </Delivery>
+  <Delivery>
+    <Id>5046</Id>
+    <OrderId>1031</OrderId>
+    <Transport>Bike</Transport>
+    <CourierId>100001</CourierId>
+    <PickupTime>2026-01-12T17:49:56</PickupTime>
+    <ArrivalTime xsi:nil="true" />
+    <Distance xsi:nil="true" />
+    <DeliveredStatus xsi:nil="true" />
+  </Delivery>
+  <Delivery>
+    <Id>5045</Id>
+    <OrderId>1028</OrderId>
+    <Transport>Bike</Transport>
+    <CourierId>100001</CourierId>
+    <PickupTime>2026-01-12T17:49:56</PickupTime>
+    <ArrivalTime>2026-01-12T17:49:56</ArrivalTime>
+    <Distance>1.512811505319014</Distance>
+    <DeliveredStatus>Delivered</DeliveredStatus>
+  </Delivery>
 </ArrayOfDelivery>

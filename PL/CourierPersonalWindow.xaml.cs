@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using BlApi;
 using BO;
+using PL.Courier;
 
 namespace PL;
 
@@ -64,6 +65,9 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         {
             _courier = value;
             OnPropertyChanged();
+            // computed properties depend on courier
+            OnPropertyChanged(nameof(CanChooseOrder));
+            OnPropertyChanged(nameof(DisplayDistanceText));
         }
     }
 
@@ -76,6 +80,11 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             _orderInProgress = value;
             IsAnOrderInProgress = value == null ? Visibility.Collapsed : Visibility.Visible;
             OnPropertyChanged();
+            // computed properties depend on order in progress
+            OnPropertyChanged(nameof(CanChooseOrder));
+            OnPropertyChanged(nameof(DisplayDistanceText));
+            OnPropertyChanged(nameof(DeliveryStatusText));
+            OnPropertyChanged(nameof(IsDeliveryEndTypeVisible));
         }
     }
 
@@ -125,6 +134,83 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
     #endregion
 
+    #region History properties (no new files)
+
+    private Visibility _historyVisibility = Visibility.Collapsed;
+    public Visibility HistoryVisibility
+    {
+        get => _historyVisibility;
+        set { _historyVisibility = value; OnPropertyChanged(); }
+    }
+
+    private ObservableCollection<BO.ClosedDeliveryInList> _deliveryHistory = new();
+    public ObservableCollection<BO.ClosedDeliveryInList> DeliveryHistory
+    {
+        get => _deliveryHistory;
+        set { _deliveryHistory = value; OnPropertyChanged(); }
+    }
+
+    private string _historyStatusMessage = "Ready";
+    public string HistoryStatusMessage
+    {
+        get => _historyStatusMessage;
+        set { _historyStatusMessage = value; OnPropertyChanged(); }
+    }
+
+    #endregion
+
+    #region Computed / Helper Properties
+
+    // Whether the courier may choose an order: must be active AND must have no current order.
+    public bool CanChooseOrder => Courier != null && Courier.IsActive && OrderInProgress == null;
+
+    // Display distance: smaller between courier max distance and order distance when available.
+    public string DisplayDistanceText
+    {
+        get
+        {
+            if (OrderInProgress == null)
+                return "N/A";
+
+            double? orderDist = OrderInProgress.Distance;
+            double? max = Courier?.MaxDistance;
+
+            if (!orderDist.HasValue && !max.HasValue)
+                return "Unknown";
+
+            if (orderDist.HasValue && max.HasValue)
+            {
+                double used = Math.Min(orderDist.Value, max.Value);
+                return $"{used:F2} km (display)";
+            }
+
+            // one of them available
+            if (orderDist.HasValue)
+                return $"{orderDist.Value:F2} km";
+            if (max.HasValue)
+                return $"{max.Value:F2} km (max)";
+
+            return "Unknown";
+        }
+    }
+
+    // Text describing whether the delivery is in-progress or arrival recorded (used as "type of delivery")
+    public string DeliveryStatusText
+    {
+        get
+        {
+            if (OrderInProgress == null)
+                return "No delivery";
+
+            return OrderInProgress.ArrivalTime.HasValue ? "Arrived / Ending" : "In Progress";
+        }
+    }
+
+    // Visibility for Delivery End Type (should be shown only when arrival is recorded)
+    public Visibility IsDeliveryEndTypeVisible => OrderInProgress != null && OrderInProgress.ArrivalTime.HasValue ? Visibility.Visible : Visibility.Collapsed;
+
+    #endregion
+
     #region INotifyPropertyChanged Implementation
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -162,6 +248,9 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         };
 
         SelectedFinishType = DeliveredStatus.Delivered;
+
+        // init history collection
+        DeliveryHistory = new ObservableCollection<BO.ClosedDeliveryInList>();
     }
 
     #endregion
@@ -176,28 +265,11 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             StatusMessage = "Loading courier data...";
 
             LoadCourierData();
-
-            try
-            {
-                if (_courierObserver != null)
-                {
-                    s_bl.Courier.AddObserver(_courierId, _courierObserver);
-                    StatusMessage = $"Welcome, {Courier?.Name}! Ready to go.";
-                }
-                else
-                {
-                    StatusMessage = $"Welcome, {Courier?.Name}! (auto-refresh disabled)";
-                }
-            }
-            catch
-            {
-                StatusMessage = $"Welcome, {Courier?.Name}! (auto-refresh disabled)";
-            }
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error loading data: {ex.Message}";
-            MessageBox.Show($"Failed to load courier data:\n{ex.Message}", 
+            MessageBox.Show($"Failed to load courier data:\n{ex.Message}",
                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             Close();
         }
@@ -239,7 +311,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             s_bl.Courier.UpdateCourier(CourierId, Courier);
 
             StatusMessage = "Profile updated successfully!";
-            MessageBox.Show("Your profile has been updated successfully.", 
+            MessageBox.Show("Your profile has been updated successfully.",
                 "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
             LoadCourierData();
@@ -247,7 +319,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         catch (Exception ex)
         {
             StatusMessage = $"Update failed: {ex.Message}";
-            MessageBox.Show($"Failed to update profile:\n{ex.Message}", 
+            MessageBox.Show($"Failed to update profile:\n{ex.Message}",
                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -260,16 +332,16 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            StatusMessage = "Opening delivery history...";
-            MessageBox.Show("Delivery history feature coming soon.\n\nThis will show your complete delivery record.", 
-                "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-            StatusMessage = "Ready";
+            // Open the history window (if present)
+            var historyWindow = new PL.Courier.CourierDeliveryHistoryWindow(_courierId)
+            {
+                Owner = this
+            };
+            historyWindow.Show();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
-            MessageBox.Show($"Failed to open history:\n{ex.Message}", 
-                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Failed to open history:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -286,7 +358,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             if (!Courier.IsActive)
             {
                 StatusMessage = "You must be marked as active";
-                MessageBox.Show("You must be marked as active by a manager to choose orders.", 
+                MessageBox.Show("You must be marked as active by a manager to choose orders.",
                     "Not Active", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -294,20 +366,22 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             if (OrderInProgress != null)
             {
                 StatusMessage = "You already have an active delivery";
-                MessageBox.Show("You must complete your current delivery before choosing a new one.", 
+                MessageBox.Show("You must complete your current delivery before choosing a new one.",
                     "Active Delivery", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            StatusMessage = "Opening order selection...";
-            MessageBox.Show("Order selection feature coming soon.\n\nThis will let you choose available deliveries based on your location and capacity.", 
-                "Information", MessageBoxButton.OK, MessageBoxImage.Information);
-            StatusMessage = "Ready";
+            // Open the order selection window
+            var choose = new PL.Courier.CourierOrderSelectionWindow(_courierId)
+            {
+                Owner = this
+            };
+            choose.Show();
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error: {ex.Message}";
-            MessageBox.Show($"Failed to open order selection:\n{ex.Message}", 
+            MessageBox.Show($"Failed to open order selection:\n{ex.Message}",
                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -319,11 +393,12 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             if (OrderInProgress == null)
             {
                 StatusMessage = "No active delivery to complete";
-                MessageBox.Show("There is no active delivery to complete.", 
+                MessageBox.Show("There is no active delivery to complete.",
                     "No Active Delivery", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
+            // Confirm with selected finish type for user's clarity
             var result = MessageBox.Show(
                 $"Mark delivery of Order #{OrderInProgress.OrderId} as {SelectedFinishType}?\n\n" +
                 $"Customer: {OrderInProgress.CustomerName}\n" +
@@ -341,16 +416,29 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             Mouse.OverrideCursor = Cursors.Wait;
             StatusMessage = "Completing delivery...";
 
+            // BL expects requesterId (who calls), courierId, deliveryId
+            int deliveryId = OrderInProgress.DeliveryId;
+            if (deliveryId == 0)
+            {
+                StatusMessage = "Cannot complete delivery: delivery id missing.";
+                MessageBox.Show("Delivery id is missing. Please try again after refreshing.",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            s_bl.Order.FinishOrder(_courierId, _courierId, deliveryId);
+
             StatusMessage = $"Delivery marked as {SelectedFinishType}";
-            MessageBox.Show("Delivery has been completed successfully.", 
+            MessageBox.Show("Delivery has been completed successfully.",
                 "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            LoadCourierData();
+            // After completion the courier won't remain here
+            Close();
         }
         catch (Exception ex)
         {
             StatusMessage = $"Completion failed: {ex.Message}";
-            MessageBox.Show($"Failed to complete delivery:\n{ex.Message}", 
+            MessageBox.Show($"Failed to complete delivery:\n{ex.Message}",
                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -379,13 +467,22 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Called by observers / child windows to refresh data on the courier screen.
+    /// Exposed publicly so child windows can notify the parent after assignment/completion.
+    /// </summary>
+    public void RefreshDataFromChild()
+    {
+        // reuse existing refresh logic (runs on UI thread)
+        RefreshCourierData();
+    }
+
     private void RefreshCourierData()
     {
         Dispatcher.Invoke(async () =>
         {
             try
             {
-                // Add defensive check to prevent race condition - verify courier still exists
                 var courierExists = await Task.Run(() =>
                 {
                     try
@@ -401,17 +498,15 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
                 if (!courierExists)
                 {
-                    // Courier was deleted - close this window gracefully
-                    MessageBox.Show("Your courier profile has been removed by an administrator.", 
+                    MessageBox.Show("Your courier profile has been removed by an administrator.",
                         "Profile Removed", MessageBoxButton.OK, MessageBoxImage.Information);
                     Close();
                     return;
                 }
 
-                // Load updated courier data asynchronously
-                var updatedCourier = await Task.Run(() => 
+                var updatedCourier = await Task.Run(() =>
                     s_bl.Courier.GetCourierDetails(_bossId, _courierId));
-                
+
                 Courier = updatedCourier;
                 OrderInProgress = updatedCourier.CurrentOrder;
                 StatusMessage = "Data refreshed from server";
@@ -419,8 +514,6 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             catch (Exception ex)
             {
                 StatusMessage = $"Refresh failed: {ex.Message}";
-                // Don't show error message box for refresh failures as they might be frequent
-                // The user can see the error in the status message
             }
         });
     }

@@ -231,7 +231,7 @@
                         <!-- Late Deliveries -->
                         <TextBlock Grid.Row="12" Grid.Column="0" Text="Late Deliveries:" Style="{StaticResource LabelStyle}"/>
                         <TextBlock Grid.Row="12" Grid.Column="1" 
-                                   Text="{Binding Courier.NumberOfLateDeliveries, StringFormat={}{0} deliveries}"
+                                   Text="{Binding Courier.NumberOfLateDeliveries, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0} deliveries}"
                                    Style="{StaticResource ValueStyle}"
                                    Foreground="#DC3545"/>
 
@@ -248,7 +248,7 @@
                                     ToolTip="View your delivery history"/>
                             <Button Content="📦 Choose Order" 
                                     Click="BtnChooseOrder_Click"
-                                    IsEnabled="{Binding Courier.IsActive}"
+                                    IsEnabled="{Binding CanChooseOrder}"
                                     ToolTip="Select a new order to deliver"/>
                         </StackPanel>
                     </Grid>
@@ -276,6 +276,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/> <!-- added to avoid overlap -->
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -312,7 +313,7 @@
                             <!-- Distance -->
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Distance:" Style="{StaticResource LabelStyle}"/>
                             <TextBlock Grid.Row="4" Grid.Column="1" 
-                                       Text="{Binding OrderInProgress.Distance, StringFormat={}{0:F2} km}"
+                                       Text="{Binding DisplayDistanceText}"
                                        Style="{StaticResource ValueStyle}"/>
 
                             <!-- Order Date/Time -->
@@ -327,15 +328,23 @@
                                        Text="{Binding OrderInProgress.ScheduleStatus}"
                                        Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Finish Type Selection -->
-                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Finish Type:" Style="{StaticResource LabelStyle}"/>
-                            <ComboBox Grid.Row="7" Grid.Column="1"
+                            <!-- Delivery Type (In Progress / Arrived) -->
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Delivery Type:" Style="{StaticResource LabelStyle}"/>
+                            <TextBlock Grid.Row="7" Grid.Column="1"
+                                       Text="{Binding DeliveryStatusText}"
+                                       Style="{StaticResource ValueStyle}"/>
+
+                            <!-- Finish Type Selection (only visible when arrival recorded) -->
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Finish Type:" Style="{StaticResource LabelStyle}"
+                                       Visibility="{Binding IsDeliveryEndTypeVisible}"/>
+                            <ComboBox Grid.Row="8" Grid.Column="1"
                                       ItemsSource="{Binding DeliveryFinishTypes}"
                                       SelectedItem="{Binding SelectedFinishType, UpdateSourceTrigger=PropertyChanged}"
-                                      ToolTip="Select how this delivery ended"/>
+                                      ToolTip="Select how this delivery ended"
+                                      Visibility="{Binding IsDeliveryEndTypeVisible}"/>
 
                             <!-- Finish Button -->
-                            <StackPanel Grid.Row="8" Grid.ColumnSpan="2" 
+                            <StackPanel Grid.Row="9" Grid.ColumnSpan="2" 
                                         Orientation="Horizontal" 
                                         HorizontalAlignment="Right"
                                         Margin="0,15,0,0">

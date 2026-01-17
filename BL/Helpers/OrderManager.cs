@@ -1259,75 +1259,106 @@ internal static class OrderManager
             // Validate courier exists in the system
             var courier = s_dal.Courier.Read(courierId) ?? throw new BLNotFoundException($"Courier {courierId} not found.");
 
-            // Get all active deliveries for this courier (those without recorded arrival times)
-            var deliveries = s_dal.Delivery.ReadAll(d => d.CourierId == courierId && d.ArrivalTime == null).ToList();
-            var orders = s_dal.Order.ReadAll().ToDictionary(o => o.Id);
+            // Read all orders and deliveries
+            var orders = s_dal.Order.ReadAll().ToList();
+            var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
             var config = AdminManager.GetConfig();
 
-            var list = deliveries.Select(d =>
+            var result = new List<BO.OpenOrderInList>();
+
+            foreach (var o in orders)
             {
-                // Retrieve associated order (or use default if not found)
-                orders.TryGetValue(d.OrderId, out var o);
-                double lat = o?.Latitude ?? 0;
-                double lon = o?.Longitude ?? 0;
-                if (lat == 0 && lon == 0 && o != null)
+                // Skip already finished/cancelled orders
+                var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
+                var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
+                if (orderStatus == BO.OrderStatus.Delivered || orderStatus == BO.OrderStatus.Returned || orderStatus == BO.OrderStatus.Canceled)
+                    continue;
+
+                // Find open deliveries for this order (ArrivalTime == null)
+                var openDeliveries = orderDeliveries.Where(d => d.ArrivalTime == null).ToList();
+
+                // If there is any open delivery assigned to a courier (CourierId != 0),
+                // the order is currently being processed by someone -> not available.
+                if (openDeliveries.Any(d => d.CourierId != 0))
+                    continue;
+
+                // At this point the order is considered "available":
+                // - either it has an open delivery with CourierId == 0 (explicit unassigned slot),
+                // - or it has no delivery record yet.
+                // We'll compute distance/estimated time similarly to other methods.
+                double lat = o.Latitude ?? 0;
+                double lon = o.Longitude ?? 0;
+                if (lat == 0 && lon == 0 && !string.IsNullOrWhiteSpace(o.CustomerAddress))
                 {
                     try
                     {
-                        // Attempt to geocode the customer address if coordinates are missing
                         var coords = Tools.GetCoordinatesFromAddressAsync(o.CustomerAddress).GetAwaiter().GetResult();
                         lat = coords.Latitude;
                         lon = coords.Longitude;
                     }
-                    catch { }
+                    catch { /* ignore geocode failures, use 0/0 */ }
                 }
+
                 double bird = Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
 
-                // Use delivery pickup time + delivery transport speed for ETA when available
+                // For orders that already have an unassigned delivery record, take that delivery's pickup time, distance
+                DO.Delivery? unassignedDelivery = openDeliveries.FirstOrDefault(d => d.CourierId == 0);
+
+                DateTime addedTimeReference = o.OrderDate;
+                TimeSpan? addedTime = (AdminManager.Now - addedTimeReference);
                 DateTime? estArrival = null;
                 TimeSpan estTimeSpan = TimeSpan.Zero;
-                if (o != null)
+                if (unassignedDelivery != null)
                 {
-                    double speed = Tools.GetSpeed(d.Transport, config);
-                    estArrival = Tools.CalculateEstimatedArrival(d.PickupTime, bird, speed);
-                    estTimeSpan = estArrival != null ? estArrival.Value - d.PickupTime : TimeSpan.Zero;
+                    double speed = Tools.GetSpeed(unassignedDelivery.Transport, config);
+                    estArrival = Tools.CalculateEstimatedArrival(unassignedDelivery.PickupTime, bird, speed);
+                    estTimeSpan = estArrival != null ? estArrival.Value - unassignedDelivery.PickupTime : TimeSpan.Zero;
+                }
+                else
+                {
+                    // No delivery record yet: estimate from order date using default car speed
+                    double speed = config.CarSpeed;
+                    estArrival = Tools.CalculateEstimatedArrival(o.OrderDate, bird, speed);
+                    estTimeSpan = estArrival != null ? estArrival.Value - o.OrderDate : TimeSpan.Zero;
                 }
 
                 DateTime maxDelivered = estArrival?.Add(config.RiskRange) ?? AdminManager.Now;
 
-                return new BO.OpenOrderInList
+                // Build BO.OpenOrderInList entry
+                result.Add(new BO.OpenOrderInList
                 {
-                    CourierId = d.CourierId == 0 ? null : (int?)d.CourierId,
-                    OrderId = d.OrderId,
-                    OrderType = o != null ? (BO.OrderType)o.Type : BO.OrderType.FastFood,
-                    Fragility = o?.Fragility != null ? (BO.FragilityLevel?)(BO.FragilityLevel)o.Fragility.Value : null,
-                    CustomerAddress = o?.CustomerAddress ?? string.Empty,
+                    CourierId = null, // currently unassigned
+                    OrderId = o.Id,
+                    OrderType = (BO.OrderType)o.Type,
+                    Fragility = o.Fragility != null ? (BO.FragilityLevel?)(BO.FragilityLevel)o.Fragility.Value : null,
+                    CustomerAddress = o.CustomerAddress ?? string.Empty,
                     BirdDistance = bird,
-                    Distance = d.Distance,
-                    AddedTime = (o != null) ? (TimeSpan?)(AdminManager.Now - o.OrderDate) : null,
-                    ScheduleStatus = Tools.CalculateScheduleStatus(Tools.CalculateOrderStatus(new List<DO.Delivery> { d }), o?.OrderDate ?? AdminManager.Now, estArrival, estArrival?.Add(config.RiskRange), d.ArrivalTime),
+                    Distance = unassignedDelivery?.Distance,
+                    AddedTime = addedTime,
+                    ScheduleStatus = Tools.CalculateScheduleStatus(Tools.CalculateOrderStatus(orderDeliveries), o.OrderDate, estArrival, estArrival?.Add(config.RiskRange), null),
                     EstimatedDeliveryTime = estTimeSpan,
                     MaxDeliveredTime = maxDelivered
-                };
-            }).ToList();
+                });
+            }
 
+            // Optional filter by OrderType
             if (filter.HasValue)
-                list = list.Where(x => x.OrderType == filter.Value).ToList();
+                result = result.Where(x => x.OrderType == filter.Value).ToList();
 
-            // Sorter param is DeliveredStatus? but for open orders we'll support sorting by AddedTime or BirdDistance via enum name string
+            // Sorting support: support BirdDistance or AddedTime by enum name string (like before)
             if (sorter != null)
             {
                 string key = sorter.ToString() ?? string.Empty;
                 bool ascending = true;
-                list = key switch
+                result = key switch
                 {
-                    "BirdDistance" => ascending ? list.OrderBy(x => x.BirdDistance).ToList() : list.OrderByDescending(x => x.BirdDistance).ToList(),
-                    "AddedTime" => ascending ? list.OrderBy(x => x.AddedTime).ToList() : list.OrderByDescending(x => x.AddedTime).ToList(),
-                    _ => list
+                    "BirdDistance" => ascending ? result.OrderBy(x => x.BirdDistance).ToList() : result.OrderByDescending(x => x.BirdDistance).ToList(),
+                    "AddedTime" => ascending ? result.OrderBy(x => x.AddedTime).ToList() : result.OrderByDescending(x => x.AddedTime).ToList(),
+                    _ => result
                 };
             }
 
-            return list;
+            return result;
         }
         catch (Exception ex)
         {

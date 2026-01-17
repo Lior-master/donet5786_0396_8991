@@ -1,4 +1,4 @@
-﻿using BO;
+﻿    using BO;
 using DalApi;
 using DO;
 using System.Linq;
@@ -488,12 +488,14 @@ internal static class CourierManager
                     // Build the order-in-progress view model
                     currentOrder = new BO.OrderInProgress
                     {
+                        DeliveryId = currentDelivery.Id,                      // <-- ensure delivery id is present
                         OrderId = orderDO.Id,
                         CustomerName = orderDO.CustomerName,
                         CustomerAddress = orderDO.CustomerAddress,
                         CustomerPhone = orderDO.CustomerPhone,
                         PickupTime = currentDelivery.PickupTime,
                         Distance = currentDelivery.Distance,
+                        ArrivalTime = currentDelivery.ArrivalTime,           // <-- propagate arrival time if set
                         OrderStatus = ordStatus
                     };
                 }
