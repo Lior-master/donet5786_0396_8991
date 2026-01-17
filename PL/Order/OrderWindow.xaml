@@ -143,7 +143,7 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
 
-        <ObjectDataProvider x:Key="ShedulStatus"
+        <ObjectDataProvider x:Key="ScheduleStatusValues"
                             MethodName="GetValues"
                             ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
@@ -169,6 +169,8 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -225,6 +227,7 @@
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Delivery Address:" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="4" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
+                             Height="80"
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
                              VerticalScrollBarVisibility="Auto"
@@ -235,14 +238,14 @@
                     <TextBlock Grid.Row="5" Grid.Column="0" Text="Weight (kg):" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="5" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
-                             Text="{Binding OrderCurrent.Weight, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding OrderCurrent.Weight, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                              Margin="0,0,0,15"/>
 
                     <!-- Volume (set -> editable, nullable) -->
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="Volume:" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="6" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
-                             Text="{Binding OrderCurrent.Volume, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding OrderCurrent.Volume, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                              Margin="0,0,0,15"/>
 
                     <!-- Fragility Level (set -> editable, nullable enum) -->
@@ -261,7 +264,7 @@
                              TextWrapping="Wrap"
                              AcceptsReturn="True"
                              VerticalScrollBarVisibility="Auto"
-                             Text="{Binding OrderCurrent.OrderDescription, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding OrderCurrent.OrderDescription, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
                              Margin="0,0,0,15"/>
 
                     <!-- Order Date (init -> readonly display) -->
@@ -275,18 +278,18 @@
                     <!-- Status (init -> readonly display) -->
                     <TextBlock Grid.Row="10" Grid.Column="0" Text="Status:" Style="{StaticResource FieldLabelStyle}"/>
                     <ComboBox Grid.Row="10" Grid.Column="1"
-                             Style="{StaticResource ModernComboBoxStyle}"
-                             IsEnabled="False"
-                             ItemsSource="{StaticResource OrderStatusCollectionKey}"
-                             Text="{Binding OrderCurrent.Status}"
-                             Margin="0,0,0,15"/>
+                              Style="{StaticResource ModernComboBoxStyle}"
+                              IsEnabled="False"
+                              ItemsSource="{Binding Source={StaticResource OrderStatusValues}}"
+                              SelectedItem="{Binding OrderCurrent.Status}"
+                              Margin="0,0,0,15"/>
 
                     <!-- Distance (init -> readonly display) -->
                     <TextBlock Grid.Row="11" Grid.Column="0" Text="Distance (km):" Style="{StaticResource FieldLabelStyle}"/>
                     <TextBox Grid.Row="11" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
                              IsReadOnly="True"
-                             Text="{Binding OrderCurrent.Distance, StringFormat={}{0:0.0}}"
+                             Text="{Binding OrderCurrent.Distance, StringFormat={}{0:0.00}}"
                              Margin="0,0,0,15"/>
 
                     <!-- Estimated Arrival (init -> readonly display) -->
@@ -294,7 +297,7 @@
                     <TextBox Grid.Row="12" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
                              IsReadOnly="True"
-                             Text="{Binding OrderCurrent.ArrivalDateEstimeted, StringFormat={}{0:dd/MM/yyyy HH:mm}}"
+                             Text="{Binding OrderCurrent.ArrivalDateEstimeted, StringFormat={}{0:dd/MM/yyyy HH:mm}, TargetNullValue='Not scheduled'}"
                              Margin="0,0,0,15"/>
 
                     <!-- Max Arrival Date (init -> readonly display) -->
@@ -302,7 +305,7 @@
                     <TextBox Grid.Row="13" Grid.Column="1"
                              Style="{StaticResource ModernTextBoxStyle}"
                              IsReadOnly="True"
-                             Text="{Binding OrderCurrent.ArrivalDateMax, StringFormat={}{0:dd/MM/yyyy HH:mm}}"
+                             Text="{Binding OrderCurrent.ArrivalDateMax, StringFormat={}{0:dd/MM/yyyy HH:mm}, TargetNullValue='Not set'}"
                              Margin="0,0,0,15"/>
 
                     <!-- Schedule Status (init -> readonly display) -->
@@ -310,9 +313,128 @@
                     <ComboBox Grid.Row="14" Grid.Column="1"
                               Style="{StaticResource ModernComboBoxStyle}"
                               IsEnabled="False"
-                              ItemsSource="{Binding Source={StaticResource ShedulStatus}}"
+                              ItemsSource="{Binding Source={StaticResource ScheduleStatusCollectionKey}}"
                               SelectedItem="{Binding OrderCurrent.ScheduleStatus}"
-                              Margin="0,0,0,0"/>
+                              Margin="0,0,0,15"/>
+
+                    <!-- Arrival Estimate time -->
+                    <TextBlock Grid.Row="15" Grid.Column="0" Text="Arrival Estimate Time:" Style="{StaticResource FieldLabelStyle}"/>
+                    <TextBox Grid.Row="15" Grid.Column="1"
+                             Style="{StaticResource ModernTextBoxStyle}"
+                             IsReadOnly="True"
+                             Text="{Binding OrderCurrent.ArrivalTimeEstimeted, StringFormat={}{0:hh\\:mm\\:ss}}"
+                             Margin="0,0,0,15"/>
+
+                    <!-- All Deliveries of this Order (if exist) -->
+                    <TextBlock Grid.Row="16" Grid.Column="0" Text="Deliveries:" Style="{StaticResource FieldLabelStyle}" VerticalAlignment="Top"/>
+                    <ListBox Grid.Row="16" Grid.Column="1"
+                             Height="120"
+                             Background="White"
+                             BorderBrush="#BDBDBD"
+                             BorderThickness="1"
+                             ItemsSource="{Binding OrderCurrent.DeliveriesPerOrder}"
+                             Margin="0,0,0,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#FAFAFA" BorderBrush="#E0E0E0" BorderThickness="1" 
+                                        CornerRadius="4" Margin="2" Padding="8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Delivery ID and Status -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Delivery ID:" FontWeight="Medium" FontSize="11" Foreground="#546E7A" Margin="0,0,8,0"/>
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding DeliveryId}" FontWeight="Bold" FontSize="11" Foreground="#37474F"/>
+                                            <TextBlock Text=" - Status: " FontSize="11" Foreground="#546E7A" Margin="8,0,0,0"/>
+                                            <TextBlock Text="{Binding DeliveredStatus, TargetNullValue='Pending'}" 
+                                                       FontWeight="Medium" FontSize="11">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="#FF9800"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding DeliveredStatus}" Value="Delivered">
+                                                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding DeliveredStatus}" Value="Failed">
+                                                                <Setter Property="Foreground" Value="#F44336"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding DeliveredStatus}" Value="Rejected">
+                                                                <Setter Property="Foreground" Value="#F44336"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding DeliveredStatus}" Value="Canceled">
+                                                                <Setter Property="Foreground" Value="#9E9E9E"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding DeliveredStatus}" Value="Absent">
+                                                                <Setter Property="Foreground" Value="#FF5722"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+
+                                        <!-- Courier and Transport -->
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Courier:" FontWeight="Medium" FontSize="11" Foreground="#546E7A" Margin="0,2,8,0"/>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,2,0,0">
+                                            <TextBlock Text="{Binding CourierName, TargetNullValue='Unassigned'}" FontSize="11" Foreground="#37474F"/>
+                                            <TextBlock Text=" (ID: " FontSize="11" Foreground="#546E7A" Margin="4,0,0,0"/>
+                                            <TextBlock Text="{Binding CourierId, TargetNullValue='N/A'}" FontSize="11" Foreground="#37474F"/>
+                                            <TextBlock Text=", " FontSize="11" Foreground="#546E7A"/>
+                                            <TextBlock Text="{Binding transport}" FontSize="11" Foreground="#546E7A"/>
+                                            <TextBlock Text=")" FontSize="11" Foreground="#546E7A"/>
+                                        </StackPanel>
+
+                                        <!-- Pickup Time -->
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Pickup:" FontWeight="Medium" FontSize="11" Foreground="#546E7A" Margin="0,2,8,0"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" 
+                                                   Text="{Binding PickupTime, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" 
+                                                   FontSize="11" Foreground="#37474F" Margin="0,2,0,0"/>
+
+                                        <!-- Arrival Time -->
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Arrival:" FontWeight="Medium" FontSize="11" Foreground="#546E7A" Margin="0,2,8,0"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" 
+                                                   Text="{Binding ArrivalTime, StringFormat='{}{0:dd/MM/yyyy HH:mm}', TargetNullValue='Not arrived'}" 
+                                                   FontSize="11" Foreground="#37474F" Margin="0,2,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Show message when no deliveries -->
+                    <TextBox Grid.Row="16" Grid.Column="1"
+                             Height="120"
+                             IsReadOnly="True"
+                             Text="No deliveries assigned yet"
+                             VerticalContentAlignment="Center"
+                             HorizontalContentAlignment="Center"
+                             Background="#F9F9F9"
+                             Foreground="#666666"
+                             FontStyle="Italic"
+                             Margin="0,0,0,0">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding OrderCurrent.DeliveriesPerOrder}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding OrderCurrent.DeliveriesPerOrder.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
                 </Grid>
             </ScrollViewer>
         </Border>
