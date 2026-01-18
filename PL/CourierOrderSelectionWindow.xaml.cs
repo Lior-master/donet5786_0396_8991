@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,14 +14,25 @@ namespace PL.Courier;
 
 /// <summary>
 /// Window that lists open orders available to the courier and allows assignment.
+/// Relies on BL observers for refresh (AssignOrderToCourier triggers notifications).
+/// Keeps UI logic minimal: mostly delegates to small helper methods.
 /// </summary>
 public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChanged
 {
     private static readonly IBl s_bl = Factory.Get();
+
     private readonly int _courierId;
-    private Action? _orderListObserver;
+    private readonly int _bossId;
+    private readonly Action _ordersObserver;
 
     public ObservableCollection<OpenOrderInList> OpenOrders { get; } = new();
+
+    private string _filterStatusMessage = string.Empty;
+    public string FilterStatusMessage
+    {
+        get => _filterStatusMessage;
+        set { _filterStatusMessage = value; OnPropertyChanged(); }
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
@@ -29,178 +41,208 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     public CourierOrderSelectionWindow(int courierId)
     {
         InitializeComponent();
+
         _courierId = courierId;
-        dgOpenOrders.ItemsSource = OpenOrders;
-        _orderListObserver = RefreshFromBl;
+        _bossId = s_bl.Admin.GetConfig().BossId;
+
+        DataContext = this;
+        lstOpenOrders.ItemsSource = OpenOrders;
+
+        // Observer must marshal back to UI thread
+        _ordersObserver = () => Dispatcher.Invoke(RefreshOpenOrdersFromBl);
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
         try
         {
-            // Populate filter combo
-            cmbFilterOrderType.Items.Clear();
-            cmbFilterOrderType.Items.Add("All");
-            foreach (var t in Enum.GetValues(typeof(BO.OrderType)).Cast<BO.OrderType>())
-                cmbFilterOrderType.Items.Add(t);
-            cmbFilterOrderType.SelectedIndex = 0;
+            InitializeFilterCombo();
 
-            // register observer (if supported) so list auto-refreshes on changes
-            try { s_bl.Order.AddObserver(_orderListObserver!); } catch { }
+            // Register observer so BL notifications update this window automatically
+            TryRegisterObserver();
 
-            LoadOpenOrders(null);
+            RefreshOpenOrdersFromBl();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to load open orders: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            Close();
+            ShowErrorAndClose($"Failed to load open orders: {ex.Message}");
         }
     }
 
     private void Window_Closed(object? sender, EventArgs e)
     {
-        try { if (_orderListObserver != null) s_bl.Order.RemoveObserver(_orderListObserver); } catch { }
+        TryUnregisterObserver();
     }
 
-    private void LoadOpenOrders(BO.OrderType? filter)
+    private void InitializeFilterCombo()
     {
-        try
-        {
-            txtStatus.Text = "Loading open orders...";
-            var list = s_bl.Order.GetOpenOrdersForCourier(_courierId, _courierId, filter, null)
-                .OrderBy(o => o.OrderId)
-                .ToList();
+        cmbFilterOrderType.Items.Clear();
+        cmbFilterOrderType.Items.Add("All");
 
-            OpenOrders.Clear();
-            foreach (var o in list) OpenOrders.Add(o);
+        foreach (var t in Enum.GetValues(typeof(BO.OrderType)).Cast<BO.OrderType>())
+            cmbFilterOrderType.Items.Add(t);
 
-            txtStatus.Text = $"Loaded {OpenOrders.Count} open orders";
-        }
-        catch (Exception ex)
-        {
-            txtStatus.Text = $"Error: {ex.Message}";
-        }
+        cmbFilterOrderType.SelectedIndex = 0;
     }
 
-    private void RefreshFromBl()
+    private void TryRegisterObserver()
     {
-        Dispatcher.Invoke(() =>
-        {
-            BO.OrderType? filter = null;
-            if (cmbFilterOrderType.SelectedItem is BO.OrderType ot) filter = ot;
-            LoadOpenOrders(filter);
-        });
+        try { s_bl.Order.AddObserver(_ordersObserver); } catch { }
     }
 
-    private void cmbFilterOrderType_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void TryUnregisterObserver()
     {
-        BO.OrderType? filter = null;
-        if (cmbFilterOrderType.SelectedItem is BO.OrderType ot) filter = ot;
-        LoadOpenOrders(filter);
+        try { s_bl.Order.RemoveObserver(_ordersObserver); } catch { }
     }
 
-    private void BtnRefresh_Click(object sender, RoutedEventArgs e)
+    private BO.OrderType? GetSelectedFilter()
     {
-        BO.OrderType? filter = null;
-        if (cmbFilterOrderType.SelectedItem is BO.OrderType ot) filter = ot;
-        LoadOpenOrders(filter);
+        return cmbFilterOrderType.SelectedItem is BO.OrderType ot ? ot : null;
+    }
+
+    private void RefreshOpenOrdersFromBl()
+    {
+        var filter = GetSelectedFilter();
+        var list = GetOpenOrdersFromBl(filter);
+        UpdateOpenOrdersCollection(list);
+        UpdateStatusMessages(filter);
+    }
+
+    private System.Collections.Generic.List<OpenOrderInList> GetOpenOrdersFromBl(BO.OrderType? filter)
+    {
+        txtStatus.Text = "Loading open orders...";
+
+        // Minimal local logic: let BL do filtering; PL only does basic display ordering
+        return s_bl.Order.GetOpenOrdersForCourier(_bossId, _courierId, filter, null)
+            .OrderBy(o => o.ScheduleStatus) // keep simple; BL already sets schedule status
+            .ThenBy(o => o.BirdDistance)
+            .ToList();
+    }
+
+    private void UpdateOpenOrdersCollection(System.Collections.Generic.List<OpenOrderInList> list)
+    {
+        OpenOrders.Clear();
+        foreach (var o in list) OpenOrders.Add(o);
+
+        txtStatus.Text = $"Loaded {OpenOrders.Count} available orders";
+        lstOpenOrders.Items.Refresh();
+    }
+
+    private void UpdateStatusMessages(BO.OrderType? filter)
+    {
+        if (filter == null)
+            FilterStatusMessage = "Showing all available orders";
+        else
+            FilterStatusMessage = $"Filtered by: {filter}";
+    }
+
+    private void cmbFilterOrderType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsLoaded) return;
+        RefreshOpenOrdersFromBl();
     }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
 
     private async void BtnAssign_Click(object sender, RoutedEventArgs e)
     {
-        try
-        {
-            if (dgOpenOrders.SelectedItem is not OpenOrderInList selected)
-            {
-                MessageBox.Show("Please select an order to assign.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var res = MessageBox.Show($"Assign order #{selected.OrderId} to you?", "Confirm Assignment", MessageBoxButton.OKCancel, MessageBoxImage.Question);
-            if (res != MessageBoxResult.OK)
-                return;
-
-            txtStatus.Text = "Assigning order...";
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
-
-            // requesterId = courier themselves
-            s_bl.Order.AssignOrderToCourier(_courierId, selected.OrderId, _courierId);
-
-            MessageBox.Show($"Order #{selected.OrderId} assigned to you.", "Assigned", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            // attempt to refresh the owner courier window if available
-            if (Owner is PL.CourierPersonalWindow cpw)
-            {
-                try 
-                { 
-                    // Wait for the data to be refreshed
-                    await cpw.RefreshDataFromChildAsync(); 
-                } 
-                catch { /* ignore */ }
-            }
-
-            Close();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Failed to assign order: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            txtStatus.Text = "Error assigning order";
-        }
-        finally
-        {
-            Mouse.OverrideCursor = null;
-        }
+        await AssignSelectedOrderAsync(lstOpenOrders.SelectedItem as OpenOrderInList);
     }
 
     private async void BtnChooseOrder_Click(object sender, RoutedEventArgs e)
     {
+        if (sender is not Button button) return;
+        if (button.DataContext is not OpenOrderInList selected) return;
+
+        await AssignSelectedOrderAsync(selected);
+    }
+
+    private async Task AssignSelectedOrderAsync(OpenOrderInList? selected)
+    {
+        if (selected == null)
+        {
+            MessageBox.Show("Please select an order to assign.",
+                "No Selection", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (!ConfirmAssignment(selected))
+            return;
+
         try
         {
-            if (sender is not Button button)
-                return;
+            BeginBusy("🚚 Assigning order...");
 
-            if (button.DataContext is not OpenOrderInList selected)
-            {
-                MessageBox.Show("Error retrieving order information.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            // IMPORTANT:
+            // Refresh is NOT done here. BL AssignOrderToCourier triggers:
+            // Observers.NotifyItemUpdated(orderId);
+            // Observers.NotifyListUpdated();
+            // Observers.NotifyItemUpdated(courierId);
+            await Task.Run(() =>
+                s_bl.Order.AssignOrderToCourier(_bossId, selected.OrderId, _courierId));
 
-            var res = MessageBox.Show($"Assign order #{selected.OrderId} to you?", "Confirm Assignment", MessageBoxButton.OKCancel, MessageBoxImage.Question);
-            if (res != MessageBoxResult.OK)
-                return;
-
-            txtStatus.Text = "Assigning order...";
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
-
-            // requesterId = courier themselves
-            s_bl.Order.AssignOrderToCourier(_courierId, selected.OrderId, _courierId);
-
-            MessageBox.Show($"Order #{selected.OrderId} assigned to you.", "Assigned", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            // attempt to refresh the owner courier window if available
-            if (Owner is PL.CourierPersonalWindow cpw)
-            {
-                try 
-                { 
-                    // Wait for the data to be refreshed
-                    await cpw.RefreshDataFromChildAsync(); 
-                } 
-                catch { /* ignore */ }
-            }
-
+            ShowAssignmentSuccess(selected);
             Close();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to assign order: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            txtStatus.Text = "Error assigning order";
+            EndBusy();
+            MessageBox.Show($"❌ Failed to assign order: {ex.Message}",
+                "Assignment Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            txtStatus.Text = "❌ Assignment failed";
         }
         finally
         {
-            Mouse.OverrideCursor = null;
+            EndBusy();
         }
     }
 
+    private bool ConfirmAssignment(OpenOrderInList selected)
+    {
+        var result = MessageBox.Show(
+            $"Assign Order #{selected.OrderId}?\n\n" +
+            $"Address: {selected.CustomerAddress}\n" +
+            $"Type: {selected.OrderType}" +
+            (selected.Fragility != null ? $" ({selected.Fragility})" : "") + "\n" +
+            $"Bird Distance: {selected.BirdDistance:F1} km\n" +
+            $"Status: {selected.ScheduleStatus}\n" +
+            $"Est. Delivery: {selected.EstimatedDeliveryTime:hh\\:mm}\n" +
+            $"Deadline: {selected.MaxDeliveredTime:HH:mm}\n\n" +
+            "This order will be assigned to you immediately.",
+            "Confirm Order Assignment",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        return result == MessageBoxResult.Yes;
+    }
+
+    private void ShowAssignmentSuccess(OpenOrderInList selected)
+    {
+        MessageBox.Show(
+            $"✅ Order #{selected.OrderId} Assigned Successfully!\n\n" +
+            $"Delivery Address: {selected.CustomerAddress}\n" +
+            $"Bird Distance: {selected.BirdDistance:F1} km\n" +
+            $"Status: {selected.ScheduleStatus}\n\n" +
+            "You can now view your active delivery in the main dashboard.",
+            "Order Assigned",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+    }
+
+    private void BeginBusy(string statusText)
+    {
+        txtStatus.Text = statusText;
+        Mouse.OverrideCursor = Cursors.Wait;
+    }
+
+    private void EndBusy()
+    {
+        Mouse.OverrideCursor = null;
+    }
+
+    private void ShowErrorAndClose(string message)
+    {
+        MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        Close();
+    }
 }

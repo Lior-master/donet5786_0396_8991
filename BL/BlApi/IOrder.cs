@@ -12,7 +12,7 @@ public interface IOrder : IObservable
     void CancelOrder(int requesterId,int orderId);
     void RemoveOrder(int requesterId,int orderId);
     void AddOrder(int requesterId,BO.Order order);
-    void FinishOrder(int requesterId,int courierId,int deliveryId);
+    void FinishOrder(int requesterId,int courierId,int deliveryId, BO.DeliveredStatus deliveredStatus);
     void AssignOrderToCourier(int requesterId,int orderId,int courierId);
     IEnumerable<BO.ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId,int courierId,OrderType? filter,Enum? sorter);
     IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId,int courierId, OrderType? filter,Enum? sorter);

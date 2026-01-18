@@ -980,7 +980,7 @@ internal static class OrderManager
     /// <param name="deliveryId">ID of the delivery being marked as completed.</param>
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester, courier, delivery, or associated order does not exist.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static void FinishOrder(int requesterId, int courierId, int deliveryId)
+    internal static void FinishOrder(int requesterId, int courierId, int deliveryId,BO.DeliveredStatus deliveredStatus)
     {
         try
         {
@@ -1110,6 +1110,7 @@ internal static class OrderManager
             // Notify subscribers that the order has been assigned
             Observers.NotifyItemUpdated(orderId);
             Observers.NotifyListUpdated();
+            Observers.NotifyItemUpdated(courierId);
         }
         catch (Exception ex)
         {

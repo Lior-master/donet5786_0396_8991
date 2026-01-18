@@ -109,8 +109,8 @@ internal class OrderImplementation : IOrder
     /// Authorization is validated by the <see cref="OrderManager"/>. The delivery status is updated to reflect
     /// the completion state (e.g., <see cref="DeliveredStatus.Delivered"/>). All registered observers will be notified.
     /// </remarks>
-    public void FinishOrder(int requesterId, int courierId, int deliveryId)
-        => OrderManager.FinishOrder(requesterId, courierId, deliveryId);
+    public void FinishOrder(int requesterId, int courierId, int deliveryId,BO.DeliveredStatus deliveredStatus)
+        => OrderManager.FinishOrder(requesterId, courierId, deliveryId,deliveredStatus);
 
     /// <summary>
     /// Retrieves a filtered and sorted list of closed (completed) deliveries for a specific courier.

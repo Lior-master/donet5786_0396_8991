@@ -431,7 +431,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
                 return;
             }
 
-            s_bl.Order.FinishOrder(_courierId, _courierId, deliveryId);
+            s_bl.Order.FinishOrder(_courierId, _courierId, deliveryId, SelectedFinishType);
 
             StatusMessage = $"✅ Delivery marked as {SelectedFinishType}";
             MessageBox.Show($"Delivery has been completed successfully.\n\nStatus: {SelectedFinishType}",
