@@ -384,7 +384,6 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
                         <!-- Header Row -->
@@ -553,48 +552,6 @@
                                 Style="{StaticResource SummaryCellStyle}"
                                 Margin="2" Height="35" FontSize="13"/>
 
-                        <!-- Unknown Row -->
-                        <TextBlock Grid.Row="4" Grid.Column="0" 
-                                   Text="Unknown" 
-                                   FontWeight="Medium" FontSize="12"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Foreground="#9E9E9E"
-                                   Margin="5" Padding="8,6"/>
-                        
-                        <Button Grid.Row="4" Grid.Column="1" 
-                                Content="{Binding OrderSummaryData[15]}"
-                                Tag="Unknown,Pending"
-                                Click="SummaryCell_Click"
-                                Style="{StaticResource SummaryCellStyle}"
-                                Margin="2" Height="35" FontSize="13"/>
-                        
-                        <Button Grid.Row="4" Grid.Column="2" 
-                                Content="{Binding OrderSummaryData[16]}"
-                                Tag="Unknown,Processing"
-                                Click="SummaryCell_Click"
-                                Style="{StaticResource SummaryCellStyle}"
-                                Margin="2" Height="35" FontSize="13"/>
-                        
-                        <Button Grid.Row="4" Grid.Column="3" 
-                                Content="{Binding OrderSummaryData[17]}"
-                                Tag="Unknown,Delivered"
-                                Click="SummaryCell_Click"
-                                Style="{StaticResource SummaryCellStyle}"
-                                Margin="2" Height="35" FontSize="13"/>
-                        
-                        <Button Grid.Row="4" Grid.Column="4" 
-                                Content="{Binding OrderSummaryData[18]}"
-                                Tag="Unknown,Canceled"
-                                Click="SummaryCell_Click"
-                                Style="{StaticResource SummaryCellStyle}"
-                                Margin="2" Height="35" FontSize="13"/>
-                        
-                        <Button Grid.Row="4" Grid.Column="5" 
-                                Content="{Binding OrderSummaryData[19]}"
-                                Tag="Unknown,Returned"
-                                Click="SummaryCell_Click"
-                                Style="{StaticResource SummaryCellStyle}"
-                                Margin="2" Height="35" FontSize="13"/>
                     </Grid>
                 </StackPanel>
             </Border>
