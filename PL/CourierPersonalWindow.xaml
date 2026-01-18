@@ -276,7 +276,6 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/> <!-- added to avoid overlap -->
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
@@ -334,14 +333,12 @@
                                        Text="{Binding DeliveryStatusText}"
                                        Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Finish Type Selection (only visible when arrival recorded) -->
-                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Finish Type:" Style="{StaticResource LabelStyle}"
-                                       Visibility="{Binding IsDeliveryEndTypeVisible}"/>
+                            <!-- Finish Type Selection (ALWAYS visible when order in progress) -->
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Finish Type:" Style="{StaticResource LabelStyle}"/>
                             <ComboBox Grid.Row="8" Grid.Column="1"
                                       ItemsSource="{Binding DeliveryFinishTypes}"
                                       SelectedItem="{Binding SelectedFinishType, UpdateSourceTrigger=PropertyChanged}"
-                                      ToolTip="Select how this delivery ended"
-                                      Visibility="{Binding IsDeliveryEndTypeVisible}"/>
+                                      ToolTip="Select how this delivery will end"/>
 
                             <!-- Finish Button -->
                             <StackPanel Grid.Row="9" Grid.ColumnSpan="2" 
