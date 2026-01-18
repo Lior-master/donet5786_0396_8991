@@ -206,7 +206,7 @@
                         <!-- Start Date (Read-Only) -->
                         <TextBlock Grid.Row="8" Grid.Column="0" Text="Start Date:" Style="{StaticResource LabelStyle}"/>
                         <TextBlock Grid.Row="8" Grid.Column="1" 
-                                   Text="{Binding Courier.StartDate, StringFormat='dd-mm-yyyy'}"
+                                   Text="{Binding Courier.StartDate, StringFormat='dd/MM/yyyy'}"
                                    Style="{StaticResource ValueStyle}"
                                    Foreground="#28A745"/>
 
