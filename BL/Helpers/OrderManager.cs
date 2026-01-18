@@ -1247,113 +1247,144 @@ internal static class OrderManager
         }
     }
 
-    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, BO.OrderType? filter, Enum? sorter)
+    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(
+        int requesterId,
+        int courierId,
+        Enum? filter,
+        Enum? sorter)
     {
         try
         {
-            // Validate requester exists in the system
-            var requester = s_dal.Courier.Read(requesterId);
-            if (requester == null)
-                throw new BLNotFoundException("Requester does not exist.");
+            // Validate requester exists
+            _ = s_dal.Courier.Read(requesterId)
+                ?? throw new BLNotFoundException("Requester does not exist.");
 
-            // Validate courier exists in the system
-            var courier = s_dal.Courier.Read(courierId) ?? throw new BLNotFoundException($"Courier {courierId} not found.");
+            // Validate courier exists
+            var courier = s_dal.Courier.Read(courierId)
+                ?? throw new BLNotFoundException($"Courier {courierId} not found.");
 
-            // Read all orders and deliveries
+            var config = AdminManager.GetConfig();
+            DateTime now = config.Clock;
+
+            // Company coordinates come from admin/config (as you said)
+            double companyLat = config.CompanyLatitude;
+            double companyLon = config.CompanyLongitude;
+
+            // Read all orders and deliveries once
             var orders = s_dal.Order.ReadAll().ToList();
             var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
-            var config = AdminManager.GetConfig();
 
             var result = new List<BO.OpenOrderInList>();
 
             foreach (var o in orders)
             {
-                // Skip already finished/cancelled orders
+                // Compute order status from deliveries
                 var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
                 var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
-                if (orderStatus == BO.OrderStatus.Delivered || orderStatus == BO.OrderStatus.Returned || orderStatus == BO.OrderStatus.Canceled)
+
+                // Only open orders (not closed)
+                if (orderStatus == BO.OrderStatus.Delivered ||
+                    orderStatus == BO.OrderStatus.Returned ||
+                    orderStatus == BO.OrderStatus.Canceled)
                     continue;
 
-                // Find open deliveries for this order (ArrivalTime == null)
+                // If there is any open delivery assigned to a courier -> not available
                 var openDeliveries = orderDeliveries.Where(d => d.ArrivalTime == null).ToList();
-
-                // If there is any open delivery assigned to a courier (CourierId != 0),
-                // the order is currently being processed by someone -> not available.
                 if (openDeliveries.Any(d => d.CourierId != 0))
                     continue;
 
-                // At this point the order is considered "available":
-                // - either it has an open delivery with CourierId == 0 (explicit unassigned slot),
-                // - or it has no delivery record yet.
-                // We'll compute distance/estimated time similarly to other methods.
-                double lat = o.Latitude ?? 0;
-                double lon = o.Longitude ?? 0;
-                if (lat == 0 && lon == 0 && !string.IsNullOrWhiteSpace(o.CustomerAddress))
+                // Resolve customer coordinates (fallback: geocode from address)
+                double custLat = o.Latitude ?? 0;
+                double custLon = o.Longitude ?? 0;
+
+                if (custLat == 0 && custLon == 0 && !string.IsNullOrWhiteSpace(o.CustomerAddress))
                 {
                     try
                     {
                         var coords = Tools.GetCoordinatesFromAddressAsync(o.CustomerAddress).GetAwaiter().GetResult();
-                        lat = coords.Latitude;
-                        lon = coords.Longitude;
+                        custLat = coords.Latitude;
+                        custLon = coords.Longitude;
                     }
-                    catch { /* ignore geocode failures, use 0/0 */ }
+                    catch
+                    {
+                        // If we cannot locate the customer, we cannot calculate distance reliably -> skip
+                        continue;
+                    }
                 }
 
-                double bird = Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
+                // Bird distance is measured from the company (per your project design)
+                double bird = Tools.BirdDistance(companyLat, companyLon, custLat, custLon);
 
-                // For orders that already have an unassigned delivery record, take that delivery's pickup time, distance
-                DO.Delivery? unassignedDelivery = openDeliveries.FirstOrDefault(d => d.CourierId == 0);
+                // Filter by courier personal max distance (if defined)
+                if (courier.MaxDistance != null && bird > courier.MaxDistance.Value)
+                    continue;
 
-                DateTime addedTimeReference = o.OrderDate;
-                TimeSpan? addedTime = (AdminManager.Now - addedTimeReference);
-                DateTime? estArrival = null;
-                TimeSpan estTimeSpan = TimeSpan.Zero;
-                if (unassignedDelivery != null)
-                {
-                    double speed = Tools.GetSpeed(unassignedDelivery.Transport, config);
-                    estArrival = Tools.CalculateEstimatedArrival(unassignedDelivery.PickupTime, bird, speed);
-                    estTimeSpan = estArrival != null ? estArrival.Value - unassignedDelivery.PickupTime : TimeSpan.Zero;
-                }
-                else
-                {
-                    // No delivery record yet: estimate from order date using default car speed
-                    double speed = config.CarSpeed;
-                    estArrival = Tools.CalculateEstimatedArrival(o.OrderDate, bird, speed);
-                    estTimeSpan = estArrival != null ? estArrival.Value - o.OrderDate : TimeSpan.Zero;
-                }
+                // Added time since order creation
+                TimeSpan? addedTime = now - o.OrderDate;
 
-                DateTime maxDelivered = estArrival?.Add(config.RiskRange) ?? AdminManager.Now;
+                // Estimated delivery time:
+                // Use courier transport speed from config; estimate from "now" using bird distance.
+                double speed = Tools.GetSpeed(courier.Transport, config);
+                DateTime? estArrival = Tools.CalculateEstimatedArrival(now, bird, speed);
+                TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
 
-                // Build BO.OpenOrderInList entry
+                // Latest acceptable delivery time (orderDate + MaxDeliveryTime)
+                DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
+
+                // Schedule status based on your updated rules (no Unknown)
+                var scheduleStatus = Tools.CalculateScheduleStatus(
+                    orderStatus,
+                    o.OrderDate,
+                    estArrival,
+                    maxDeliveredTime,
+                    null);
+
                 result.Add(new BO.OpenOrderInList
                 {
-                    CourierId = null, // currently unassigned
+                    CourierId = null,
                     OrderId = o.Id,
                     OrderType = (BO.OrderType)o.Type,
-                    Fragility = o.Fragility != null ? (BO.FragilityLevel?)(BO.FragilityLevel)o.Fragility.Value : null,
+                    Fragility = o.Fragility != null
+                        ? (BO.FragilityLevel?)(BO.FragilityLevel)o.Fragility.Value
+                        : null,
                     CustomerAddress = o.CustomerAddress ?? string.Empty,
                     BirdDistance = bird,
-                    Distance = unassignedDelivery?.Distance,
+                    Distance = null, // route distance not calculated here
                     AddedTime = addedTime,
-                    ScheduleStatus = Tools.CalculateScheduleStatus(Tools.CalculateOrderStatus(orderDeliveries), o.OrderDate, estArrival, estArrival?.Add(config.RiskRange), null),
-                    EstimatedDeliveryTime = estTimeSpan,
-                    MaxDeliveredTime = maxDelivered
+                    ScheduleStatus = scheduleStatus,
+                    EstimatedDeliveryTime = estSpan,
+                    MaxDeliveredTime = maxDeliveredTime
                 });
             }
 
-            // Optional filter by OrderType
-            if (filter.HasValue)
-                result = result.Where(x => x.OrderType == filter.Value).ToList();
+            // Optional filter by OrderType (nullable enum): null => full list
+            if (filter != null)
+                result = result.Where(x => x.OrderType.Equals(filter)).ToList();
 
-            // Sorting support: support BirdDistance or AddedTime by enum name string (like before)
-            if (sorter != null)
+            // Sorting: if sorter is null => sort by ScheduleStatus
+            if (sorter == null)
+            {
+                static int Rank(BO.ScheduleStatus s) => s switch
+                {
+                    BO.ScheduleStatus.OnTime => 0,
+                    BO.ScheduleStatus.InRisk => 1,
+                    BO.ScheduleStatus.Late => 2,
+                    _ => 3
+                };
+
+                result = result.OrderBy(x => Rank(x.ScheduleStatus)).ToList();
+            }
+            else
             {
                 string key = sorter.ToString() ?? string.Empty;
-                bool ascending = true;
+
                 result = key switch
                 {
-                    "BirdDistance" => ascending ? result.OrderBy(x => x.BirdDistance).ToList() : result.OrderByDescending(x => x.BirdDistance).ToList(),
-                    "AddedTime" => ascending ? result.OrderBy(x => x.AddedTime).ToList() : result.OrderByDescending(x => x.AddedTime).ToList(),
+                    "BirdDistance" => result.OrderBy(x => x.BirdDistance).ToList(),
+                    "AddedTime" => result.OrderBy(x => x.AddedTime).ToList(),
+                    "ScheduleStatus" => result.OrderBy(x => x.ScheduleStatus).ToList(),
+                    "EstimatedDeliveryTime" => result.OrderBy(x => x.EstimatedDeliveryTime).ToList(),
+                    "MaxDeliveredTime" => result.OrderBy(x => x.MaxDeliveredTime).ToList(),
                     _ => result
                 };
             }
@@ -1362,14 +1393,17 @@ internal static class OrderManager
         }
         catch (Exception ex)
         {
-            // Re-throw business logic exceptions without modification
-            if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
-            
-            // Map Data Access Layer exceptions to Business Logic Layer exceptions
+            if (ex is BO.BLNotFoundException ||
+                ex is BO.BLInvalidInputException ||
+                ex is BO.BLAlreadyExistsException ||
+                ex is BO.BLInvalidOperationException) throw;
+
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
             if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
-            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
+            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException)
+                throw new BO.BLFailedOperation(ex.Message, ex);
+
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
     }
