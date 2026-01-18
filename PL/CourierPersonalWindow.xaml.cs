@@ -432,8 +432,8 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             MessageBox.Show("Delivery has been completed successfully.",
                 "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            // After completion the courier won't remain here
-            Close();
+            // After completion, refresh the data and wait for completion
+            RefreshCourierDataAndContinue();
         }
         catch (Exception ex)
         {
@@ -445,6 +445,50 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         {
             Mouse.OverrideCursor = null;
         }
+    }
+
+    private async void RefreshCourierDataAndContinue()
+    {
+        await Task.Run(async () =>
+        {
+            await Dispatcher.InvokeAsync(async () =>
+            {
+                try
+                {
+                    var courierExists = await Task.Run(() =>
+                    {
+                        try
+                        {
+                            s_bl.Courier.GetCourierDetails(_bossId, _courierId);
+                            return true;
+                        }
+                        catch (BO.BLNotFoundException)
+                        {
+                            return false;
+                        }
+                    });
+
+                    if (!courierExists)
+                    {
+                        MessageBox.Show("Your courier profile has been removed by an administrator.",
+                            "Profile Removed", MessageBoxButton.OK, MessageBoxImage.Information);
+                        Close();
+                        return;
+                    }
+
+                    var updatedCourier = await Task.Run(() =>
+                        s_bl.Courier.GetCourierDetails(_bossId, _courierId));
+
+                    Courier = updatedCourier;
+                    OrderInProgress = updatedCourier.CurrentOrder;
+                    StatusMessage = "Ready to choose a new order";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = $"Refresh failed: {ex.Message}";
+                }
+            }, System.Windows.Threading.DispatcherPriority.Normal);
+        });
     }
 
     #endregion
@@ -468,17 +512,13 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Called by observers / child windows to refresh data on the courier screen.
-    /// Exposed publicly so child windows can notify the parent after assignment/completion.
+    /// Called by observer / child windows to refresh data on the courier screen asynchronously.
+    /// Returns a Task that completes when the refresh is done.
     /// </summary>
-    public void RefreshDataFromChild()
+    public Task RefreshDataFromChildAsync()
     {
-        // reuse existing refresh logic (runs on UI thread)
-        RefreshCourierData();
-    }
-
-    private void RefreshCourierData()
-    {
+        var tcs = new TaskCompletionSource<bool>();
+        
         Dispatcher.Invoke(async () =>
         {
             try
@@ -501,6 +541,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
                     MessageBox.Show("Your courier profile has been removed by an administrator.",
                         "Profile Removed", MessageBoxButton.OK, MessageBoxImage.Information);
                     Close();
+                    tcs.SetResult(false);
                     return;
                 }
 
@@ -509,13 +550,18 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
                 Courier = updatedCourier;
                 OrderInProgress = updatedCourier.CurrentOrder;
-                StatusMessage = "Data refreshed from server";
+                StatusMessage = "Order assigned successfully!";
+                
+                tcs.SetResult(true);
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Refresh failed: {ex.Message}";
+                tcs.SetException(ex);
             }
         });
+
+        return tcs.Task;
     }
 
     private bool ValidateProfileFields()
@@ -552,6 +598,23 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
         return true;
     }
+
+    // Add this private method to the class
+private void RefreshCourierData()
+{
+    try
+    {
+        var courierData = s_bl.Courier.GetCourierDetails(_bossId, _courierId);
+        Courier = courierData;
+        OrderInProgress = courierData.CurrentOrder;
+        StatusMessage = $"Data loaded - {courierData.Name}";
+    }
+    catch (Exception ex)
+    {
+        StatusMessage = $"Failed to load data: {ex.Message}";
+        throw;
+    }
+}
 
     #endregion
 }

@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace PL.Courier;
@@ -107,7 +108,7 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
 
     private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
 
-    private void BtnAssign_Click(object sender, RoutedEventArgs e)
+    private async void BtnAssign_Click(object sender, RoutedEventArgs e)
     {
         try
         {
@@ -132,7 +133,12 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
             // attempt to refresh the owner courier window if available
             if (Owner is PL.CourierPersonalWindow cpw)
             {
-                try { cpw.RefreshDataFromChild(); } catch { /* ignore */ }
+                try 
+                { 
+                    // Wait for the data to be refreshed
+                    await cpw.RefreshDataFromChildAsync(); 
+                } 
+                catch { /* ignore */ }
             }
 
             Close();
@@ -147,4 +153,54 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
             Mouse.OverrideCursor = null;
         }
     }
+
+    private async void BtnChooseOrder_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (sender is not Button button)
+                return;
+
+            if (button.DataContext is not OpenOrderInList selected)
+            {
+                MessageBox.Show("Error retrieving order information.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var res = MessageBox.Show($"Assign order #{selected.OrderId} to you?", "Confirm Assignment", MessageBoxButton.OKCancel, MessageBoxImage.Question);
+            if (res != MessageBoxResult.OK)
+                return;
+
+            txtStatus.Text = "Assigning order...";
+            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+
+            // requesterId = courier themselves
+            s_bl.Order.AssignOrderToCourier(_courierId, selected.OrderId, _courierId);
+
+            MessageBox.Show($"Order #{selected.OrderId} assigned to you.", "Assigned", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // attempt to refresh the owner courier window if available
+            if (Owner is PL.CourierPersonalWindow cpw)
+            {
+                try 
+                { 
+                    // Wait for the data to be refreshed
+                    await cpw.RefreshDataFromChildAsync(); 
+                } 
+                catch { /* ignore */ }
+            }
+
+            Close();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to assign order: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            txtStatus.Text = "Error assigning order";
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
+        }
+    }
+
 }
