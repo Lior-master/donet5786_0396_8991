@@ -27,6 +27,8 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     private int _bossId;
     private readonly Action? _courierObserver;
 
+    public BO.DeliveredStatus SelectedFinishType { get; set; } = BO.DeliveredStatus.Delivered;
+
     #endregion
 
     #region Properties for Data Binding
@@ -85,39 +87,6 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(DisplayDistanceText));
             OnPropertyChanged(nameof(DeliveryStatusText));
             OnPropertyChanged(nameof(IsDeliveryEndTypeVisible));
-        }
-    }
-
-    private ObservableCollection<DeliveryTransport>? _deliveryTypes;
-    public ObservableCollection<DeliveryTransport> DeliveryTypes
-    {
-        get => _deliveryTypes!;
-        set
-        {
-            _deliveryTypes = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private ObservableCollection<DeliveredStatus>? _deliveryFinishTypes;
-    public ObservableCollection<DeliveredStatus> DeliveryFinishTypes
-    {
-        get => _deliveryFinishTypes!;
-        set
-        {
-            _deliveryFinishTypes = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private DeliveredStatus _selectedFinishType;
-    public DeliveredStatus SelectedFinishType
-    {
-        get => _selectedFinishType;
-        set
-        {
-            _selectedFinishType = value;
-            OnPropertyChanged();
         }
     }
 
@@ -233,25 +202,6 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         
         // Register the observer with the business logic
         s_bl.Courier.AddObserver(_courierId, _courierObserver);
-
-        DeliveryTypes = new ObservableCollection<DeliveryTransport>
-        {
-            DeliveryTransport.Car,
-            DeliveryTransport.Motorcycle,
-            DeliveryTransport.Bike,
-            DeliveryTransport.Foot
-        };
-
-        DeliveryFinishTypes = new ObservableCollection<DeliveredStatus>
-        {
-            DeliveredStatus.Delivered,
-            DeliveredStatus.Rejected,
-            DeliveredStatus.Canceled,
-            DeliveredStatus.Absent,
-            DeliveredStatus.Failed
-        };
-
-        SelectedFinishType = DeliveredStatus.Delivered;
 
         // init history collection
         DeliveryHistory = new ObservableCollection<BO.ClosedDeliveryInList>();
@@ -454,7 +404,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private async void RefreshCourierDataAndContinue()
+    public async void RefreshCourierDataAndContinue()
     {
         await Task.Run(async () =>
         {

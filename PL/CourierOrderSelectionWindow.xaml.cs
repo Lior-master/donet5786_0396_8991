@@ -183,6 +183,11 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
 
             ShowAssignmentSuccess(selected);
             Close();
+            if(Owner is not null && Owner is CourierPersonalWindow cpw)
+            {
+                cpw.Activate();
+                await cpw.RefreshDataFromChildAsync();
+            }
         }
         catch (Exception ex)
         {
