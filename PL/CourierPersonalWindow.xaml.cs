@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using BlApi;
-using BO;
+using BO;   
 using PL.Courier;
 
 namespace PL;
@@ -228,7 +228,11 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         _courierId = courierId;
         CourierId = courierId;
         _bossId = s_bl.Admin.GetConfig().BossId;
-        _courierObserver = RefreshCourierData!;
+        // FIX: Register the observer properly - it should be a method reference that matches Action signature
+        _courierObserver = RefreshCourierData;
+        
+        // Register the observer with the business logic
+        s_bl.Courier.AddObserver(_courierId, _courierObserver);
 
         DeliveryTypes = new ObservableCollection<DeliveryTransport>
         {
@@ -400,10 +404,11 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
             // Confirm with selected finish type for user's clarity
             var result = MessageBox.Show(
-                $"Mark delivery of Order #{OrderInProgress.OrderId} as {SelectedFinishType}?\n\n" +
+                $"Mark delivery of Order #{OrderInProgress.OrderId} as: {SelectedFinishType}?\n\n" +
                 $"Customer: {OrderInProgress.CustomerName}\n" +
-                $"Address: {OrderInProgress.CustomerAddress}",
-                "Confirm Completion",
+                $"Address: {OrderInProgress.CustomerAddress}\n" +
+                $"Status: {SelectedFinishType}",
+                "Confirm Delivery Completion",
                 MessageBoxButton.OKCancel,
                 MessageBoxImage.Question);
 
@@ -428,12 +433,14 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
             s_bl.Order.FinishOrder(_courierId, _courierId, deliveryId);
 
-            StatusMessage = $"Delivery marked as {SelectedFinishType}";
-            MessageBox.Show("Delivery has been completed successfully.",
+            StatusMessage = $"✅ Delivery marked as {SelectedFinishType}";
+            MessageBox.Show($"Delivery has been completed successfully.\n\nStatus: {SelectedFinishType}",
                 "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            // After completion, refresh the data and wait for completion
-            RefreshCourierDataAndContinue();
+            // Clear the order immediately - this will hide the "Current Delivery" section
+            // and show the "No Active Delivery" message with the "Choose Order" button enabled
+            OrderInProgress = null;
+            StatusMessage = "Ready to choose a new order";
         }
         catch (Exception ex)
         {
@@ -508,6 +515,28 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         {
             StatusMessage = $"Failed to load data: {ex.Message}";
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Called by the observer pattern when courier data changes.
+    /// Refreshes the current courier information on the UI thread.
+    /// </summary>
+    private void RefreshCourierData()
+    {
+        try
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var courierData = s_bl.Courier.GetCourierDetails(_bossId, _courierId);
+                Courier = courierData;
+                OrderInProgress = courierData.CurrentOrder;
+                StatusMessage = "Data refreshed";
+            });
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to refresh data: {ex.Message}";
         }
     }
 
@@ -598,23 +627,6 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
         return true;
     }
-
-    // Add this private method to the class
-private void RefreshCourierData()
-{
-    try
-    {
-        var courierData = s_bl.Courier.GetCourierDetails(_bossId, _courierId);
-        Courier = courierData;
-        OrderInProgress = courierData.CurrentOrder;
-        StatusMessage = $"Data loaded - {courierData.Name}";
-    }
-    catch (Exception ex)
-    {
-        StatusMessage = $"Failed to load data: {ex.Message}";
-        throw;
-    }
-}
 
     #endregion
 }
