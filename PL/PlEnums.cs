@@ -1,6 +1,12 @@
 ﻿using System.Collections;
 namespace PL;
 
+internal class DeliveredStatusCollection : IEnumerable
+{
+    static readonly IEnumerable<BO.DeliveredStatus> s_enums =
+        (Enum.GetValues(typeof(BO.DeliveredStatus)) as IEnumerable<BO.DeliveredStatus>)!;
+    public IEnumerator GetEnumerator() => s_enums.GetEnumerator();
+}
 internal class TransportsCollection : IEnumerable
 {
     static readonly IEnumerable<BO.DeliveryTransport> s_enums =

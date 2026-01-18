@@ -14,6 +14,7 @@
         Closed="Window_Closed">
 
     <Window.Resources>
+
         <!-- GroupBox Style -->
         <Style TargetType="GroupBox">
             <Setter Property="Margin" Value="10"/>
@@ -25,7 +26,7 @@
             <Setter Property="FontSize" Value="12"/>
         </Style>
 
-        <!-- Button Style -->
+        <!-- Default Button Style -->
         <Style TargetType="Button">
             <Setter Property="Margin" Value="6"/>
             <Setter Property="MinWidth" Value="100"/>
@@ -63,7 +64,7 @@
             <Setter Property="Foreground" Value="#333"/>
         </Style>
 
-        <!-- TextBlock Label Style -->
+        <!-- Label Style -->
         <Style TargetType="TextBlock" x:Key="LabelStyle">
             <Setter Property="Margin" Value="6"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -71,7 +72,7 @@
             <Setter Property="Foreground" Value="#333"/>
         </Style>
 
-        <!-- TextBlock Value Style -->
+        <!-- Value Style -->
         <Style TargetType="TextBlock" x:Key="ValueStyle">
             <Setter Property="Margin" Value="6"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
@@ -84,6 +85,7 @@
             <Setter Property="Margin" Value="6"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+
     </Window.Resources>
 
     <Grid Margin="10">
@@ -95,19 +97,16 @@
 
         <!-- ==================== HEADER ==================== -->
         <DockPanel Grid.Row="0" Margin="10,0,10,10" Background="White">
-            <DockPanel.Resources>
-                <!-- (keep any resources here if present) -->
-            </DockPanel.Resources>
             <Border Padding="15" Background="Transparent">
                 <DockPanel LastChildFill="True">
-                    <TextBlock FontSize="28" 
-                               FontWeight="Bold" 
-                               Text="Courier Dashboard" 
+                    <TextBlock FontSize="28"
+                               FontWeight="Bold"
+                               Text="Courier Dashboard"
                                DockPanel.Dock="Left"
                                Foreground="#007BFF"/>
-                    <TextBlock FontSize="14" 
+                    <TextBlock FontSize="14"
                                Foreground="#666"
-                               Text="{Binding CourierId, StringFormat='Courier ID: {0}'}"
+                               Text="{Binding Courier.Id, StringFormat=Courier ID: {0}}"
                                DockPanel.Dock="Right"
                                VerticalAlignment="Center"/>
                 </DockPanel>
@@ -141,131 +140,122 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
+
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Courier ID (Read-Only) -->
+                        <!-- Courier ID -->
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Courier ID:" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" 
+                        <TextBlock Grid.Row="0" Grid.Column="1"
                                    Text="{Binding Courier.Id}"
                                    Style="{StaticResource ValueStyle}"
                                    FontWeight="Bold"
                                    Foreground="#007BFF"/>
 
-                        <!-- Name Field -->
+                        <!-- Name -->
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Grid.Row="1" Grid.Column="1" 
-                                 Text="{Binding Courier.Name, UpdateSourceTrigger=PropertyChanged}"
-                                 ToolTip="Your full name"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"
+                                 Text="{Binding Courier.Name, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <!-- Phone Field -->
+                        <!-- Phone -->
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="Phone:" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Grid.Row="2" Grid.Column="1" 
-                                 Text="{Binding Courier.Phone, UpdateSourceTrigger=PropertyChanged}"
-                                 ToolTip="Contact phone number"/>
+                        <TextBox Grid.Row="2" Grid.Column="1"
+                                 Text="{Binding Courier.Phone, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <!-- Email Field -->
+                        <!-- Email -->
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="Email:" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Grid.Row="3" Grid.Column="1" 
-                                 Text="{Binding Courier.Email, UpdateSourceTrigger=PropertyChanged}"
-                                 ToolTip="Contact email address"/>
+                        <TextBox Grid.Row="3" Grid.Column="1"
+                                 Text="{Binding Courier.Email, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <!-- Password Field -->
+                        <!-- Password -->
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Password:" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Grid.Column="1" Grid.Row="4"
-                                  Text="{Binding Courier.Password, UpdateSourceTrigger=PropertyChanged}"
-                                  ToolTip="Your account password"/> 
+                        <TextBox Grid.Row="4" Grid.Column="1"
+                                 Text="{Binding Courier.Password, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <!-- Max Distance Field -->
+                        <!-- Max Distance -->
                         <TextBlock Grid.Row="5" Grid.Column="0" Text="Max Distance (km):" Style="{StaticResource LabelStyle}"/>
-                        <TextBox Grid.Row="5" Grid.Column="1" 
-                                 Text="{Binding Courier.MaxDistance, UpdateSourceTrigger=PropertyChanged}"
-                                 ToolTip="Maximum delivery distance"/>
+                        <TextBox Grid.Row="5" Grid.Column="1"
+                                 Text="{Binding Courier.MaxDistance, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <!-- Delivery Transport Type Field -->
+                        <!-- Transport -->
                         <TextBlock Grid.Row="6" Grid.Column="0" Text="Delivery Type:" Style="{StaticResource LabelStyle}"/>
                         <ComboBox Grid.Row="6" Grid.Column="1"
-                                  ItemsSource="{Binding DeliveryTypes}"
-                                  SelectedItem="{Binding Courier.Transport, UpdateSourceTrigger=PropertyChanged}"
-                                  ToolTip="Your primary transport method"/>
+                                  ItemsSource="{Binding Source={StaticResource TransportsCollectionKey}}"
+                                  SelectedItem="{Binding Courier.Transport, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <!-- Active Status Field (Read-Only) -->
+                        <!-- Active -->
                         <TextBlock Grid.Row="7" Grid.Column="0" Text="Active Status:" Style="{StaticResource LabelStyle}"/>
                         <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                             <CheckBox IsChecked="{Binding Courier.IsActive, Mode=OneWay}"
-                                      IsEnabled="False"
-                                      ToolTip="Your active status (controlled by manager only)"/>
-                            <TextBlock Text="{Binding Courier.IsActive, StringFormat='Status: {0}'}" 
+                                      IsEnabled="False"/>
+                            <TextBlock Text="{Binding Courier.IsActive, StringFormat=Status: {0}}"
                                        Margin="10,0,0,0"
                                        VerticalAlignment="Center"
                                        Foreground="#666"/>
                         </StackPanel>
 
-                        <!-- Start Date (Read-Only) -->
+                        <!-- Start Date -->
                         <TextBlock Grid.Row="8" Grid.Column="0" Text="Start Date:" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Grid.Row="8" Grid.Column="1" 
-                                   Text="{Binding Courier.StartDate, StringFormat='dd/MM/yyyy'}"
+                        <TextBlock Grid.Row="8" Grid.Column="1"
+                                   Text="{Binding Courier.StartDate, StringFormat=dd/MM/yyyy}"
                                    Style="{StaticResource ValueStyle}"
                                    Foreground="#28A745"/>
 
-                        <!-- Administrator Role (Read-Only) -->
+                        <!-- Role -->
                         <TextBlock Grid.Row="9" Grid.Column="0" Text="Role:" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Grid.Row="9" Grid.Column="1" 
+                        <TextBlock Grid.Row="9" Grid.Column="1"
                                    Text="{Binding Courier.Administrator}"
                                    Style="{StaticResource ValueStyle}"
                                    FontWeight="SemiBold"
                                    Foreground="#6F42C1"/>
 
-                        <!-- Statistics Section -->
                         <Separator Grid.Row="10" Grid.ColumnSpan="2" Margin="0,10,0,10"/>
 
-                        <!-- On-Time Deliveries -->
+                        <!-- On-Time -->
                         <TextBlock Grid.Row="11" Grid.Column="0" Text="On-Time Deliveries:" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Grid.Row="11" Grid.Column="1" 
+                        <TextBlock Grid.Row="11" Grid.Column="1"
                                    Text="{Binding Courier.NumberOfOnTimeDeliveries, StringFormat={}{0} deliveries}"
                                    Style="{StaticResource ValueStyle}"
                                    Foreground="#28A745"/>
 
-                        <!-- Late Deliveries -->
+                        <!-- Late -->
                         <TextBlock Grid.Row="12" Grid.Column="0" Text="Late Deliveries:" Style="{StaticResource LabelStyle}"/>
-                        <TextBlock Grid.Row="12" Grid.Column="1" 
-                                   Text="{Binding Courier.NumberOfLateDeliveries, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0} deliveries}"
+                        <TextBlock Grid.Row="12" Grid.Column="1"
+                                   Text="{Binding Courier.NumberOfLateDeliveries, StringFormat={}{0} deliveries}"
                                    Style="{StaticResource ValueStyle}"
                                    Foreground="#DC3545"/>
 
-                        <!-- Action Buttons -->
-                        <StackPanel Grid.Row="13" Grid.ColumnSpan="2" 
-                                    Orientation="Horizontal" 
+                        <!-- Buttons -->
+                        <StackPanel Grid.Row="13" Grid.ColumnSpan="2"
+                                    Orientation="Horizontal"
                                     HorizontalAlignment="Right"
                                     Margin="0,15,0,0">
-                            <Button Content="💾 Update Profile" 
-                                    Click="BtnUpdate_Click"
-                                    ToolTip="Save changes to your profile"/>
-                            <Button Content="📋 View History" 
-                                    Click="BtnHistory_Click"
-                                    ToolTip="View your delivery history"/>
-                            <Button Content="📦 Choose Order" 
+                            <Button Content="💾 Update Profile" Click="BtnUpdate_Click"/>
+                            <Button Content="📋 View History" Click="BtnHistory_Click"/>
+                            <Button Content="📦 Choose Order"
                                     Click="BtnChooseOrder_Click"
-                                    IsEnabled="{Binding CanChooseOrder}"
-                                    ToolTip="Select a new order to deliver"/>
+                                    IsEnabled="{Binding CanChooseOrder}"/>
                         </StackPanel>
+
                     </Grid>
                 </ScrollViewer>
             </GroupBox>
 
-            <!-- ========== ORDER IN PROGRESS SECTION ========== -->
+            <!-- ========== RIGHT SIDE (CURRENT ORDER) ========== -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- GroupBox with Order Details -->
-                <GroupBox Header="Current Delivery" Foreground="#DC3545"
+                <!-- Current Delivery -->
+                <GroupBox Header="Current Delivery"
+                          Foreground="#DC3545"
                           Visibility="{Binding IsAnOrderInProgress}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
+                            <!-- FIX: 10 rows because button uses row 9 -->
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -276,82 +266,77 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
+
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Order ID -->
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Order ID:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" 
+                            <TextBlock Grid.Row="0" Grid.Column="1"
                                        Text="{Binding OrderInProgress.OrderId}"
                                        Style="{StaticResource ValueStyle}"
                                        FontWeight="Bold"
                                        Foreground="#DC3545"/>
 
-                            <!-- Customer Name -->
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Customer:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                            <TextBlock Grid.Row="1" Grid.Column="1"
                                        Text="{Binding OrderInProgress.CustomerName}"
                                        Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Customer Phone -->
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Phone:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" 
+                            <TextBlock Grid.Row="2" Grid.Column="1"
                                        Text="{Binding OrderInProgress.CustomerPhone}"
                                        Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Delivery Address -->
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Address:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                            <TextBlock Grid.Row="3" Grid.Column="1"
                                        Text="{Binding OrderInProgress.CustomerAddress}"
-                                       Style="{StaticResource ValueStyle}"
-                                       TextWrapping="Wrap"/>
+                                       Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Distance -->
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Distance:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="4" Grid.Column="1" 
-                                       Text="{Binding DisplayDistanceText}"
+                            <TextBlock Grid.Row="4" Grid.Column="1"
+                                       Text="{Binding OrderInProgress.Distance}"
                                        Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Order Date/Time -->
                             <TextBlock Grid.Row="5" Grid.Column="0" Text="Order Date:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="5" Grid.Column="1" 
-                                       Text="{Binding OrderInProgress.OrderDate, StringFormat='yyyy-MM-dd HH:mm'}"
+                            <TextBlock Grid.Row="5" Grid.Column="1"
+                                       Text="{Binding OrderInProgress.OrderDate, StringFormat=dd-MM-yyyy HH:mm}"
                                        Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Delivery Schedule Status -->
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Schedule:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="6" Grid.Column="1" 
+                            <TextBlock Grid.Row="6" Grid.Column="1"
                                        Text="{Binding OrderInProgress.ScheduleStatus}"
                                        Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Delivery Type (In Progress / Arrived) -->
                             <TextBlock Grid.Row="7" Grid.Column="0" Text="Delivery Type:" Style="{StaticResource LabelStyle}"/>
                             <TextBlock Grid.Row="7" Grid.Column="1"
                                        Text="{Binding DeliveryStatusText}"
                                        Style="{StaticResource ValueStyle}"/>
 
-                            <!-- Finish Type Selection (ALWAYS visible when order in progress) -->
                             <TextBlock Grid.Row="8" Grid.Column="0" Text="Finish Type:" Style="{StaticResource LabelStyle}"/>
                             <ComboBox Grid.Row="8" Grid.Column="1"
-                                      ItemsSource="{Binding DeliveryFinishTypes}"
-                                      SelectedItem="{Binding SelectedFinishType, UpdateSourceTrigger=PropertyChanged}"
-                                      ToolTip="Select how this delivery will end"/>
+                                      ItemsSource="{Binding Source={StaticResource DeliveredStatusCollectionKey}}"
+                                      SelectedItem="{Binding SelectedFinishType, UpdateSourceTrigger=PropertyChanged}"/>
 
-                            <!-- Finish Button -->
-                            <StackPanel Grid.Row="9" Grid.ColumnSpan="2" 
-                                        Orientation="Horizontal" 
+                            <!-- Finish Button (NO BasedOn => avoids XAML errors) -->
+                            <StackPanel Grid.Row="9" Grid.ColumnSpan="2"
+                                        Orientation="Horizontal"
                                         HorizontalAlignment="Right"
                                         Margin="0,15,0,0">
-                                <Button Content="✅ Complete Delivery" 
+                                <Button Content="✅ Complete Delivery"
                                         Click="BtnFinish_Click"
                                         Background="#28A745"
-                                        ToolTip="Mark this delivery as complete">
+                                        Foreground="White">
                                     <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Style TargetType="Button">
                                             <Setter Property="Background" Value="#28A745"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                            <Setter Property="Margin" Value="6"/>
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Background" Value="#218838"/>
@@ -361,33 +346,35 @@
                                     </Button.Style>
                                 </Button>
                             </StackPanel>
+
                         </Grid>
                     </ScrollViewer>
                 </GroupBox>
 
-                <!-- Empty Message When No Order -->
+                <!-- No order message -->
                 <StackPanel VerticalAlignment="Center"
                             HorizontalAlignment="Center"
                             Margin="20"
                             Visibility="{Binding IsNoOrderInProgress}">
-                    <TextBlock Text="No Active Delivery" 
-                               FontSize="16" 
+                    <TextBlock Text="No Active Delivery"
+                               FontSize="16"
                                FontWeight="Bold"
                                Foreground="#999"
                                TextAlignment="Center"
                                Margin="0,0,0,10"/>
-                    <TextBlock Text="Click 'Choose Order' to select a delivery" 
-                               FontSize="12" 
+                    <TextBlock Text="Click 'Choose Order' to select a delivery"
+                               FontSize="12"
                                Foreground="#BBB"
                                TextAlignment="Center"/>
                 </StackPanel>
+
             </Grid>
         </Grid>
 
         <!-- ==================== FOOTER ==================== -->
-        <Border Grid.Row="2" 
-                Background="White" 
-                BorderBrush="#DDD" 
+        <Border Grid.Row="2"
+                Background="White"
+                BorderBrush="#DDD"
                 BorderThickness="0,1,0,0"
                 Padding="10">
             <TextBlock Foreground="#666"
@@ -396,5 +383,6 @@
                        VerticalAlignment="Center"
                        MinHeight="25"/>
         </Border>
+
     </Grid>
 </Window>

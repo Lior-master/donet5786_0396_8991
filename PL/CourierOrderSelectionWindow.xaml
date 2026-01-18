@@ -8,11 +8,10 @@
         Background="#F5F5F5"
         Loaded="Window_Loaded"
         Closed="Window_Closed">
-    
+
     <Window.Resources>
-        <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        
+
         <!-- Status color converter for schedule status -->
         <Style TargetType="TextBlock" x:Key="StatusTextStyle">
             <Setter Property="FontWeight" Value="Bold"/>
@@ -28,8 +27,8 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-        
-        <!-- Button style for choose order -->
+
+        <!-- Base button style -->
         <Style TargetType="Button" x:Key="ChooseButtonStyle">
             <Setter Property="Background" Value="#007BFF"/>
             <Setter Property="Foreground" Value="White"/>
@@ -44,8 +43,9 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Dynamic button style for choose order with urgency -->
+        <!-- Dynamic button style for urgency -->
         <Style TargetType="Button" x:Key="DynamicChooseButtonStyle" BasedOn="{StaticResource ChooseButtonStyle}">
+            <Setter Property="Content" Value="✅ Choose This Order"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding ScheduleStatus}" Value="Late">
                     <Setter Property="Background" Value="#DC3545"/>
@@ -59,7 +59,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Urgent order highlighting -->
+        <!-- Card highlighting by urgency -->
         <Style TargetType="Border" x:Key="OrderCardStyle">
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
             <Setter Property="Background" Value="White"/>
@@ -74,8 +74,9 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
     </Window.Resources>
-    
+
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -87,34 +88,37 @@
         <!-- Filter Controls -->
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="6">
             <TextBlock VerticalAlignment="Center" Margin="6,0" Text="Filter by Order Type:"/>
-            <ComboBox x:Name="cmbFilterOrderType" Width="180" Margin="6,0" SelectionChanged="cmbFilterOrderType_SelectionChanged"/>
+            <ComboBox x:Name="cmbFilterOrderType" Width="180" Margin="6,0"
+                      SelectionChanged="cmbFilterOrderType_SelectionChanged"/>
             <Button Content="❌ Close" Margin="6,0" Click="BtnClose_Click"/>
         </StackPanel>
 
         <!-- Filter Status Information -->
-        <Border Grid.Row="1" Background="#E8F4FD" BorderBrush="#007BFF" BorderThickness="1" 
+        <Border Grid.Row="1" Background="#E8F4FD" BorderBrush="#007BFF" BorderThickness="1"
                 Margin="6" Padding="10" CornerRadius="4">
-            <TextBlock Text="{Binding FilterStatusMessage}" 
-                       Foreground="#0056B3" 
+            <TextBlock Text="{Binding FilterStatusMessage}"
+                       Foreground="#0056B3"
                        FontWeight="SemiBold"
                        TextWrapping="Wrap"/>
         </Border>
 
         <!-- Orders List -->
-        <ListBox x:Name="lstOpenOrders" 
-                 Grid.Row="2" 
+        <ListBox x:Name="lstOpenOrders"
+                 Grid.Row="2"
                  Margin="6"
                  ItemsSource="{Binding OpenOrders}"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  Background="White"
                  BorderBrush="#DDD">
+
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border Style="{StaticResource OrderCardStyle}"
-                            BorderThickness="2" 
-                            Margin="3" 
+                            BorderThickness="2"
+                            Margin="3"
                             Padding="12"
                             CornerRadius="6">
+
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -122,33 +126,33 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <!-- Order ID and Type with Priority Indicator -->
+
+                                <!-- Order ID + Type -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                     <TextBlock Text="🚚 Order #" FontWeight="Bold" Foreground="#007BFF"/>
                                     <TextBlock Text="{Binding OrderId}" FontWeight="Bold" Foreground="#007BFF"/>
                                     <TextBlock Text=" - " Margin="5,0" Foreground="#666"/>
                                     <TextBlock Text="{Binding OrderType}" FontWeight="SemiBold" Foreground="#6F42C1"/>
-                                    <TextBlock Text="{Binding Fragility, StringFormat=' ({0})'}" 
-                                               Foreground="#DC3545" 
+
+                                    <!-- Fragility (optional) -->
+                                    <TextBlock Text="{Binding Fragility, StringFormat=' ({0})'}"
+                                               Foreground="#DC3545"
                                                FontStyle="Italic">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Setter Property="Visibility" Value="Visible"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Fragility}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Fragility}" Value="">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    
-                                    <!-- Priority indicator -->
-                                    <TextBlock Text=" 🚨 URGENT" 
-                                               Foreground="#DC3545" 
+
+                                    <!-- Urgent indicator -->
+                                    <TextBlock Text=" 🚨 URGENT"
+                                               Foreground="#DC3545"
                                                FontWeight="Bold"
                                                Margin="10,0,0,0">
                                         <TextBlock.Style>
@@ -167,42 +171,41 @@
                                 <!-- Address -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                     <TextBlock Text="📍 " FontSize="14"/>
-                                    <TextBlock Text="{Binding CustomerAddress}" 
-                                               TextWrapping="Wrap" 
-                                               Foreground="#333" 
+                                    <TextBlock Text="{Binding CustomerAddress}"
+                                               TextWrapping="Wrap"
+                                               Foreground="#333"
                                                MaxWidth="450"/>
                                 </StackPanel>
 
-                                <!-- Distance Information -->
+                                <!-- Bird distance -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                     <TextBlock Text="📏 Distance: " Foreground="#666"/>
                                     <TextBlock Text="{Binding BirdDistance, StringFormat='{}{0:F1} km'}"
                                                Foreground="#333"/>
-                                    <TextBlock Text=" (direct)" 
-                                               Foreground="#999" 
-                                               FontStyle="Italic"/>
+                                    <TextBlock Text=" (direct)" Foreground="#999" FontStyle="Italic"/>
                                 </StackPanel>
 
-                                <!-- Timing Information -->
+                                <!-- Timing -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                     <TextBlock Text="⏱️ Est. Delivery: " Foreground="#666"/>
-                                    <TextBlock Text="{Binding EstimatedDeliveryTime, StringFormat='{}{0:hh\\:mm}'}" 
+                                    <TextBlock Text="{Binding EstimatedDeliveryTime, StringFormat='{}{0:hh\\:mm}'}"
                                                Foreground="#333"/>
+
                                     <TextBlock Text=" | Deadline: " Margin="10,0,0,0" Foreground="#666"/>
-                                    <TextBlock Text="{Binding MaxDeliveredTime, StringFormat='HH:mm'}" 
-                                               Foreground="#DC3545" 
+                                    <TextBlock Text="{Binding MaxDeliveredTime, StringFormat='{}{0:HH:mm}'}"
+                                               Foreground="#DC3545"
                                                FontWeight="SemiBold"/>
                                 </StackPanel>
 
-                                <!-- Status and Age -->
+                                <!-- Status + AddedTime (optional) -->
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                     <TextBlock Text="📊 Status: " Foreground="#666"/>
-                                    <TextBlock Text="{Binding ScheduleStatus}" 
-                                               Style="{StaticResource StatusTextStyle}"/>
+                                    <TextBlock Text="{Binding ScheduleStatus}" Style="{StaticResource StatusTextStyle}"/>
+
                                     <TextBlock Text=" | Added: " Margin="10,0,0,0" Foreground="#666">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Setter Property="Visibility" Value="Visible"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding AddedTime}" Value="{x:Null}">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -211,12 +214,9 @@
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <TextBlock Foreground="#333">
-                                        <TextBlock.Text>
-                                            <MultiBinding StringFormat="{}{0:hh\\:mm} ago">
-                                                <Binding Path="AddedTime"/>
-                                            </MultiBinding>
-                                        </TextBlock.Text>
+
+                                    <TextBlock Foreground="#333"
+                                               Text="{Binding AddedTime, StringFormat='{}{0:hh\\:mm} ago'}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Visibility" Value="Visible"/>
@@ -229,24 +229,29 @@
                                         </TextBlock.Style>
                                     </TextBlock>
                                 </StackPanel>
+
                             </StackPanel>
 
-                            <!-- Choose Order Button with Dynamic Styling -->
-                            <Button Grid.Column="1" 
-                                    Content="✅ Choose This Order" 
+                            <!-- Choose button -->
+                            <Button Grid.Column="1"
                                     Style="{StaticResource DynamicChooseButtonStyle}"
                                     Click="BtnChooseOrder_Click"
                                     VerticalAlignment="Center"
                                     Margin="10,0,0,0"/>
                         </Grid>
+
                     </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <!-- Status Footer -->
+        <!-- Footer -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="6">
-            <TextBlock x:Name="txtStatus" VerticalAlignment="Center" Foreground="#666" Margin="6,0" Text="Ready"/>
+            <TextBlock x:Name="txtStatus"
+                       VerticalAlignment="Center"
+                       Foreground="#666"
+                       Margin="6,0"
+                       Text=""/>
             <Button Content="📋 Assign Selected Order" Click="BtnAssign_Click" Margin="6,0"/>
         </StackPanel>
     </Grid>

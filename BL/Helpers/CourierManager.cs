@@ -1,4 +1,4 @@
-﻿    using BO;
+﻿using BO;
 using DalApi;
 using DO;
 using System.Linq;
@@ -484,11 +484,17 @@ internal static class CourierManager
                     // Get all delivery records for this order to calculate its status using cached data
                     var deliveriesForOrder = GetDeliveries().Where(d => d.OrderId == orderDO.Id).ToList();
                     var ordStatus = Tools.CalculateOrderStatus(deliveriesForOrder);
+                    var scheduleStatus = Tools.CalculateScheduleStatus(
+                        ordStatus,
+                        orderDO.OrderDate,
+                        currentDelivery.Distance.HasValue ? Tools.CalculateEstimatedArrival(orderDO.OrderDate, currentDelivery.Distance.Value, GetSpeed(currentDelivery.Transport)) : null,
+                        orderDO.OrderDate.Add(config.MaxDeliveryTime),
+                        currentDelivery.ArrivalTime);
 
                     // Build the order-in-progress view model
                     currentOrder = new BO.OrderInProgress
                     {
-                        DeliveryId = currentDelivery.Id,                      // <-- ensure delivery id is present
+                        DeliveryId = currentDelivery.Id,
                         OrderId = orderDO.Id,
                         CustomerName = orderDO.CustomerName,
                         CustomerAddress = orderDO.CustomerAddress,
@@ -496,7 +502,11 @@ internal static class CourierManager
                         PickupTime = currentDelivery.PickupTime,
                         Distance = currentDelivery.Distance,
                         ArrivalTime = currentDelivery.ArrivalTime,           // <-- propagate arrival time if set
-                        OrderStatus = ordStatus
+                        OrderStatus = ordStatus,
+                        OrderDate = orderDO.OrderDate,
+                        WaitingTime = (s_dal.Config.Clock - currentDelivery.PickupTime),
+                        Description = orderDO.Description,
+                        ScheduleStatus = scheduleStatus,
                     };
                 }
             }

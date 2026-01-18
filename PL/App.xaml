@@ -11,5 +11,6 @@
         <local:AdministratorTypeCollection x:Key="AdministratorTypeCollectionKey" />
         <local:OrderTypeCollection x:Key="OrderTypeCollectionKey" />
         <local:ScheduleStatusCollection x:Key="ScheduleStatusCollectionKey" />
+        <local:DeliveredStatusCollection x:Key="DeliveredStatusCollectionKey" />
     </Application.Resources>
 </Application>

@@ -1022,7 +1022,7 @@ internal static class OrderManager
                 // Record the calculated distance
                 Distance = distance,
                 // Mark status as delivered
-                DeliveredStatus = DO.DeliveredStatus.Delivered
+                DeliveredStatus = (DO.DeliveredStatus)deliveredStatus
             };
 
             s_dal.Delivery.Update(updated);
@@ -1038,6 +1038,9 @@ internal static class OrderManager
             // Notify subscribers that this order has been completed
             Observers.NotifyItemUpdated(delivery.OrderId);
             Observers.NotifyListUpdated();
+
+            CourierManager.Observers.NotifyItemUpdated(courierId);
+            CourierManager.Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -1110,7 +1113,10 @@ internal static class OrderManager
             // Notify subscribers that the order has been assigned
             Observers.NotifyItemUpdated(orderId);
             Observers.NotifyListUpdated();
-            Observers.NotifyItemUpdated(courierId);
+
+            // Notify COURIER subscribers (THIS is what was missing)
+            CourierManager.Observers.NotifyItemUpdated(courierId);
+            CourierManager.Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {

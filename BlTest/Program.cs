@@ -550,7 +550,7 @@ internal class Program
         if (!int.TryParse(Console.ReadLine(), out int deliveryId))
             return;
 
-        s_bl.Order.FinishOrder(TestRequesterId, courierId, deliveryId);
+        s_bl.Order.FinishOrder(TestRequesterId, courierId, deliveryId, DeliveredStatus.Delivered);
         Console.WriteLine("Delivery finished.");
         Console.WriteLine("Press Enter...");
         Console.ReadLine();
