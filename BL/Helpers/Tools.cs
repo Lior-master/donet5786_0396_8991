@@ -590,32 +590,49 @@ internal static class Tools
         DateTime? maxArrival,
         DateTime? realArrival)
     {
-        // maxArrival represents the maximum allowed delivery time (orderDate + MaxDeliveryTime)
-        if (maxArrival == null)
-            return BO.ScheduleStatus.Unknown;
-
         var config = AdminManager.GetConfig();
         DateTime now = config.Clock;
-        DateTime maxSupplyTime = maxArrival.Value;
+
+        // Maximum allowed delivery time:
+        // According to the general description, it is calculated as
+        // orderDate + MaxDeliveryTime
+        DateTime maxSupplyTime = maxArrival ?? orderDate + config.MaxDeliveryTime;
+
+        // Risk threshold:
+        // If the remaining time is less than RiskRange, the order is considered "InRisk"
         DateTime riskThreshold = maxSupplyTime - config.RiskRange;
 
+        // A closed order is an order whose final outcome is already known
         bool isClosed =
             status == BO.OrderStatus.Delivered ||
             status == BO.OrderStatus.Returned ||
             status == BO.OrderStatus.Canceled;
 
-        // Closed orders: compare actual finish time to max supply time
+        // ---------------------------------------------------------
+        // Closed orders:
+        // Compare the actual finish time to the maximum supply time.
+        // - finishTime <= maxSupplyTime  -> OnTime
+        // - finishTime >  maxSupplyTime  -> Late
+        //
+        // If realArrival is missing (should not happen in a consistent system),
+        // we fall back to the current system time to still return a valid status,
+        // since "Unknown" does not exist.
+        // ---------------------------------------------------------
         if (isClosed)
         {
-            if (realArrival == null)
-                return BO.ScheduleStatus.Unknown;
+            DateTime finishTime = realArrival ?? now;
 
-            return realArrival.Value <= maxSupplyTime
+            return finishTime <= maxSupplyTime
                 ? BO.ScheduleStatus.OnTime
                 : BO.ScheduleStatus.Late;
         }
 
-        // Open orders: compare current system time to thresholds
+        // ---------------------------------------------------------
+        // Open (in-treatment) orders:
+        // - If the maximum supply time has passed -> Late
+        // - If the order is within the risk range -> InRisk
+        // - Otherwise                            -> OnTime
+        // ---------------------------------------------------------
         if (now >= maxSupplyTime)
             return BO.ScheduleStatus.Late;
 

@@ -51,7 +51,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //   ORDER SUMMARY DATA BINDING
     // ================================
-    private int[] _orderSummaryData = new int[20]; // 4 ScheduleStatus × 5 OrderStatus
+    private int[] _orderSummaryData = new int[15]; // 3 ScheduleStatus × 5 OrderStatus
     public int[] OrderSummaryData
     {
         get => _orderSummaryData;
@@ -119,21 +119,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // idx = OrderStatus * 4 + ScheduleStatus
             var raw = s_bl.Order.GetOrdersBySummary(bossId).ToArray();
 
-            // We expect 5 statuses (Pending..Returned) and 4 schedules (OnTime, InRisk, Late, Unknown)
+            // We expect 5 statuses (Pending..Returned) and 3 schedules (OnTime, InRisk, Late)
             // UI wants schedule-major by ROWS in this order: OnTime, Late, InRisk, Unknown
             const int statusCount = 5;
-            const int scheduleCount = 4;
+            const int scheduleCount = 3;
 
-            var ui = new int[statusCount * scheduleCount]; // 20
+            var ui = new int[statusCount * scheduleCount]; // 15
 
             // UI row -> enum schedule index mapping
             // Row0 OnTime   -> 0
             // Row1 Late     -> 2
             // Row2 InRisk   -> 1
             // Row3 Unknown  -> 3
-            int[] scheduleMap = { 0, 2, 1, 3 };
+            int[] scheduleMap = { 0, 2, 1 };
 
-            if (raw.Length >= 20)
+            if (raw.Length >= 15)
             {
                 for (int row = 0; row < scheduleCount; row++)
                 {
@@ -153,12 +153,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else
             {
                 // Fallback: pad with zeros
-                OrderSummaryData = new int[20];
+                OrderSummaryData = new int[15];
             }
         }
         catch (Exception ex)
         {
-            OrderSummaryData = new int[20];
+            OrderSummaryData = new int[15];
             System.Diagnostics.Debug.WriteLine($"Error refreshing order summary: {ex.Message}");
         }
     }

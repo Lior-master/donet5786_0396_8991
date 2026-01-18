@@ -133,9 +133,6 @@ public enum ScheduleStatus
     /// <summary>Delivery has exceeded acceptable time thresholds and is considered late.</summary>
     Late,
 
-    /// <summary>Schedule status cannot be determined due to lack of information.</summary>
-    Unknown,
-
     /// <summary>
     /// Specifies that all available options or items are selected. (Used for filtering or querying.)
     /// </summary>
