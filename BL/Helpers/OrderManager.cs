@@ -1180,6 +1180,7 @@ internal static class OrderManager
                     DO.DeliveredStatus.Canceled => BO.DeliveredStatus.Canceled,
                     DO.DeliveredStatus.Rejected => BO.DeliveredStatus.Rejected,
                     DO.DeliveredStatus.Failed => BO.DeliveredStatus.Failed,
+                    DO.DeliveredStatus.Absent => BO.DeliveredStatus.Absent,
                     _ => BO.DeliveredStatus.Failed
                 };
 
