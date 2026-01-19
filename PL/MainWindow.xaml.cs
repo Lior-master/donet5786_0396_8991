@@ -212,6 +212,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // Stop simulator if running
             if (_simulatorRunning)
             {
+                s_bl.Admin.Stop();
                 _simulatorRunning = false;
             }
 
