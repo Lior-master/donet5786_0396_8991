@@ -21,7 +21,8 @@ public class DeliveryPerOrderInList
     /// <summary>
     /// Display name of the courier assigned to the delivery.
     /// </summary>
-    public string CourierName { get; init; }
+    // Default to empty to prevent nulls in delivery history lists.
+    public string CourierName { get; init; } = string.Empty;
 
     /// <summary>
     /// Type of the order associated with this delivery.

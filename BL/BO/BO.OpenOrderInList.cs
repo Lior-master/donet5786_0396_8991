@@ -30,7 +30,8 @@ public class OpenOrderInList
     /// <summary>
     /// Customer delivery address.
     /// </summary>
-    public string CustomerAddress { get; init; }
+    // Default to empty to keep nullable analysis clean for list items.
+    public string CustomerAddress { get; init; } = string.Empty;
 
     /// <summary>
     /// Straight-line ("as-the-crow-flies") distance from the company to the customer, in kilometers.

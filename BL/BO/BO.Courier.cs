@@ -15,22 +15,23 @@ public class Courier
     /// <summary>
     /// Full name of the courier.
     /// </summary>
-    public string Name { get; set; }
+    // Default to empty to satisfy nullable analysis for DTO-style initialization.
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Contact phone number for the courier.
     /// </summary>
-    public string Phone { get; set; }
+    public string Phone { get; set; } = string.Empty;
 
     /// <summary>
     /// Contact email address for the courier.
     /// </summary>
-    public string Email { get; set; }
+    public string Email { get; set; } = string.Empty;
 
     /// <summary>
     /// password for the courier's account.
     ///</summary>
-    public string Password { get; set; }
+    public string Password { get; set; } = string.Empty;
 
     /// <summary>
     /// Indicates whether the courier is currently active and available for assignments.

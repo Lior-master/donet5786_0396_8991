@@ -25,7 +25,8 @@ public class Order
     /// <summary>
     /// Delivery address provided by the customer.
     /// </summary>
-    public string CustomerAddress { get; set; }
+    // Default to empty to satisfy nullable analysis for DTOs.
+    public string CustomerAddress { get; set; } = string.Empty;
 
     /// <summary>
     /// Geographic latitude of the delivery address.
@@ -45,12 +46,12 @@ public class Order
     /// <summary>
     /// Customer full name.
     /// </summary>
-    public string CustomerName { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
 
     /// <summary>
     /// Customer contact phone number.
     /// </summary>
-    public string CustomerPhone { get; set; }
+    public string CustomerPhone { get; set; } = string.Empty;
 
     /// <summary>
     /// Weight of the package in kilograms, if provided.
