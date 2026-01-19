@@ -1461,10 +1461,10 @@ internal static class OrderManager
                 }
 
                 // Bird distance is measured from the company (per your project design)
-                double distance = Tools.CalculateRouteDistanceAsync(companyLat, companyLon, custLat, custLon).GetAwaiter().GetResult();
+                var birdDistance = Tools.BirdDistance(companyLat, companyLon, custLat, custLon);
 
                 // Filter by courier personal max distance (if defined)
-                if (courier.MaxDistance != null && distance > courier.MaxDistance.Value)
+                if (courier.MaxDistance != null && birdDistance > courier.MaxDistance.Value)
                     continue;
 
                 // Added time since order creation
@@ -1472,15 +1472,12 @@ internal static class OrderManager
 
                 // Estimated delivery time:
                 // Use courier transport speed from config; estimate from "now" using bird distance.
-                double speed = Tools.GetSpeed(courier.Transport, config);
-                DateTime? estArrival = Tools.EstimateArrival(now, courier.Transport, distance);
+                DateTime? estArrival = Tools.EstimateArrival(now, courier.Transport, birdDistance);
 
                 TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
 
                 // Latest acceptable delivery time (orderDate + MaxDeliveryTime)
                 DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
-
-                var birdDistance = Tools.BirdDistance(companyLat, companyLon, custLat, custLon);
 
                 // Schedule status based on your updated rules (no Unknown)
                 var scheduleStatus = Tools.CalculateScheduleStatus(
@@ -1500,7 +1497,7 @@ internal static class OrderManager
                         : null,
                     CustomerAddress = o.CustomerAddress ?? string.Empty,
                     BirdDistance = birdDistance,
-                    Distance = distance, // route distance not calculated here
+                    Distance = birdDistance,
                     AddedTime = addedTime,
                     ScheduleStatus = scheduleStatus,
                     EstimatedDeliveryTime = estSpan,

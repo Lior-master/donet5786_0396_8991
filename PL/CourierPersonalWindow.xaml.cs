@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -26,7 +24,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
     private static readonly IBl s_bl = Factory.Get();
     private readonly int _courierId;
-    private int _bossId;
+    private readonly int _bossId;
     private readonly Action? _courierObserver;
 
     public BO.DeliveredStatus SelectedFinishType { get; set; } = BO.DeliveredStatus.Delivered;
@@ -50,16 +48,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     public Visibility IsNoOrderInProgress =>
         IsAnOrderInProgress == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
 
-    private int _courierId_Display;
-    public int CourierId
-    {
-        get => _courierId_Display;
-        set
-        {
-            _courierId_Display = value;
-            OnPropertyChanged();
-        }
-    }
+    public int CourierId => _courierId;
 
     private BO.Courier? _courier;
     public BO.Courier? Courier
@@ -101,31 +90,6 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             _statusMessage = value;
             OnPropertyChanged();
         }
-    }
-
-    #endregion
-
-    #region History properties (no new files)
-
-    private Visibility _historyVisibility = Visibility.Collapsed;
-    public Visibility HistoryVisibility
-    {
-        get => _historyVisibility;
-        set { _historyVisibility = value; OnPropertyChanged(); }
-    }
-
-    private ObservableCollection<BO.ClosedDeliveryInList> _deliveryHistory = new();
-    public ObservableCollection<BO.ClosedDeliveryInList> DeliveryHistory
-    {
-        get => _deliveryHistory;
-        set { _deliveryHistory = value; OnPropertyChanged(); }
-    }
-
-    private string _historyStatusMessage = "Ready";
-    public string HistoryStatusMessage
-    {
-        get => _historyStatusMessage;
-        set { _historyStatusMessage = value; OnPropertyChanged(); }
     }
 
     #endregion
@@ -197,16 +161,10 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     {
         InitializeComponent();
         _courierId = courierId;
-        CourierId = courierId;
         _bossId = s_bl.Admin.GetConfig().BossId;
-        // FIX: Register the observer properly - it should be a method reference that matches Action signature
         _courierObserver = RefreshCourierData;
         
-        // Register the observer with the business logic
         s_bl.Courier.AddObserver(_courierId, _courierObserver);
-
-        // init history collection
-        DeliveryHistory = new ObservableCollection<BO.ClosedDeliveryInList>();
     }
 
     #endregion
@@ -333,28 +291,17 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
                 Owner = this
             };
             
-            // Use ShowDialog to wait for result
             var result = choose.ShowDialog();
             
             if (result == true && choose.AssignedOrderId.HasValue)
             {
-                int expectedOrderId = choose.AssignedOrderId.Value;
-                
-                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Order {expectedOrderId} was assigned, attempting synchronization...");
-                
-                // Tentative de synchronisation avec retry pattern
-                bool synchronized = await TryToSynchronizeOrder(expectedOrderId);
-                
-                if (synchronized)
-                {
+                var expectedOrderId = choose.AssignedOrderId.Value;
+                await RefreshDataFromChildAsync();
+
+                if (OrderInProgress?.OrderId == expectedOrderId)
                     StatusMessage = $"✅ Order #{expectedOrderId} assigned successfully!";
-                    System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Successfully synchronized order {expectedOrderId}");
-                }
                 else
-                {
-                    // Fallback: Créer manuellement l'OrderInProgress basé sur les données de l'ordre assigné
                     await CreateOrderInProgressFromAssignedOrder(expectedOrderId);
-                }
             }
         }
         catch (Exception ex)
@@ -435,50 +382,6 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
-    public async void RefreshCourierDataAndContinue()
-    {
-        await Task.Run(async () =>
-        {
-            await Dispatcher.InvokeAsync(async () =>
-            {
-                try
-                {
-                    var courierExists = await Task.Run(() =>
-                    {
-                        try
-                        {
-                            s_bl.Courier.GetCourierDetails(_bossId, _courierId);
-                            return true;
-                        }
-                        catch (BO.BLNotFoundException)
-                        {
-                            return false;
-                        }
-                    });
-
-                    if (!courierExists)
-                    {
-                        MessageBox.Show("Your courier profile has been removed by an administrator.",
-                            "Profile Removed", MessageBoxButton.OK, MessageBoxImage.Information);
-                        Close();
-                        return;
-                    }
-
-                    var updatedCourier = await Task.Run(() =>
-                        s_bl.Courier.GetCourierDetails(_bossId, _courierId));
-
-                    Courier = updatedCourier;
-                    OrderInProgress = updatedCourier.CurrentOrder;
-                    StatusMessage = "Ready to choose a new order";
-                }
-                catch (Exception ex)
-                {
-                    StatusMessage = $"Refresh failed: {ex.Message}";
-                }
-            }, System.Windows.Threading.DispatcherPriority.Normal);
-        });
-    }
-
     #endregion
 
     #region Private Methods
@@ -509,9 +412,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         {
             Dispatcher.Invoke(() =>
             {
-                var courierData = s_bl.Courier.GetCourierDetails(_bossId, _courierId);
-                Courier = courierData;
-                OrderInProgress = courierData.CurrentOrder;
+                LoadCourierData();
                 StatusMessage = "Data refreshed";
             });
         }
@@ -527,71 +428,26 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     /// </summary>
     public Task RefreshDataFromChildAsync()
     {
-        var tcs = new TaskCompletionSource<bool>();
-        
-        Dispatcher.Invoke(async () =>
+        return Dispatcher.InvokeAsync(() =>
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: RefreshDataFromChildAsync - Starting refresh for courier {_courierId}");
-                
-                var courierExists = await Task.Run(() =>
-                {
-                    try
-                    {
-                        s_bl.Courier.GetCourierDetails(_bossId, _courierId);
-                        return true;
-                    }
-                    catch (BO.BLNotFoundException)
-                    {
-                        return false;
-                    }
-                });
-
-                if (!courierExists)
-                {
-                    MessageBox.Show("Your courier profile has been removed by an administrator.",
-                        "Profile Removed", MessageBoxButton.OK, MessageBoxImage.Information);
-                    Close();
-                    tcs.SetResult(false);
-                    return;
-                }
-
-                var updatedCourier = await Task.Run(() =>
-                    s_bl.Courier.GetCourierDetails(_bossId, _courierId));
-
-                // Log pour déboguer
-                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Received updated courier data. Current order: {(updatedCourier.CurrentOrder?.OrderId.ToString() ?? "None")}");
-                
-                Courier = updatedCourier;
-                OrderInProgress = updatedCourier.CurrentOrder;
-                
-                // Forcer les notifications de changement de propriété
-                OnPropertyChanged(nameof(Courier));
-                OnPropertyChanged(nameof(OrderInProgress));
-                OnPropertyChanged(nameof(CanChooseOrder));
-                OnPropertyChanged(nameof(IsAnOrderInProgress));
-                OnPropertyChanged(nameof(IsNoOrderInProgress));
-                OnPropertyChanged(nameof(DisplayDistanceText));
-                OnPropertyChanged(nameof(DeliveryStatusText));
-                
-                StatusMessage = updatedCourier.CurrentOrder != null 
-                    ? $"✅ Order #{updatedCourier.CurrentOrder.OrderId} assigned successfully!"
+                LoadCourierData();
+                StatusMessage = OrderInProgress != null
+                    ? $"✅ Order #{OrderInProgress.OrderId} assigned successfully!"
                     : "Ready to choose a new order";
-                    
-                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Refresh completed. OrderInProgress is now: {(OrderInProgress?.OrderId.ToString() ?? "None")}");
-                
-                tcs.SetResult(true);
+            }
+            catch (BO.BLNotFoundException)
+            {
+                MessageBox.Show("Your courier profile has been removed by an administrator.",
+                    "Profile Removed", MessageBoxButton.OK, MessageBoxImage.Information);
+                Close();
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Refresh failed: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Refresh failed: {ex.Message}");
-                tcs.SetException(ex);
             }
-        });
-
-        return tcs.Task;
+        }).Task;
     }
 
     private bool ValidateProfileFields()
@@ -643,30 +499,6 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         catch (Exception ex)
         {
             StatusMessage = $"Error creating OrderInProgress: {ex.Message}";
-        }
-    }
-
-    /// <summary>
-    /// Attempts to synchronize the assigned order with the backend.
-    /// Returns true if the order is successfully synchronized and assigned to the courier.
-    /// </summary>
-    private async Task<bool> TryToSynchronizeOrder(int orderId)
-    {
-        try
-        {
-            // Attempt to refresh courier data and check if the order is now assigned
-            await RefreshDataFromChildAsync();
-
-            // After refresh, check if the current order matches the expected orderId
-            if (OrderInProgress != null && OrderInProgress.OrderId == orderId)
-            {
-                return true;
-            }
-            return false;
-        }
-        catch
-        {
-            return false;
         }
     }
 

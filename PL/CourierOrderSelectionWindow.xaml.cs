@@ -24,6 +24,7 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     private readonly int _courierId;
     private readonly int _bossId;
     private readonly Action _ordersObserver;
+    private bool _isLoading;
 
     // Property to track the assigned order ID
     public int? AssignedOrderId { get; private set; }
@@ -52,10 +53,10 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         lstOpenOrders.ItemsSource = OpenOrders;
 
         // Observer must marshal back to UI thread
-        _ordersObserver = () => Dispatcher.Invoke(RefreshOpenOrdersFromBl);
+        _ordersObserver = () => _ = Dispatcher.InvokeAsync(RefreshOpenOrdersAsync);
     }
 
-    private void Window_Loaded(object sender, RoutedEventArgs e)
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         try
         {
@@ -64,7 +65,7 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
             // Register observer so BL notifications update this window automatically
             TryRegisterObserver();
 
-            RefreshOpenOrdersFromBl();
+            await RefreshOpenOrdersAsync();
         }
         catch (Exception ex)
         {
@@ -103,18 +104,28 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         return cmbFilterOrderType.SelectedItem is BO.OrderType ot ? ot : null;
     }
 
-    private void RefreshOpenOrdersFromBl()
+    private async Task RefreshOpenOrdersAsync()
     {
+        if (_isLoading)
+            return;
+
+        _isLoading = true;
         var filter = GetSelectedFilter();
-        var list = GetOpenOrdersFromBl(filter);
-        UpdateOpenOrdersCollection(list);
-        UpdateStatusMessages(filter);
+        try
+        {
+            txtStatus.Text = "Loading open orders...";
+            var list = await Task.Run(() => GetOpenOrdersFromBl(filter));
+            UpdateOpenOrdersCollection(list);
+            UpdateStatusMessages(filter);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private System.Collections.Generic.List<OpenOrderInList> GetOpenOrdersFromBl(BO.OrderType? filter)
     {
-        txtStatus.Text = "Loading open orders...";
-
         // Minimal local logic: let BL do filtering; PL only does basic display ordering
         return s_bl.Order.GetOpenOrdersForCourier(_bossId, _courierId, filter, null).ToList();
     }
@@ -139,7 +150,7 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     private void cmbFilterOrderType_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded) return;
-        RefreshOpenOrdersFromBl();
+        _ = RefreshOpenOrdersAsync();
     }
 
     private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
@@ -173,13 +184,9 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         {
             BeginBusy("🚚 Assigning order...");
 
-            System.Diagnostics.Debug.WriteLine($"CourierOrderSelectionWindow: Starting assignment of order {selected.OrderId} to courier {_courierId}");
-
             // Assigner la commande au coursier
             await Task.Run(() =>
                 s_bl.Order.AssignOrderToCourier(_bossId, selected.OrderId, _courierId));
-
-            System.Diagnostics.Debug.WriteLine($"CourierOrderSelectionWindow: Assignment completed successfully");
 
             // IMPORTANT: Stocker l'ID de l'ordre assigné
             AssignedOrderId = selected.OrderId;
@@ -195,11 +202,9 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         }
         catch (Exception ex)
         {
-            EndBusy();
             MessageBox.Show($"❌ Failed to assign order: {ex.Message}",
                 "Assignment Failed", MessageBoxButton.OK, MessageBoxImage.Error);
             txtStatus.Text = "❌ Assignment failed";
-            System.Diagnostics.Debug.WriteLine($"CourierOrderSelectionWindow: Assignment failed: {ex.Message}");
         }
         finally
         {
