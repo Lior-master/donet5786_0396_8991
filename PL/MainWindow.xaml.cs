@@ -4,11 +4,10 @@ using PL.Courier;
 using PL.Order;
 using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media; // Add this at the top with other using directives
 
 namespace PL;
 
@@ -88,13 +87,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            // Marshal call to UI thread
-            Dispatcher.Invoke(() =>
-            {
-                CurrentTime = s_bl.Admin.GetClock();
-                // Refresh order summary when clock updates
-                RefreshOrderSummary();
-            });
+            CurrentTime = s_bl.Admin.GetClock();
+            // Refresh order summary when clock updates
+            RefreshOrderSummary();
         }
         catch { }
     }
@@ -106,11 +101,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            // Marshal call to UI thread
-            Dispatcher.Invoke(() =>
-            {
-                Configuration = s_bl.Admin.GetConfig();
-            });
+            Configuration = s_bl.Admin.GetConfig();
         }
         catch { }
     }
@@ -196,12 +187,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            // Stop simulator if running
-            if (_simulatorRunning)
-            {
-                _simulatorRunning = false;
-            }
-
             s_bl.Admin.RemoveClockObserver(ClockObserver);
             s_bl.Admin.RemoveConfigObserver(ConfigObserver);
         }
@@ -414,100 +399,5 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _orderListWindowInstance.Closed += (s, args) => _orderListWindowInstance = null;
         
         _orderListWindowInstance.Show();
-    }
-
-    private bool _simulatorRunning = false;
-
-    // =======================================================
-    //          SIMULATOR CONTROL
-    // =======================================================
-    
-    private void SimulatorToggle_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (_simulatorRunning)
-            {
-                // Stop simulator
-                s_bl.Admin.Stop();
-                _simulatorRunning = false;
-                
-                // Update UI
-                SimulatorToggleButton.Content = "▶ Start Simulator";
-                SimulatorToggleButton.Background = new SolidColorBrush(Color.FromArgb(255, 0, 200, 83)); // Green
-                SimulatorIntervalInput.IsReadOnly = false;
-                
-                // Re-enable time control buttons
-                EnableTimeControlButtons(true);
-                EnableDatabaseButtons(true);
-            }
-            else
-            {
-                // Start simulator
-                if (!int.TryParse(SimulatorIntervalInput.Text, out int interval) || interval <= 0)
-                {
-                    MessageBox.Show("Please enter a valid positive number for clock speed.",
-                                    "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                s_bl.Admin.Start(interval);
-                _simulatorRunning = true;
-                
-                // Update UI
-                SimulatorToggleButton.Content = "⏹ Stop Simulator";
-                SimulatorToggleButton.Background = new SolidColorBrush(Color.FromArgb(255, 244, 67, 54)); // Red
-                SimulatorIntervalInput.IsReadOnly = true;
-                
-                // Disable time control buttons
-                EnableTimeControlButtons(false);
-                EnableDatabaseButtons(false);
-            }
-        }
-        catch (Exception ex)
-        {
-            _simulatorRunning = false;
-            MessageBox.Show($"Error controlling simulator: {ex.Message}",
-                           "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
-
-    private void EnableTimeControlButtons(bool enable)
-    {
-        // Iterate through visual tree to find buttons
-        foreach (var button in FindVisualChildren<Button>(this))
-        {
-            if (button.Content?.ToString()?.StartsWith("+") ?? false)
-            {
-                button.IsEnabled = enable;
-            }
-        }
-    }
-
-    private void EnableDatabaseButtons(bool enable)
-    {
-        foreach (var button in FindVisualChildren<Button>(this))
-        {
-            var content = button.Content?.ToString() ?? "";
-            if (content.Contains("Initialize") || content.Contains("Reset"))
-            {
-                button.IsEnabled = enable;
-            }
-        }
-    }
-
-    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
-    {
-        if (depObj == null) yield break;
-
-        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
-        {
-            DependencyObject child = VisualTreeHelper.GetChild(depObj, i);
-            if (child is T t)
-                yield return t;
-
-            foreach (T childOfChild in FindVisualChildren<T>(child))
-                yield return childOfChild;
-        }
     }
 }
