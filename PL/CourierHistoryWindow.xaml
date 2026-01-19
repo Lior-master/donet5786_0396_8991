@@ -7,7 +7,9 @@
         WindowStartupLocation="CenterOwner"
         Background="#F5F5F5"
         Loaded="Window_Loaded"
-        Closed="Window_Closed">
+        Closed="Window_Closed"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}">
+
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -15,32 +17,140 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- =========================
+             Top controls
+             ========================= -->
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="6">
-            <TextBlock VerticalAlignment="Center" Margin="6,0" Text="Filter by Order Type:"/>
-            <ComboBox x:Name="cmbFilterOrderType" Width="180" Margin="6,0" SelectionChanged="cmbFilterOrderType_SelectionChanged"/>
-            <Button Content="Refresh" Margin="6,0" Click="BtnRefresh_Click"/>
-            <Button Content="Close" Margin="6,0" Click="BtnClose_Click"/>
+            <TextBlock VerticalAlignment="Center"
+                       Margin="6,0"
+                       Text="Filter by Order Type:"/>
+
+            <ComboBox Width="180"
+                      Margin="6,0"
+                      ItemsSource="{Binding OrderTypeFilters}"
+                      SelectedItem="{Binding SelectedOrderTypeFilter, Mode=TwoWay}"
+                      DisplayMemberPath="Display"/>
+
+            <Button Content="Refresh"
+                    Margin="6,0"
+                    Click="BtnRefresh_Click"/>
+
+            <Button Content="Close"
+                    Margin="6,0"
+                    Click="BtnClose_Click"/>
         </StackPanel>
 
-        <DataGrid x:Name="dgHistory"
-                  Grid.Row="1"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserSortColumns="True"
-                  SelectionMode="Single"
-                  Margin="6">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Delivery ID" Binding="{Binding DeliveryId}" Width="80"/>
-                <DataGridTextColumn Header="Order ID" Binding="{Binding OrderId}" Width="80"/>
-                <DataGridTextColumn Header="Order Type" Binding="{Binding OrderType}" Width="110"/>
-                <DataGridTextColumn Header="Customer Address" Binding="{Binding CustomerAdress}" Width="*"/>
-                <DataGridTextColumn Header="Transport" Binding="{Binding DeliveryTransport}" Width="100"/>
-                <DataGridTextColumn Header="Distance (km)" Binding="{Binding ActualDistance, StringFormat={}{0:F2}}" Width="110"/>
-                <DataGridTextColumn Header="Duration" Binding="{Binding DeliveryTotalTime}" Width="110"/>
-                <DataGridTextColumn Header="End Type" Binding="{Binding DeliveredStatus}" Width="110"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- =========================
+             Delivery history (ListBox)
+             ========================= -->
+        <ListBox Grid.Row="1"
+                 Margin="6"
+                 ItemsSource="{Binding Deliveries}"
+                 SelectedItem="{Binding SelectedDelivery, Mode=TwoWay}"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto">
 
-        <TextBlock x:Name="txtStatus" Grid.Row="2" Margin="6" Foreground="#666" Text="Ready"/>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="6"
+                            Padding="10"
+                            Background="White"
+                            CornerRadius="8"
+                            BorderBrush="#DDD"
+                            BorderThickness="1">
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Order type -->
+                            <TextBlock FontWeight="Bold"
+                                       FontSize="14"
+                                       Text="{Binding OrderType}"/>
+
+                            <!-- IDs -->
+                            <StackPanel Grid.Row="1"
+                                        Orientation="Horizontal"
+                                        Margin="0,4,0,0">
+                                <TextBlock Text="Delivery ID: "
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding DeliveryId}"
+                                           Margin="0,0,12,0"/>
+
+                                <TextBlock Text="Order ID: "
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding OrderId}"/>
+                            </StackPanel>
+
+                            <!-- Customer address -->
+                            <StackPanel Grid.Row="2"
+                                        Orientation="Horizontal"
+                                        Margin="0,4,0,0">
+                                <TextBlock Text="Address: "
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding CustomerAdress}"
+                                           TextWrapping="Wrap"
+                                           Width="600"/>
+                            </StackPanel>
+
+                            <!-- Transport + distance -->
+                            <StackPanel Grid.Row="3"
+                                        Orientation="Horizontal"
+                                        Margin="0,4,0,0">
+                                <TextBlock Text="Transport: "
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding DeliveryTransport}"
+                                           Margin="0,0,12,0"/>
+
+                                <TextBlock Text="Distance: "
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding ActualDistance,
+                                                          StringFormat={}{0:F2} km,
+                                                          TargetNullValue=N/A}"/>
+                            </StackPanel>
+
+                            <!-- Time + status -->
+                            <StackPanel Grid.Row="4"
+                                        Orientation="Horizontal"
+                                        Margin="0,4,0,0">
+                                <TextBlock Text="Duration: "
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding DeliveryTotalTime}"
+                                           Margin="0,0,12,0"/>
+
+                                <TextBlock Text="End Type: "
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding DeliveredStatus}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- =========================
+             Selected delivery details
+             ========================= -->
+        <Border Grid.Row="2"
+                Margin="6"
+                Padding="10"
+                Background="White"
+                CornerRadius="8">
+            <StackPanel>
+                <TextBlock FontWeight="Bold"
+                           Text="Selected delivery:"/>
+
+                <TextBlock Margin="0,4,0,0"
+                           Text="{Binding SelectedDelivery.CustomerAdress,
+                                          TargetNullValue=No delivery selected}"/>
+
+                <TextBlock
+                    Text="{Binding SelectedDelivery.DeliveredStatus}"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

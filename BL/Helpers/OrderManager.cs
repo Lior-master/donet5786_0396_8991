@@ -1013,7 +1013,7 @@ internal static class OrderManager
             }
 
             // Calculate the actual distance traveled
-            double distance = Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
+            double distance = Tools.CalculateRouteDistanceAsync(config.CompanyLatitude, config.CompanyLongitude, lat, lon).GetAwaiter().GetResult();
 
             // Update the delivery record with completion information
             var updated = delivery with
@@ -1021,7 +1021,10 @@ internal static class OrderManager
                 // Record the current time as the arrival time
                 ArrivalTime = AdminManager.Now,
                 // Mark status as delivered
-                DeliveredStatus = (DO.DeliveredStatus)deliveredStatus
+                DeliveredStatus = (DO.DeliveredStatus)deliveredStatus,
+                Distance = distance,
+                PickupTime = delivery.PickupTime,
+                
             };
 
             s_dal.Delivery.Update(updated);
