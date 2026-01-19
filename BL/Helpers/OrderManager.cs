@@ -997,6 +997,7 @@ internal static class OrderManager
             var config = AdminManager.GetConfig();
 
             // Compute coordinates and distance for the delivery
+            
             double lat = order.Latitude ?? 0;
             double lon = order.Longitude ?? 0;
             if (lat == 0 && lon == 0)
@@ -1079,6 +1080,14 @@ internal static class OrderManager
             if (courier.Administrator == DO.Administrator.Director)
                 throw new BO.BLInvalidOperationException($"Cannot assign order {orderId} to courier {courierId}: courier is a Director.");
 
+            double? distance = null;
+            try
+            {
+                (double Latitude, double Longitude) coord = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
+                distance = Tools.BirdDistance(AdminManager.GetConfig().CompanyLatitude, AdminManager.GetConfig().CompanyLongitude, coord.Latitude, coord.Longitude);
+            }
+            catch { }
+
             // Create a new delivery record assigned to the courier
             var delivery = new DO.Delivery
             {
@@ -1093,7 +1102,7 @@ internal static class OrderManager
                 // Arrival time will be filled when delivery is completed
                 ArrivalTime = null,
                 // Distance will be calculated when delivery is completed
-                Distance = null,
+                Distance = distance,
                 // Mark delivery as null (because is not yet delivered)
                 DeliveredStatus = null
             };

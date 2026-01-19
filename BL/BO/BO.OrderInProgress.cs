@@ -88,7 +88,7 @@ public class OrderInProgress
     /// <summary>
     /// Time the order has been waiting since pickup or since it was queued, as applicable.
     /// </summary>
-    public TimeSpan WaitingTime { get; init; }
+    public TimeSpan RemaningTime { get; init; }
 
     public override string ToString() => this.ToStringProperty();
 }
