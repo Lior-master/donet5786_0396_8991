@@ -579,6 +579,30 @@
 
                 <Separator Margin="0,30" Background="#E0E0E0"/>
 
+                <TextBlock Text="▶️ Simulator" Style="{StaticResource SectionHeaderStyle}"/>
+
+                <StackPanel Name="SimulatorControlPanel">
+                    <TextBlock Text="Clock Speed:" FontSize="12" Foreground="#546E7A" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBox Name="SimulatorIntervalInput" 
+                                 Style="{StaticResource ModernTextBoxStyle}"
+                                 Text="1"
+                                 Width="60" Height="35"
+                                 VerticalContentAlignment="Center"
+                                 Margin="0,0,10,0"/>
+                        <TextBlock Text="min/sec" VerticalAlignment="Center" Foreground="#546E7A"/>
+                    </StackPanel>
+
+                    <Button Name="SimulatorToggleButton"
+                            Content="▶ Start Simulator"
+                            Style="{StaticResource ModernButtonStyle}"
+                            Background="#00C853"
+                            Height="55" Margin="0,10"
+                            Click="SimulatorToggle_Click"/>
+                </StackPanel>
+
+                <Separator Margin="0,30" Background="#E0E0E0"/>
+
                 <TextBlock Text="🗄️ Database" Style="{StaticResource SectionHeaderStyle}"/>
 
                 <Button Content="🔄 Initialize DB"

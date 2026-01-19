@@ -112,4 +112,17 @@ internal class AdminImplementation : IAdmin
     /// </remarks>
     public void RemoveConfigObserver(Action configObserver)
         => AdminManager.ConfigUpdatedObservers -= configObserver;
+
+    /// <summary>
+    /// Starts the simulator with the specified interval (in minutes per second).
+    /// </summary>
+    /// <param name="interval">The interval in minutes by which to advance the clock per second.</param>
+    public void Start(int interval)
+        => AdminManager.Start(interval);
+
+    /// <summary>
+    /// Stops the running simulator.
+    /// </summary>
+    public void Stop()
+        => AdminManager.Stop();
 }

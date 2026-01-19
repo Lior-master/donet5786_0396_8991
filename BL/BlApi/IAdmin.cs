@@ -12,4 +12,7 @@ public interface IAdmin
     void RemoveConfigObserver(Action configObserver);
     void AddClockObserver(Action clockObserver);
     void RemoveClockObserver(Action clockObserver);
+    void Start(int interval);
+    void Stop();
+
 }
