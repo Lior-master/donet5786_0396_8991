@@ -228,9 +228,22 @@ public partial class OrderListWindow : Window
     /// <remarks>
     /// This method is registered as an observer with the <see cref="IBl.Order"/> service.
     /// When orders are added, modified, or removed, this callback is automatically invoked.
+    /// Since observers can be called from background threads, this method marshals the call to the UI thread.
     /// </remarks>
     private void orderListObserver()
-        => queryOrderList();
+    {
+        // Check if we need to marshal to UI thread
+        if (Dispatcher.CheckAccess())
+        {
+            // Already on UI thread, safe to call directly
+            queryOrderList();
+        }
+        else
+        {
+            // Called from background thread, marshal to UI thread
+            Dispatcher.BeginInvoke(new Action(queryOrderList));
+        }
+    }
 
     /// <summary>
     /// Handles the Window_Loaded event, which fires when the window is fully initialized and ready for display.

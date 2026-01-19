@@ -175,73 +175,70 @@ internal static class Tools
         double lat1, double lon1,
         double lat2, double lon2)
     {
-        // Get the LocationIQ API key
+        // Reuse the existing geocoding client + rate limiter to avoid 429 bursts.
+        // This keeps behavior consistent and prevents creating many HttpClient instances.
         string apiKey = LocationIqKey;
-
         const string baseUrl = "https://us1.locationiq.com/v1/directions/driving";
 
-        // Create a scoped HTTP client with a 20-second timeout
-        using var client = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(20)
-        };
-
-        // Set standard HTTP headers for API communication
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("DotNetDeliveryProject/1.0");
-        client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
-
-        // Build the API request URL
-        // Note: LocationIQ expects coordinates in longitude,latitude order
+        // LocationIQ expects coordinates in longitude,latitude order
         string url =
-            $"{baseUrl}/{lon1.ToString(CultureInfo.InvariantCulture)},{lat1.ToString(CultureInfo.InvariantCulture)};" +
+            $"{baseUrl}/" +
+            $"{lon1.ToString(CultureInfo.InvariantCulture)},{lat1.ToString(CultureInfo.InvariantCulture)};" +
             $"{lon2.ToString(CultureInfo.InvariantCulture)},{lat2.ToString(CultureInfo.InvariantCulture)}" +
             $"?key={Uri.EscapeDataString(apiKey)}" +
             $"&overview=false&alternatives=false";
 
-        System.Diagnostics.Debug.WriteLine($"LocationIQ routing request: {url}");
+        // IMPORTANT: avoid logging the full URL because it contains the API key
+        System.Diagnostics.Debug.WriteLine("LocationIQ routing request: [redacted]");
 
-        HttpResponseMessage response;
-
-        try
+        // Retry a few times when rate-limited (HTTP 429)
+        for (int attempt = 0; attempt < 3; attempt++)
         {
-            // Send the HTTP GET request
-            response = await client.GetAsync(url).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            // Log and re-throw network/TLS errors
-            System.Diagnostics.Debug.WriteLine("LocationIQ routing GetAsync FAILED:");
-            System.Diagnostics.Debug.WriteLine(ex.ToString());
-            throw new BLFailedOperation($"Network/TLS error during routing: {ex.Message}", ex);
-        }
+            // Use the existing throttling mechanism (same as geocoding)
+            await EnforceGeoRateLimitAsync().ConfigureAwait(false);
 
-        using (response)
-        {
-            // Check for rate limiting (too many requests)
-            if (response.StatusCode == HttpStatusCode.TooManyRequests)
-                throw new BLFailedOperation("LocationIQ routing rate-limited (HTTP 429)");
-
-            // Check for other HTTP errors
-            if (!response.IsSuccessStatusCode)
+            HttpResponseMessage response;
+            try
             {
-                string err = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                throw new BLFailedOperation(
-                    $"Routing failed with status {response.StatusCode}: {err}");
+                // Use the shared client (already configured with timeout + headers in static ctor)
+                response = await s_geoClient.GetAsync(url).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("LocationIQ routing GetAsync FAILED:");
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                throw new BLFailedOperation($"Network/TLS error during routing: {ex.Message}", ex);
             }
 
-            // Parse the JSON response
-            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            using var doc = JsonDocument.Parse(json);
+            using (response)
+            {
+                // Rate-limited: wait and retry
+                if (response.StatusCode == (HttpStatusCode)429)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+                    continue;
+                }
 
-            // Extract the routes array from the response
-            var routes = doc.RootElement.GetProperty("routes");
-            if (routes.GetArrayLength() == 0)
-                throw new BLNotFoundException("No route found between the two points");
+                if (!response.IsSuccessStatusCode)
+                {
+                    string err = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    throw new BLFailedOperation($"Routing failed with status {response.StatusCode}: {err}");
+                }
 
-            // Extract the distance in meters from the first (best) route and convert to kilometers
-            double meters = routes[0].GetProperty("distance").GetDouble();
-            return meters / 1000.0;
+                string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                using var doc = JsonDocument.Parse(json);
+
+                var routes = doc.RootElement.GetProperty("routes");
+                if (routes.GetArrayLength() == 0)
+                    throw new BLNotFoundException("No route found between the two points");
+
+                double meters = routes[0].GetProperty("distance").GetDouble();
+                return meters / 1000.0;
+            }
         }
+
+        // If we exhausted retries due to 429
+        throw new BLFailedOperation("LocationIQ routing was rate-limited (HTTP 429) after retries.");
     }
 
     /// <summary>
@@ -335,7 +332,7 @@ internal static class Tools
     /// </summary>
     private static readonly HttpClient s_geoClient = new HttpClient
     {
-        Timeout = TimeSpan.FromSeconds(20)
+        Timeout = TimeSpan.FromSeconds(10)
     };
 
     /// <summary>
@@ -353,7 +350,7 @@ internal static class Tools
     /// Minimum interval (in milliseconds) required between consecutive geocoding API requests.
     /// Set to 550ms to comply with LocationIQ rate limits.
     /// </summary>
-    private static readonly TimeSpan s_minGeoInterval = TimeSpan.FromMilliseconds(550);
+    private static readonly TimeSpan s_minGeoInterval = TimeSpan.FromMilliseconds(400);
 
     /// <summary>
     /// Thread-safe cache mapping normalized addresses to their geographic coordinates.
