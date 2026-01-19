@@ -63,6 +63,7 @@ internal static class OrderManager
 
             bool deliveriesUpdated = false;
             var updatedOrders = new HashSet<int>();
+            var updatedCouriers = new HashSet<int>();
 
             
             // update all OPEN orders whose validity expired after advancing the system clock
@@ -99,16 +100,23 @@ internal static class OrderManager
                     s_dal.Delivery.Update(upd);
                     deliveriesUpdated = true;
                     updatedOrders.Add(d.OrderId);
+                    if (d.CourierId != 0)
+                        updatedCouriers.Add(d.CourierId);
                 }
             }
 
             // Notify observers if any deliveries were updated
             if (deliveriesUpdated)
             {
+                CourierManager.InvalidateDeliveryCache();
                 foreach (var orderId in updatedOrders)
                     Observers.NotifyItemUpdated(orderId);
 
                 Observers.NotifyListUpdated();
+                foreach (var courierId in updatedCouriers)
+                    CourierManager.Observers.NotifyItemUpdated(courierId);
+                if (updatedCouriers.Count > 0)
+                    CourierManager.Observers.NotifyListUpdated();
             }
         }
         catch (Exception ex)
@@ -524,6 +532,11 @@ internal static class OrderManager
 
             // Get all deliveries associated with this order
             var deliveries = s_dal.Delivery.ReadAll(d => d.OrderId == orderId).ToList();
+            var impactedCouriers = deliveries
+                .Where(d => d.CourierId != 0)
+                .Select(d => d.CourierId)
+                .Distinct()
+                .ToList();
             var lastDelivery = deliveries.OrderByDescending(d => d.PickupTime).FirstOrDefault();
 
             var config = AdminManager.GetConfig();
@@ -761,6 +774,7 @@ internal static class OrderManager
                     DeliveredStatus = (DO.DeliveredStatus)BO.DeliveredStatus.Canceled,
                     ArrivalTime = AdminManager.Now
                 });
+                CourierManager.InvalidateDeliveryCache();
                 Observers.NotifyItemUpdated(orderId);
                 Observers.NotifyListUpdated();
                 return;
@@ -780,8 +794,14 @@ internal static class OrderManager
                     ArrivalTime: AdminManager.Now,
                     DeliveredStatus: DO.DeliveredStatus.Canceled
                     ));
+                CourierManager.InvalidateDeliveryCache();
                 Observers.NotifyListUpdated();
                 Observers.NotifyItemUpdated(orderId);
+                if (lastDelivery.CourierId != 0)
+                {
+                    CourierManager.Observers.NotifyItemUpdated(lastDelivery.CourierId);
+                    CourierManager.Observers.NotifyListUpdated();
+                }
 
                 // to send email to courier about cancellation - commented out because i don't want to spam my own email
 
@@ -849,6 +869,11 @@ internal static class OrderManager
 
             // Get all deliveries associated with this order
             var deliveries = s_dal.Delivery.ReadAll(d => d.OrderId == orderId).ToList();
+            var impactedCouriers = deliveries
+                .Where(d => d.CourierId != 0)
+                .Select(d => d.CourierId)
+                .Distinct()
+                .ToList();
             
             // Delete each delivery first (cascade delete)
             foreach (var d in deliveries)
@@ -856,10 +881,15 @@ internal static class OrderManager
 
             // Then delete the order itself
             s_dal.Order.Delete(orderId);
+            CourierManager.InvalidateDeliveryCache();
             
             // Notify subscribers that this order and its deliveries have been removed
             Observers.NotifyItemUpdated(orderId);
             Observers.NotifyListUpdated();
+            foreach (var courierId in impactedCouriers)
+                CourierManager.Observers.NotifyItemUpdated(courierId);
+            if (impactedCouriers.Count > 0)
+                CourierManager.Observers.NotifyListUpdated();
         }
         catch (Exception ex)
         {
@@ -1028,6 +1058,7 @@ internal static class OrderManager
             };
 
             s_dal.Delivery.Update(updated);
+            CourierManager.InvalidateDeliveryCache();
 
             // Notify subscribers that this order has been completed
             Observers.NotifyItemUpdated(delivery.OrderId);
@@ -1112,6 +1143,7 @@ internal static class OrderManager
 
             // Persist the new delivery to the data layer
             s_dal.Delivery.Create(delivery);
+            CourierManager.InvalidateDeliveryCache();
             
             // Notify subscribers that the order has been assigned
             Observers.NotifyItemUpdated(orderId);

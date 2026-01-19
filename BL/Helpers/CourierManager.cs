@@ -78,7 +78,7 @@ internal static class CourierManager
     /// Invalidates the delivery cache to ensure fresh data is loaded on next access.
     /// Call this method whenever delivery data is modified.
     /// </summary>
-    private static void InvalidateDeliveryCache()
+    internal static void InvalidateDeliveryCache()
     {
         _deliveryCache.Clear();
     }
@@ -813,6 +813,7 @@ internal static class CourierManager
             Random random = new();
             bool notificationNeeded = false;
             var updatedCourierIds = new HashSet<int>();
+            var updatedOrderIds = new HashSet<int>();
 
             // Step 3: Process each active courier
             foreach (var courier in activeCouriers)
@@ -826,23 +827,26 @@ internal static class CourierManager
                 {
                     // Courier has an active delivery - try to complete it
                     HandleDeliveryCompletion(courier, courierInProgressDeliveries.First(), 
-                        config, now, random, ref notificationNeeded, updatedCourierIds);
+                        config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds);
                 }
                 else
                 {
                     // Courier has no active delivery - maybe assign one
-                    HandleCourierOrderSelection(courier, config, now, random, ref notificationNeeded, updatedCourierIds);
-                }
+                    HandleCourierOrderSelection(courier, config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds);
+            }
             }
 
             // Step 4: Trigger notifications outside of locks
             if (notificationNeeded)
             {
+                InvalidateDeliveryCache();
                 foreach (var courierId in updatedCourierIds)
                     Observers.NotifyItemUpdated(courierId);
 
                 Observers.NotifyListUpdated();
                 OrderManager.Observers.NotifyListUpdated();
+                foreach (var orderId in updatedOrderIds)
+                    OrderManager.Observers.NotifyItemUpdated(orderId);
             }
         }
         catch (Exception ex)
@@ -863,7 +867,8 @@ internal static class CourierManager
         DateTime now,
         Random random,
         ref bool notificationNeeded,
-        HashSet<int> updatedCourierIds)
+        HashSet<int> updatedCourierIds,
+        HashSet<int> updatedOrderIds)
     {
         const double AVAILABILITY_PROBABILITY = 0.15; // 15% chance courier chooses to view orders
         const double ORDER_SELECTION_PROBABILITY = 0.50; // 50% chance to actually select an order
@@ -923,6 +928,7 @@ internal static class CourierManager
                     s_dal.Delivery.Create(delivery);
                     notificationNeeded = true;
                     updatedCourierIds.Add(courier.Id);
+                    updatedOrderIds.Add(selectedOrder.OrderId);
                 }
                 catch
                 {
@@ -949,7 +955,8 @@ internal static class CourierManager
         DateTime now,
         Random random,
         ref bool notificationNeeded,
-        HashSet<int> updatedCourierIds)
+        HashSet<int> updatedCourierIds,
+        HashSet<int> updatedOrderIds)
     {
         const double CANCELLATION_PROBABILITY = 0.10; // 10% chance to cancel if insufficient time elapsed
 
@@ -1016,6 +1023,7 @@ internal static class CourierManager
                         s_dal.Delivery.Update(updatedDelivery);
                         notificationNeeded = true;
                         updatedCourierIds.Add(courier.Id);
+                        updatedOrderIds.Add(delivery.OrderId);
                     }
                     catch
                     {
@@ -1040,6 +1048,7 @@ internal static class CourierManager
                         s_dal.Delivery.Update(cancelledDelivery);
                         notificationNeeded = true;
                         updatedCourierIds.Add(courier.Id);
+                        updatedOrderIds.Add(delivery.OrderId);
 
                         System.Diagnostics.Debug.WriteLine(
                             $"Delivery {delivery.Id} for order {delivery.OrderId} cancelled by admin (insufficient time elapsed)");

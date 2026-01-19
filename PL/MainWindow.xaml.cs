@@ -116,6 +116,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     // ================================
+    //   OBSERVER: ORDERS SUMMARY
+    // ================================
+    private void OrderSummaryObserver()
+    {
+        try
+        {
+            Dispatcher.Invoke(RefreshOrderSummary);
+        }
+        catch { }
+    }
+
+    // ================================
     //   ORDER SUMMARY REFRESH
     // ================================
     private void RefreshOrderSummary()
@@ -187,6 +199,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // Register observers
         s_bl.Admin.AddClockObserver(ClockObserver);
         s_bl.Admin.AddConfigObserver(ConfigObserver);
+        s_bl.Order.AddObserver(OrderSummaryObserver);
     }
 
     // ================================
@@ -204,6 +217,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             s_bl.Admin.RemoveClockObserver(ClockObserver);
             s_bl.Admin.RemoveConfigObserver(ConfigObserver);
+            s_bl.Order.RemoveObserver(OrderSummaryObserver);
         }
         catch
         {
