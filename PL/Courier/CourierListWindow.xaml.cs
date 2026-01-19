@@ -84,7 +84,8 @@ public partial class CourierListWindow : Window
     }
 
     private void courierListObserver()
-        => Dispatcher.Invoke(() => queryCourierList);
+        // Ensure the UI refresh executes on the dispatcher thread.
+        => Dispatcher.Invoke(queryCourierList);
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {

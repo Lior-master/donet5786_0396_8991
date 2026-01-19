@@ -58,17 +58,18 @@ public class OrderInProgress
     /// <summary>
     /// Customer full name.
     /// </summary>
-    public string CustomerName { get; init; }
+    // Default to empty to avoid null strings in live order snapshots.
+    public string CustomerName { get; init; } = string.Empty;
 
     /// <summary>
     /// Customer contact phone number.
     /// </summary>
-    public string CustomerPhone { get; init; }
+    public string CustomerPhone { get; init; } = string.Empty;
 
     /// <summary>
     /// Customer delivery address.
     /// </summary>
-    public string CustomerAddress { get; init; }
+    public string CustomerAddress { get; init; } = string.Empty;
 
     /// <summary>
     /// Date and time when the order was placed.

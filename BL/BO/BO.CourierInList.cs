@@ -15,7 +15,8 @@ public class CourierInList
     /// <summary>
     /// Display name of the courier.
     /// </summary>
-    public string Name { get; init; }
+    // Default to empty to avoid nulls in list projections.
+    public string Name { get; init; } = string.Empty;
 
     /// <summary>
     /// Indicates whether the courier is currently active and available.

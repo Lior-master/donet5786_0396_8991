@@ -25,7 +25,8 @@ public class ClosedDeliveryInList
     /// <summary>
     /// Delivery address provided by the customer.
     /// </summary>
-    public string CustomerAdress { get; init; }
+    // Default to empty to avoid null strings in history views.
+    public string CustomerAdress { get; init; } = string.Empty;
 
     /// <summary>
     /// Transport method used to perform the delivery.
