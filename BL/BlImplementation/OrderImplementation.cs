@@ -86,6 +86,9 @@ internal class OrderImplementation : IOrder
     public void AssignOrderToCourier(int requesterId, int orderId, int courierId)
         => OrderManager.AssignOrderToCourier(requesterId, orderId, courierId);
 
+    public OrderInProgress GetOrderInProgressSnapshot(int requesterId, int courierId, int orderId)
+        => OrderManager.GetOrderInProgressSnapshot(requesterId, courierId, orderId);
+
     /// <summary>
     /// Cancels an open order, preventing it from being processed or delivered.
     /// </summary>

@@ -636,28 +636,9 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            // Attempt to fetch the order details from BL and create a new OrderInProgress
-            var orderDetails = await Task.Run(() => s_bl.Order.GetOrderDetails(_courierId, orderId));
-            if (orderDetails != null)
-            {
-                // Map orderDetails to OrderInProgress (assuming a suitable constructor or mapping exists)
-                OrderInProgress = new OrderInProgress
-                {
-                    OrderId = orderDetails.Id,
-                    DeliveryId = orderDetails.DeliveriesPerOrder != null && orderDetails.DeliveriesPerOrder.Count > 0
-                        ? orderDetails.DeliveriesPerOrder[0].DeliveryId
-                        : 0,
-                    CustomerName = orderDetails.CustomerName,
-                    CustomerAddress = orderDetails.CustomerAddress,
-                    Distance = orderDetails.Distance,
-                    ArrivalTime = null // or use a suitable property from Order if available, e.g. ArrivalDateEstimeted
-                };
-                StatusMessage = $"Order #{orderId} assigned (manual fallback).";
-            }
-            else
-            {
-                StatusMessage = $"Failed to retrieve order details for order #{orderId}.";
-            }
+            OrderInProgress = await Task.Run(() =>
+                s_bl.Order.GetOrderInProgressSnapshot(_courierId, _courierId, orderId));
+            StatusMessage = $"Order #{orderId} assigned (manual fallback).";
         }
         catch (Exception ex)
         {

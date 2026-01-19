@@ -1136,6 +1136,111 @@ internal static class OrderManager
     }
 
     /// <summary>
+    /// Builds a live OrderInProgress snapshot for a courier/order pair.
+    /// Used by UI fallback flows to display accurate timing fields from BL.
+    /// </summary>
+    /// <param name="requesterId">ID of the user requesting this information (must exist in the system).</param>
+    /// <param name="courierId">ID of the courier who is assigned to the order.</param>
+    /// <param name="orderId">ID of the order to build the snapshot for.</param>
+    /// <returns>OrderInProgress snapshot populated with timing and schedule data.</returns>
+    /// <exception cref="BO.BLNotFoundException">Thrown if requester, courier, or order does not exist.</exception>
+    /// <exception cref="BO.BLInvalidOperationException">Thrown if no active delivery exists for the courier/order.</exception>
+    /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
+    internal static BO.OrderInProgress GetOrderInProgressSnapshot(int requesterId, int courierId, int orderId)
+    {
+        try
+        {
+            var requester = s_dal.Courier.Read(requesterId);
+            if (requester == null)
+                throw new BLNotFoundException("Requester does not exist.");
+
+            var courier = s_dal.Courier.Read(courierId)
+                ?? throw new BLNotFoundException($"Courier {courierId} not found.");
+            var orderDO = s_dal.Order.Read(orderId)
+                ?? throw new BLNotFoundException($"Order {orderId} not found.");
+
+            var deliveries = s_dal.Delivery.ReadAll(d => d.OrderId == orderId).ToList();
+            var currentDelivery = deliveries.FirstOrDefault(d => d.CourierId == courierId && d.ArrivalTime == null);
+            if (currentDelivery == null)
+                throw new BO.BLInvalidOperationException($"No active delivery for courier {courierId} on order {orderId}.");
+
+            var config = AdminManager.GetConfig();
+            var ordStatus = Tools.CalculateOrderStatus(deliveries);
+
+            double? distance = currentDelivery.Distance;
+            if (!distance.HasValue)
+            {
+                try
+                {
+                    (double Lat, double Lon) coord = Tools.GetCoordinatesFromAddressAsync(orderDO.CustomerAddress)
+                        .GetAwaiter().GetResult();
+
+                    distance = Tools.CalculateRouteDistanceAsync(
+                        config.CompanyLatitude, config.CompanyLongitude,
+                        coord.Lat, coord.Lon
+                    ).GetAwaiter().GetResult();
+                }
+                catch
+                {
+                    // Leave distance null if calculation fails; ETA will use fallback.
+                }
+            }
+
+            DateTime estimatedArrival = distance.HasValue
+                ? Tools.EstimateArrival(currentDelivery.PickupTime, currentDelivery.Transport, distance.Value)
+                : Tools.EstimateArrivalFallback(currentDelivery.PickupTime);
+
+            var scheduleStatus = Tools.CalculateScheduleStatus(
+                ordStatus,
+                orderDO.OrderDate,
+                distance.HasValue
+                    ? Tools.CalculateEstimatedArrival(
+                        orderDO.OrderDate,
+                        distance.Value,
+                        Tools.GetSpeed(currentDelivery.Transport, config)
+                      )
+                    : null,
+                orderDO.OrderDate.Add(config.MaxDeliveryTime),
+                currentDelivery.ArrivalTime);
+
+            return new BO.OrderInProgress
+            {
+                DeliveryId = currentDelivery.Id,
+                OrderId = orderDO.Id,
+                OrderType = (BO.OrderType)orderDO.Type,
+                CustomerName = orderDO.CustomerName,
+                CustomerAddress = orderDO.CustomerAddress,
+                CustomerPhone = orderDO.CustomerPhone,
+                PickupTime = currentDelivery.PickupTime,
+                Distance = distance,
+                ArrivalTime = currentDelivery.ArrivalTime,
+                OrderStatus = ordStatus,
+                OrderDate = orderDO.OrderDate,
+                RemaningTime = estimatedArrival - AdminManager.Now,
+                Description = orderDO.Description,
+                ScheduleStatus = scheduleStatus,
+                EstimatedArrivalTime = estimatedArrival,
+                MaxDeliveryTime = orderDO.OrderDate.Add(config.MaxDeliveryTime),
+            };
+        }
+        catch (Exception ex)
+        {
+            if (ex is BO.BLNotFoundException ||
+                ex is BO.BLInvalidInputException ||
+                ex is BO.BLAlreadyExistsException ||
+                ex is BO.BLInvalidOperationException) throw;
+
+            if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
+            if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
+            if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
+            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException)
+                throw new BO.BLFailedOperation(ex.Message, ex);
+
+            throw new BO.BLFailedOperation(ex.Message, ex);
+        }
+    }
+
+    /// <summary>
     /// Retrieves a list of completed deliveries for a specific courier with optional filtering by order type
     /// and sorting options.
     /// Only includes deliveries with recorded arrival times (completed deliveries).
