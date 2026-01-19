@@ -721,4 +721,297 @@ internal static class CourierManager
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
     }
+
+    /// <summary>
+    /// Simulates courier activity by:
+    /// 1. For each active courier with no current delivery: probabilistically decide if they "choose" to view available orders,
+    ///    then probabilistically select one to start delivery
+    /// 2. For each active courier with a current delivery: if sufficient time has elapsed based on distance,
+    ///    automatically mark the delivery as completed
+    /// 
+    /// This method is called asynchronously from the simulator thread once per second.
+    /// All DAL access is protected with tight lock blocks to minimize critical section duration.
+    /// Observer notifications are performed only outside locks to prevent blocking.
+    /// </summary>
+    /// <remarks>
+    /// Implementation details per Stage 7 requirements:
+    /// - Fetches all active couriers and materializes to List to avoid deferred LINQ execution during locks
+    /// - Fetches all open and in-progress deliveries
+    /// - Wraps each DAL operation with an individual, tight lock block
+    /// - Notifications are triggered only after all locks are released
+    /// - Courier availability probability: 15% (adjustable based on courier volume)
+    /// - Order selection probability: 50% (courier "changes mind" sometimes)
+    /// - Delivery completion probability: probabilistic based on distance and random wait time
+    /// </remarks>
+    internal static void SimulateCourierActivity()
+    {
+        try
+        {
+            // Step 1: Fetch all active couriers with materialized list
+            List<DO.Courier> activeCouriers;
+            lock (AdminManager.BlMutex)
+            {
+                activeCouriers = s_dal.Courier.ReadAll()
+                    .Where(c => c.IsActive)
+                    .ToList();
+            }
+
+            if (activeCouriers.Count == 0)
+                return;
+
+            // Step 2: Fetch all deliveries (open and closed)
+            List<DO.Delivery> allDeliveries;
+            lock (AdminManager.BlMutex)
+            {
+                allDeliveries = s_dal.Delivery.ReadAll().ToList();
+            }
+
+            var config = AdminManager.GetConfig();
+            var now = AdminManager.Now;
+            Random random = new();
+            bool notificationNeeded = false;
+            var updatedCourierIds = new HashSet<int>();
+
+            // Step 3: Process each active courier
+            foreach (var courier in activeCouriers)
+            {
+                // Check if this courier has an in-progress delivery (ArrivalTime == null)
+                var courierInProgressDeliveries = allDeliveries
+                    .Where(d => d.CourierId == courier.Id && d.ArrivalTime == null)
+                    .ToList();
+
+                if (courierInProgressDeliveries.Count > 0)
+                {
+                    // Courier has an active delivery - try to complete it
+                    HandleDeliveryCompletion(courier, courierInProgressDeliveries.First(), 
+                        config, now, random, ref notificationNeeded, updatedCourierIds);
+                }
+                else
+                {
+                    // Courier has no active delivery - maybe assign one
+                    HandleCourierOrderSelection(courier, config, now, random, ref notificationNeeded, updatedCourierIds);
+                }
+            }
+
+            // Step 4: Trigger notifications outside of locks
+            if (notificationNeeded)
+            {
+                foreach (var courierId in updatedCourierIds)
+                    Observers.NotifyItemUpdated(courierId);
+
+                Observers.NotifyListUpdated();
+                OrderManager.Observers.NotifyListUpdated();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log simulation errors but don't crash the simulator thread
+            System.Diagnostics.Debug.WriteLine($"SimulateCourierActivity failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Handles the case where a courier has no active delivery.
+    /// Decides probabilistically if the courier "chooses" to view available orders,
+    /// then probabilistically selects one to start delivery if available.
+    /// </summary>
+    private static void HandleCourierOrderSelection(
+        DO.Courier courier,
+        BO.Config config,
+        DateTime now,
+        Random random,
+        ref bool notificationNeeded,
+        HashSet<int> updatedCourierIds)
+    {
+        const double AVAILABILITY_PROBABILITY = 0.15; // 15% chance courier chooses to view orders
+        const double ORDER_SELECTION_PROBABILITY = 0.50; // 50% chance to actually select an order
+
+        // Probabilistically decide if this courier wants to view available orders
+        if (random.NextDouble() > AVAILABILITY_PROBABILITY)
+            return;
+
+        try
+        {
+            // Get available orders for this courier using existing BL method
+            // This replicates what would happen if the courier opened the order selection screen
+            var availableOrders = OrderManager.GetOpenOrdersForCourier(
+                config.BossId, courier.Id, null, null).ToList();
+
+            if (availableOrders.Count == 0)
+                return;
+
+            // Probabilistically decide if the courier actually selects an order
+            if (random.NextDouble() > ORDER_SELECTION_PROBABILITY)
+                return;
+
+            // Randomly select one of the available orders
+            var selectedOrder = availableOrders[random.Next(availableOrders.Count)];
+
+            // Simulate the courier choosing this order - call AssignOrderToCourier
+            lock (AdminManager.BlMutex)
+            {
+                try
+                {
+                    // Verify the order and courier still exist and order is still available
+                    var orderToAssign = s_dal.Order.Read(selectedOrder.OrderId);
+                    if (orderToAssign == null)
+                        return;
+
+                    // Check order is still unassigned
+                    var orderDeliveries = s_dal.Delivery.ReadAll()
+                        .Where(d => d.OrderId == selectedOrder.OrderId && d.ArrivalTime == null)
+                        .ToList();
+
+                    if (orderDeliveries.Any(d => d.CourierId != 0))
+                        return; // Already assigned to someone else
+
+                    // Create the delivery assignment
+                    var delivery = new DO.Delivery
+                    {
+                        Id = 0, // Let DAL auto-generate
+                        OrderId = selectedOrder.OrderId,
+                        Transport = courier.Transport,
+                        CourierId = courier.Id,
+                        PickupTime = now,
+                        ArrivalTime = null,
+                        Distance = null,
+                        DeliveredStatus = null
+                    };
+
+                    s_dal.Delivery.Create(delivery);
+                    notificationNeeded = true;
+                    updatedCourierIds.Add(courier.Id);
+                }
+                catch
+                {
+                    // Silently fail - order may have been assigned by another courier
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error selecting order for courier {courier.Id}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Handles the case where a courier has an active delivery.
+    /// Decides if sufficient time has elapsed and marks the delivery as complete if so.
+    /// If insufficient time has elapsed, may probabilistically cancel the delivery.
+    /// Time calculation considers distance traveled and adds a random waiting period.
+    /// </summary>
+    private static void HandleDeliveryCompletion(
+        DO.Courier courier,
+        DO.Delivery delivery,
+        BO.Config config,
+        DateTime now,
+        Random random,
+        ref bool notificationNeeded,
+        HashSet<int> updatedCourierIds)
+    {
+        const double CANCELLATION_PROBABILITY = 0.10; // 10% chance to cancel if insufficient time elapsed
+
+        try
+        {
+            // Fetch the associated order to get distance info
+            DO.Order? order;
+            lock (AdminManager.BlMutex)
+            {
+                order = s_dal.Order.Read(delivery.OrderId);
+            }
+
+            if (order == null)
+                return;
+
+            // Calculate the distance from company to delivery address
+            double distance = 0;
+            if (order.Latitude.HasValue && order.Longitude.HasValue && 
+                (order.Latitude != 0 || order.Longitude != 0))
+            {
+                distance = Tools.BirdDistance(
+                    config.CompanyLatitude,
+                    config.CompanyLongitude,
+                    order.Latitude.Value,
+                    order.Longitude.Value);
+            }
+
+            // Calculate estimated travel time based on courier transport method
+            double speed = Tools.GetSpeed(delivery.Transport, config);
+            double travelTimeHours = speed > 0 ? distance / speed : 0.5; // Default 30 min if speed is 0
+            TimeSpan travelTime = TimeSpan.FromHours(travelTimeHours);
+
+            // Add random "service time" at delivery location (1-5 minutes)
+            int serviceTimeMinutes = random.Next(1, 6);
+            TimeSpan serviceTime = TimeSpan.FromMinutes(serviceTimeMinutes);
+
+            // Total expected time from pickup to completion
+            TimeSpan totalExpectedTime = travelTime + serviceTime;
+
+            // Calculate actual elapsed time since pickup
+            TimeSpan elapsedTime = now - delivery.PickupTime;
+
+            // If sufficient time has elapsed, complete the delivery
+            if (elapsedTime >= totalExpectedTime)
+            {
+                // Randomly decide the delivery status (mostly Delivered, occasionally other statuses)
+                BO.DeliveredStatus deliveryStatus;
+                double statusRoll = random.NextDouble();
+                deliveryStatus = statusRoll < 0.85 ? BO.DeliveredStatus.Delivered : // 85% Delivered
+                                 statusRoll < 0.92 ? BO.DeliveredStatus.Rejected :  // 7% Rejected
+                                 statusRoll < 0.98 ? BO.DeliveredStatus.Absent :    // 6% Absent
+                                 BO.DeliveredStatus.Failed;                         // 2% Failed
+
+                lock (AdminManager.BlMutex)
+                {
+                    try
+                    {
+                        var updatedDelivery = delivery with
+                        {
+                            ArrivalTime = now,
+                            DeliveredStatus = (DO.DeliveredStatus)deliveryStatus
+                        };
+
+                        s_dal.Delivery.Update(updatedDelivery);
+                        notificationNeeded = true;
+                        updatedCourierIds.Add(courier.Id);
+                    }
+                    catch
+                    {
+                        // Silently fail - delivery may have been updated by the courier directly
+                    }
+                }
+            }
+            // If insufficient time has elapsed, probabilistically cancel the delivery
+            else if (random.NextDouble() < CANCELLATION_PROBABILITY)
+            {
+                lock (AdminManager.BlMutex)
+                {
+                    try
+                    {
+                        // Cancel the delivery with status Canceled (simulating admin cancellation)
+                        var cancelledDelivery = delivery with
+                        {
+                            ArrivalTime = now,
+                            DeliveredStatus = DO.DeliveredStatus.Canceled
+                        };
+
+                        s_dal.Delivery.Update(cancelledDelivery);
+                        notificationNeeded = true;
+                        updatedCourierIds.Add(courier.Id);
+
+                        System.Diagnostics.Debug.WriteLine(
+                            $"Delivery {delivery.Id} for order {delivery.OrderId} cancelled by admin (insufficient time elapsed)");
+                    }
+                    catch
+                    {
+                        // Silently fail - delivery may have been updated by the courier directly
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error completing delivery {delivery.Id}: {ex.Message}");
+        }
+    }
 }
