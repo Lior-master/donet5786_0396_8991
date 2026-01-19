@@ -997,6 +997,7 @@ internal static class OrderManager
             var config = AdminManager.GetConfig();
 
             // Compute coordinates and distance for the delivery
+            
             double lat = order.Latitude ?? 0;
             double lon = order.Longitude ?? 0;
             if (lat == 0 && lon == 0)
@@ -1079,6 +1080,14 @@ internal static class OrderManager
             if (courier.Administrator == DO.Administrator.Director)
                 throw new BO.BLInvalidOperationException($"Cannot assign order {orderId} to courier {courierId}: courier is a Director.");
 
+            double? distance = null;
+            try
+            {
+                (double Latitude, double Longitude) coord = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
+                distance = Tools.CalculateRouteDistanceAsync(AdminManager.GetConfig().CompanyLatitude, AdminManager.GetConfig().CompanyLongitude, coord.Latitude, coord.Longitude).GetAwaiter().GetResult();
+            }
+            catch { }
+
             // Create a new delivery record assigned to the courier
             var delivery = new DO.Delivery
             {
@@ -1093,7 +1102,7 @@ internal static class OrderManager
                 // Arrival time will be filled when delivery is completed
                 ArrivalTime = null,
                 // Distance will be calculated when delivery is completed
-                Distance = null,
+                Distance = distance,
                 // Mark delivery as null (because is not yet delivered)
                 DeliveredStatus = null
             };
@@ -1312,10 +1321,10 @@ internal static class OrderManager
                 }
 
                 // Bird distance is measured from the company (per your project design)
-                double bird = Tools.BirdDistance(companyLat, companyLon, custLat, custLon);
+                double distance = Tools.CalculateRouteDistanceAsync(companyLat, companyLon, custLat, custLon).GetAwaiter().GetResult();
 
                 // Filter by courier personal max distance (if defined)
-                if (courier.MaxDistance != null && bird > courier.MaxDistance.Value)
+                if (courier.MaxDistance != null && distance > courier.MaxDistance.Value)
                     continue;
 
                 // Added time since order creation
@@ -1324,11 +1333,14 @@ internal static class OrderManager
                 // Estimated delivery time:
                 // Use courier transport speed from config; estimate from "now" using bird distance.
                 double speed = Tools.GetSpeed(courier.Transport, config);
-                DateTime? estArrival = Tools.CalculateEstimatedArrival(now, bird, speed);
+                DateTime? estArrival = Tools.EstimateArrival(now, courier.Transport, distance);
+
                 TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
 
                 // Latest acceptable delivery time (orderDate + MaxDeliveryTime)
                 DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
+
+                var birdDistance = Tools.BirdDistance(companyLat, companyLon, custLat, custLon);
 
                 // Schedule status based on your updated rules (no Unknown)
                 var scheduleStatus = Tools.CalculateScheduleStatus(
@@ -1347,8 +1359,8 @@ internal static class OrderManager
                         ? (BO.FragilityLevel?)(BO.FragilityLevel)o.Fragility.Value
                         : null,
                     CustomerAddress = o.CustomerAddress ?? string.Empty,
-                    BirdDistance = bird,
-                    Distance = null, // route distance not calculated here
+                    BirdDistance = birdDistance,
+                    Distance = distance, // route distance not calculated here
                     AddedTime = addedTime,
                     ScheduleStatus = scheduleStatus,
                     EstimatedDeliveryTime = estSpan,

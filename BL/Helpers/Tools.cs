@@ -52,6 +52,30 @@ internal static class Tools
     }
 
     /// <summary>
+    /// Central ETA computation when distance is already known.
+    /// Uses a consistent speed source (configuration) and a single formula: ETA = pickupTime + distance/speed.
+    /// Falls back to a conservative default if inputs are invalid.
+    /// </summary>
+    public static DateTime EstimateArrival(DateTime pickupTime, DO.DeliveryTransport transport, double distanceKm)
+    {
+        var config = AdminManager.GetConfig();
+        double speed = GetSpeed(transport, config);
+
+        // Defensive fallback: if we can't compute a meaningful ETA, return a safe default
+        if (distanceKm <= 0 || speed <= 0)
+            return EstimateArrivalFallback(pickupTime);
+
+        return pickupTime.AddHours(distanceKm / speed);
+    }
+
+    /// <summary>
+    /// Safe fallback ETA used when distance is unknown or cannot be computed.
+    /// Keeps behavior explicit and centralized (instead of scattered "AddMinutes(30)" in multiple places).
+    /// </summary>
+    public static DateTime EstimateArrivalFallback(DateTime pickupTime)
+        => pickupTime.AddMinutes(30);
+
+    /// <summary>
     /// Calculates the great-circle distance between two geographic points using the Haversine formula.
     /// This is the shortest distance over the earth's surface (ignoring elevation and roads).
     /// </summary>

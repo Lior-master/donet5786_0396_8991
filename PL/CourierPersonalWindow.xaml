@@ -255,8 +255,17 @@
                           Visibility="{Binding IsAnOrderInProgress}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
-                            <!-- FIX: 10 rows because button uses row 9 -->
+                            <!-- Extended rows to accommodate all OrderInProgress fields -->
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -274,55 +283,114 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Order ID:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1"
-                                       Text="{Binding OrderInProgress.OrderId}"
-                                       Style="{StaticResource ValueStyle}"
-                                       FontWeight="Bold"
-                                       Foreground="#DC3545"/>
+                            <!-- Delivery ID -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Delivery ID:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.DeliveryId}"
+                                     IsReadOnly="True"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Customer:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding OrderInProgress.CustomerName}"
-                                       Style="{StaticResource ValueStyle}"/>
+                            <!-- Order ID -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Order ID:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="1" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.OrderId}"
+                                     IsReadOnly="True"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Phone:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1"
-                                       Text="{Binding OrderInProgress.CustomerPhone}"
-                                       Style="{StaticResource ValueStyle}"/>
+                            <!-- Order Type -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Order Type:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="2" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.OrderType}"
+                                     IsReadOnly="True"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Address:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1"
-                                       Text="{Binding OrderInProgress.CustomerAddress}"
-                                       Style="{StaticResource ValueStyle}"/>
+                            <!-- Distance -->
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Distance (km):" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="3" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.Distance}"
+                                     IsReadOnly="True"/>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Distance:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="4" Grid.Column="1"
-                                       Text="{Binding OrderInProgress.Distance}"
-                                       Style="{StaticResource ValueStyle}"/>
+                            <!-- Pickup Time -->
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Pickup Time:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="4" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.PickupTime, StringFormat=dd-MM-yyyy HH:mm:ss}"
+                                     IsReadOnly="True"/>
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Order Date:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="5" Grid.Column="1"
-                                       Text="{Binding OrderInProgress.OrderDate, StringFormat=dd-MM-yyyy HH:mm}"
-                                       Style="{StaticResource ValueStyle}"/>
+                            <!-- Arrival Time -->
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Arrival Time:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="5" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.ArrivalTime, StringFormat=dd-MM-yyyy HH:mm:ss}"
+                                     IsReadOnly="True"/>
 
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Schedule:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="6" Grid.Column="1"
-                                       Text="{Binding OrderInProgress.ScheduleStatus}"
-                                       Style="{StaticResource ValueStyle}"/>
+                            <!-- Schedule Status -->
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Schedule Status:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="6" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.ScheduleStatus}"
+                                     IsReadOnly="True"/>
 
-                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Delivery Type:" Style="{StaticResource LabelStyle}"/>
-                            <TextBlock Grid.Row="7" Grid.Column="1"
-                                       Text="{Binding DeliveryStatusText}"
-                                       Style="{StaticResource ValueStyle}"/>
+                            <!-- Order Status -->
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Order Status:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="7" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.OrderStatus}"
+                                     IsReadOnly="True"/>
 
-                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Finish Type:" Style="{StaticResource LabelStyle}"/>
-                            <ComboBox Grid.Row="8" Grid.Column="1"
+                            <!-- Description -->
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Description:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="8" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.Description}"
+                                     IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     Height="60"/>
+
+                            <!-- Customer Name -->
+                            <TextBlock Grid.Row="9" Grid.Column="0" Text="Customer Name:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="9" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.CustomerName}"
+                                     IsReadOnly="True"/>
+
+                            <!-- Customer Phone -->
+                            <TextBlock Grid.Row="10" Grid.Column="0" Text="Customer Phone:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="10" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.CustomerPhone}"
+                                     IsReadOnly="True"/>
+
+                            <!-- Customer Address -->
+                            <TextBlock Grid.Row="11" Grid.Column="0" Text="Customer Address:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="11" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.CustomerAddress}"
+                                     IsReadOnly="True"
+                                     TextWrapping="Wrap"
+                                     Height="50"/>
+
+                            <!-- Order Date -->
+                            <TextBlock Grid.Row="12" Grid.Column="0" Text="Order Date:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="12" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.OrderDate, StringFormat=dd-MM-yyyy HH:mm:ss}"
+                                     IsReadOnly="True"/>
+
+                            <!-- Estimated Arrival Time -->
+                            <TextBlock Grid.Row="13" Grid.Column="0" Text="Est. Arrival:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="13" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.EstimatedArrivalTime, StringFormat=dd-MM-yyyy HH:mm:ss}"
+                                     IsReadOnly="True"/>
+
+                            <!-- Max Delivery Time -->
+                            <TextBlock Grid.Row="14" Grid.Column="0" Text="Max Delivery Time:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="14" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.MaxDeliveryTime, StringFormat=dd-MM-yyyy HH:mm:ss}"
+                                     IsReadOnly="True"/>
+
+                            <!-- Remaning Time -->
+                            <TextBlock Grid.Row="15" Grid.Column="0" Text="Remaning Time:" Style="{StaticResource LabelStyle}"/>
+                            <TextBox Grid.Row="15" Grid.Column="1"
+                                     Text="{Binding OrderInProgress.RemaningTime, StringFormat=hh\\:mm\\:ss}"
+                                     IsReadOnly="True"/>
+
+                            <!-- Finish Type -->
+                            <TextBlock Grid.Row="16" Grid.Column="0" Text="Finish Type:" Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Grid.Row="16" Grid.Column="1"
                                       ItemsSource="{Binding Source={StaticResource DeliveredStatusCollectionKey}}"
                                       SelectedItem="{Binding SelectedFinishType, UpdateSourceTrigger=PropertyChanged}"/>
 
-                            <!-- Finish Button (NO BasedOn => avoids XAML errors) -->
-                            <StackPanel Grid.Row="9" Grid.ColumnSpan="2"
+                            <!-- Finish Button -->
+                            <StackPanel Grid.Row="17" Grid.ColumnSpan="2"
                                         Orientation="Horizontal"
                                         HorizontalAlignment="Right"
                                         Margin="0,15,0,0">

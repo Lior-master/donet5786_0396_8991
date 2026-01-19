@@ -416,82 +416,102 @@ internal static class CourierManager
     {
         try
         {
-            // Validate that the requester exists in the system
+            // -------------------------
+            // Basic validation
+            // -------------------------
             var requester = s_dal.Courier.Read(requesterId);
             if (requester == null)
                 throw new BLNotFoundException("Requester ID does not exist.");
 
-            // Retrieve the courier data object by ID
             var courierDO = s_dal.Courier.Read(courierId);
             if (courierDO == null)
                 throw new BLNotFoundException("Courier ID does not exist.");
 
-            // Get all deliveries handled by this courier for performance analysis using cached data
+            // All deliveries handled by this courier (cached data)
             var courierDeliveries = GetDeliveries().Where(d => d.CourierId == courierId);
 
-            // Initialize counters for on-time and late deliveries
             int onTime = 0;
             int late = 0;
 
-            // Retrieve system configuration for speed calculations
-            var config = AdminManager.GetConfig();
-
-            /// <summary>
-            /// Local helper function to retrieve the speed for a given transport method based on system configuration.
-            /// </summary>
-            /// <param name="transport">The delivery transport method.</param>
-            /// <returns>The speed in km/h for the specified transport method.</returns>
-            double GetSpeed(DO.DeliveryTransport transport)
-                => transport switch
-                {
-                    DO.DeliveryTransport.Motorcycle => config.MotorcycleSpeed,
-                    DO.DeliveryTransport.Bike => config.BikeSpeed,
-                    DO.DeliveryTransport.Foot => config.WalkingSpeed,
-                    _ => config.CarSpeed,
-                };
-
-            // Iterate through deliveries to calculate performance statistics
+            // -------------------------
+            // Performance stats (on time / late)
+            // -------------------------
             foreach (var d in courierDeliveries)
             {
-                // Skip deliveries without arrival time or distance data
+                // If we don't have the required data, skip this delivery for performance stats
                 if (d.ArrivalTime == null || d.Distance == null)
                     continue;
 
-                // Calculate expected arrival time based on distance and transport speed
-                double speed = GetSpeed(d.Transport);
-                DateTime expected = d.PickupTime.AddHours(d.Distance.Value / (speed > 0 ? speed : config.CarSpeed));
+                // Centralized ETA computation (no approximation here)
+                DateTime expected = Tools.EstimateArrival(d.PickupTime, d.Transport, d.Distance.Value);
 
-                // Determine if delivery was on time or late
                 if (Tools.IsDeliveryOnTime(d, expected))
                     onTime++;
                 else
                     late++;
             }
 
-            // Find the courier's current delivery (one without an arrival time yet)
+            // -------------------------
+            // Current delivery (the one that is not completed yet)
+            // -------------------------
             var currentDelivery = courierDeliveries.FirstOrDefault(d => d.ArrivalTime == null);
 
-            // Build the current order object if one exists
             BO.OrderInProgress? currentOrder = null;
 
             if (currentDelivery != null)
             {
-                // Retrieve the order associated with the current delivery
                 var orderDO = s_dal.Order.Read(currentDelivery.OrderId);
 
                 if (orderDO != null)
                 {
-                    // Get all delivery records for this order to calculate its status using cached data
+                    var config = AdminManager.GetConfig();
+
+                    // Compute order status based on all deliveries of this order (cached data)
                     var deliveriesForOrder = GetDeliveries().Where(d => d.OrderId == orderDO.Id).ToList();
                     var ordStatus = Tools.CalculateOrderStatus(deliveriesForOrder);
+
+                    // Try to use the known distance from the current delivery; if missing, attempt to compute it
+                    double? distance = currentDelivery.Distance;
+                    if (!distance.HasValue)
+                    {
+                        try
+                        {
+                            // Geocode customer address and compute route distance from company to customer
+                            (double Lat, double Lon) coord = Tools.GetCoordinatesFromAddressAsync(orderDO.CustomerAddress)
+                                .GetAwaiter().GetResult();
+
+                            distance = Tools.CalculateRouteDistanceAsync(
+                                config.CompanyLatitude, config.CompanyLongitude,
+                                coord.Lat, coord.Lon
+                            ).GetAwaiter().GetResult();
+                        }
+                        catch
+                        {
+                            // If distance calculation fails, we keep distance = null and fall back to a default ETA
+                        }
+                    }
+
+                    // Centralized ETA computation:
+                    // - If distance is known, uses distance/speed
+                    // - If distance is not known, returns a safe default (pickupTime + 30 minutes)
+                    DateTime estimatedArrival = distance.HasValue
+                        ? Tools.EstimateArrival(currentDelivery.PickupTime, currentDelivery.Transport, distance.Value)
+                        : Tools.EstimateArrivalFallback(currentDelivery.PickupTime);
+
+                    // Schedule status calculation keeps your existing logic
                     var scheduleStatus = Tools.CalculateScheduleStatus(
                         ordStatus,
                         orderDO.OrderDate,
-                        currentDelivery.Distance.HasValue ? Tools.CalculateEstimatedArrival(orderDO.OrderDate, currentDelivery.Distance.Value, GetSpeed(currentDelivery.Transport)) : null,
+                        distance.HasValue
+                            ? Tools.CalculateEstimatedArrival(
+                                orderDO.OrderDate,
+                                distance.Value,
+                                GetSpeed(currentDelivery.Transport, config)
+                              )
+                            : null,
                         orderDO.OrderDate.Add(config.MaxDeliveryTime),
                         currentDelivery.ArrivalTime);
 
-                    // Build the order-in-progress view model
                     currentOrder = new BO.OrderInProgress
                     {
                         DeliveryId = currentDelivery.Id,
@@ -500,18 +520,22 @@ internal static class CourierManager
                         CustomerAddress = orderDO.CustomerAddress,
                         CustomerPhone = orderDO.CustomerPhone,
                         PickupTime = currentDelivery.PickupTime,
-                        Distance = currentDelivery.Distance,
+                        Distance = distance,
                         ArrivalTime = currentDelivery.ArrivalTime,
                         OrderStatus = ordStatus,
                         OrderDate = orderDO.OrderDate,
-                        WaitingTime = (s_dal.Config.Clock - currentDelivery.PickupTime),
+                        RemaningTime = estimatedArrival - AdminManager.Now,
                         Description = orderDO.Description,
                         ScheduleStatus = scheduleStatus,
+                        EstimatedArrivalTime = estimatedArrival,
+                        MaxDeliveryTime = orderDO.OrderDate.Add(config.MaxDeliveryTime),
                     };
                 }
             }
 
-            // Build and return the full Courier view model with all details
+            // -------------------------
+            // Build and return the courier view model
+            // -------------------------
             return new BO.Courier
             {
                 Id = courierDO.Id,
@@ -531,17 +555,35 @@ internal static class CourierManager
         }
         catch (Exception ex)
         {
-            // Re-throw business logic exceptions without modification
-            if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
-            
-            // Map Data Access Layer exceptions to Business Logic Layer exceptions
+            // Re-throw BL exceptions as-is
+            if (ex is BO.BLNotFoundException ||
+                ex is BO.BLInvalidInputException ||
+                ex is BO.BLAlreadyExistsException ||
+                ex is BO.BLInvalidOperationException) throw;
+
+            // Map DAL exceptions to BL exceptions
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
             if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
-            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
+            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException)
+                throw new BO.BLFailedOperation(ex.Message, ex);
+
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
     }
+
+    /// <summary>
+    /// Returns the travel speed (km/h) for the given transport method, based on system configuration.
+    /// </summary>
+    private static double GetSpeed(DO.DeliveryTransport transport, BO.Config config)
+        => transport switch
+        {
+            DO.DeliveryTransport.Motorcycle => config.MotorcycleSpeed,
+            DO.DeliveryTransport.Bike => config.BikeSpeed,
+            DO.DeliveryTransport.Foot => config.WalkingSpeed,
+            _ => config.CarSpeed,
+        };
+
 
     /// <summary>
     /// Updates an existing courier's information with new values.
