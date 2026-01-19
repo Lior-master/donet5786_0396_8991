@@ -14,6 +14,7 @@ public interface IOrder : IObservable
     void AddOrder(int requesterId,BO.Order order);
     void FinishOrder(int requesterId,int courierId,int deliveryId, BO.DeliveredStatus deliveredStatus);
     void AssignOrderToCourier(int requesterId,int orderId,int courierId);
+    BO.OrderInProgress GetOrderInProgressSnapshot(int requesterId, int courierId, int orderId);
     IEnumerable<BO.ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId,int courierId,OrderType? filter,Enum? sorter);
     IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(int requesterId,int courierId, OrderType? filter,Enum? sorter);
     IEnumerable<BO.OrderInList> orderInListsDoubleFilter(int requesterId, Enum? filter1, Enum? filter2);
