@@ -25,6 +25,9 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     private readonly int _bossId;
     private readonly Action _ordersObserver;
 
+    // Property to track the assigned order ID
+    public int? AssignedOrderId { get; private set; }
+
     public ObservableCollection<OpenOrderInList> OpenOrders { get; } = new();
 
     private string _filterStatusMessage = string.Empty;
@@ -113,10 +116,7 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         txtStatus.Text = "Loading open orders...";
 
         // Minimal local logic: let BL do filtering; PL only does basic display ordering
-        return s_bl.Order.GetOpenOrdersForCourier(_bossId, _courierId, filter, null)
-            .OrderBy(o => o.ScheduleStatus) // keep simple; BL already sets schedule status
-            .ThenBy(o => o.BirdDistance)
-            .ToList();
+        return s_bl.Order.GetOpenOrdersForCourier(_bossId, _courierId, filter, null).ToList();
     }
 
     private void UpdateOpenOrdersCollection(System.Collections.Generic.List<OpenOrderInList> list)
@@ -173,21 +173,25 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         {
             BeginBusy("🚚 Assigning order...");
 
-            // IMPORTANT:
-            // Refresh is NOT done here. BL AssignOrderToCourier triggers:
-            // Observers.NotifyItemUpdated(orderId);
-            // Observers.NotifyListUpdated();
-            // Observers.NotifyItemUpdated(courierId);
+            System.Diagnostics.Debug.WriteLine($"CourierOrderSelectionWindow: Starting assignment of order {selected.OrderId} to courier {_courierId}");
+
+            // Assigner la commande au coursier
             await Task.Run(() =>
                 s_bl.Order.AssignOrderToCourier(_bossId, selected.OrderId, _courierId));
 
+            System.Diagnostics.Debug.WriteLine($"CourierOrderSelectionWindow: Assignment completed successfully");
+
+            // IMPORTANT: Stocker l'ID de l'ordre assigné
+            AssignedOrderId = selected.OrderId;
+
+            // Set DialogResult to true to indicate successful assignment
+            DialogResult = true;
+
+            // Montrer le succès
             ShowAssignmentSuccess(selected);
+            
+            // Fermer cette fenêtre - le parent récupérera AssignedOrderId
             Close();
-            if(Owner is not null && Owner is CourierPersonalWindow cpw)
-            {
-                cpw.Activate();
-                await cpw.RefreshDataFromChildAsync();
-            }
         }
         catch (Exception ex)
         {
@@ -195,6 +199,7 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
             MessageBox.Show($"❌ Failed to assign order: {ex.Message}",
                 "Assignment Failed", MessageBoxButton.OK, MessageBoxImage.Error);
             txtStatus.Text = "❌ Assignment failed";
+            System.Diagnostics.Debug.WriteLine($"CourierOrderSelectionWindow: Assignment failed: {ex.Message}");
         }
         finally
         {

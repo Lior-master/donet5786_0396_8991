@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using BlApi;
-using BO;   
+using BO;
 using PL.Courier;
 
 namespace PL;
@@ -41,10 +43,10 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         {
             _isAnOrderInProgress = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsNoOrderInProgress));
         }
     }
 
-    private Visibility _isNoOrderInProgress;
     public Visibility IsNoOrderInProgress =>
         IsAnOrderInProgress == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
 
@@ -299,7 +301,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private void BtnChooseOrder_Click(object sender, RoutedEventArgs e)
+    private async void BtnChooseOrder_Click(object sender, RoutedEventArgs e)
     {
         try
         {
@@ -330,7 +332,30 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             {
                 Owner = this
             };
-            choose.Show();
+            
+            // Use ShowDialog to wait for result
+            var result = choose.ShowDialog();
+            
+            if (result == true && choose.AssignedOrderId.HasValue)
+            {
+                int expectedOrderId = choose.AssignedOrderId.Value;
+                
+                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Order {expectedOrderId} was assigned, attempting synchronization...");
+                
+                // Tentative de synchronisation avec retry pattern
+                bool synchronized = await TryToSynchronizeOrder(expectedOrderId);
+                
+                if (synchronized)
+                {
+                    StatusMessage = $"✅ Order #{expectedOrderId} assigned successfully!";
+                    System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Successfully synchronized order {expectedOrderId}");
+                }
+                else
+                {
+                    // Fallback: Créer manuellement l'OrderInProgress basé sur les données de l'ordre assigné
+                    await CreateOrderInProgressFromAssignedOrder(expectedOrderId);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -387,10 +412,16 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             MessageBox.Show($"Delivery has been completed successfully.\n\nStatus: {SelectedFinishType}",
                 "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            // Clear the order immediately - this will hide the "Current Delivery" section
-            // and show the "No Active Delivery" message with the "Choose Order" button enabled
+            // IMPORTANTE: Mettre OrderInProgress à null IMMÉDIATEMENT pour éviter la confusion
+            // L'observer mettra à jour avec les vraies données plus tard
             OrderInProgress = null;
-            StatusMessage = "Ready to choose a new order";
+            
+            // Forcer la mise à jour de l'interface utilisateur
+            OnPropertyChanged(nameof(CanChooseOrder));
+            OnPropertyChanged(nameof(IsAnOrderInProgress)); 
+            OnPropertyChanged(nameof(IsNoOrderInProgress));
+            
+            StatusMessage = "✅ Delivery completed - Ready to choose a new order";
         }
         catch (Exception ex)
         {
@@ -502,6 +533,8 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: RefreshDataFromChildAsync - Starting refresh for courier {_courierId}");
+                
                 var courierExists = await Task.Run(() =>
                 {
                     try
@@ -527,15 +560,33 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
                 var updatedCourier = await Task.Run(() =>
                     s_bl.Courier.GetCourierDetails(_bossId, _courierId));
 
+                // Log pour déboguer
+                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Received updated courier data. Current order: {(updatedCourier.CurrentOrder?.OrderId.ToString() ?? "None")}");
+                
                 Courier = updatedCourier;
                 OrderInProgress = updatedCourier.CurrentOrder;
-                StatusMessage = "Order assigned successfully!";
+                
+                // Forcer les notifications de changement de propriété
+                OnPropertyChanged(nameof(Courier));
+                OnPropertyChanged(nameof(OrderInProgress));
+                OnPropertyChanged(nameof(CanChooseOrder));
+                OnPropertyChanged(nameof(IsAnOrderInProgress));
+                OnPropertyChanged(nameof(IsNoOrderInProgress));
+                OnPropertyChanged(nameof(DisplayDistanceText));
+                OnPropertyChanged(nameof(DeliveryStatusText));
+                
+                StatusMessage = updatedCourier.CurrentOrder != null 
+                    ? $"✅ Order #{updatedCourier.CurrentOrder.OrderId} assigned successfully!"
+                    : "Ready to choose a new order";
+                    
+                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Refresh completed. OrderInProgress is now: {(OrderInProgress?.OrderId.ToString() ?? "None")}");
                 
                 tcs.SetResult(true);
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Refresh failed: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"CourierPersonalWindow: Refresh failed: {ex.Message}");
                 tcs.SetException(ex);
             }
         });
@@ -576,6 +627,66 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Fallback: Creates an OrderInProgress object from the assigned order ID if synchronization fails.
+    /// </summary>
+    private async Task CreateOrderInProgressFromAssignedOrder(int orderId)
+    {
+        try
+        {
+            // Attempt to fetch the order details from BL and create a new OrderInProgress
+            var orderDetails = await Task.Run(() => s_bl.Order.GetOrderDetails(_courierId, orderId));
+            if (orderDetails != null)
+            {
+                // Map orderDetails to OrderInProgress (assuming a suitable constructor or mapping exists)
+                OrderInProgress = new OrderInProgress
+                {
+                    OrderId = orderDetails.Id,
+                    DeliveryId = orderDetails.DeliveriesPerOrder != null && orderDetails.DeliveriesPerOrder.Count > 0
+                        ? orderDetails.DeliveriesPerOrder[0].DeliveryId
+                        : 0,
+                    CustomerName = orderDetails.CustomerName,
+                    CustomerAddress = orderDetails.CustomerAddress,
+                    Distance = orderDetails.Distance,
+                    ArrivalTime = null // or use a suitable property from Order if available, e.g. ArrivalDateEstimeted
+                };
+                StatusMessage = $"Order #{orderId} assigned (manual fallback).";
+            }
+            else
+            {
+                StatusMessage = $"Failed to retrieve order details for order #{orderId}.";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error creating OrderInProgress: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Attempts to synchronize the assigned order with the backend.
+    /// Returns true if the order is successfully synchronized and assigned to the courier.
+    /// </summary>
+    private async Task<bool> TryToSynchronizeOrder(int orderId)
+    {
+        try
+        {
+            // Attempt to refresh courier data and check if the order is now assigned
+            await RefreshDataFromChildAsync();
+
+            // After refresh, check if the current order matches the expected orderId
+            if (OrderInProgress != null && OrderInProgress.OrderId == orderId)
+            {
+                return true;
+            }
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     #endregion

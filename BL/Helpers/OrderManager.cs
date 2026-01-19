@@ -1019,25 +1019,16 @@ internal static class OrderManager
             {
                 // Record the current time as the arrival time
                 ArrivalTime = AdminManager.Now,
-                // Record the calculated distance
-                Distance = distance,
                 // Mark status as delivered
                 DeliveredStatus = (DO.DeliveredStatus)deliveredStatus
             };
 
             s_dal.Delivery.Update(updated);
 
-            // Optionally update courier activity status (best-effort, failures are silently caught)
-            try
-            {
-                Tools.UpdateCourierActivity(courier, config.InactivityThreshold);
-                s_dal.Courier.Update(courier);
-            }
-            catch { }
-
             // Notify subscribers that this order has been completed
             Observers.NotifyItemUpdated(delivery.OrderId);
             Observers.NotifyListUpdated();
+            Observers.NotifyItemUpdated(courierId);
 
             CourierManager.Observers.NotifyItemUpdated(courierId);
             CourierManager.Observers.NotifyListUpdated();

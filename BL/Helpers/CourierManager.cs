@@ -501,7 +501,7 @@ internal static class CourierManager
                         CustomerPhone = orderDO.CustomerPhone,
                         PickupTime = currentDelivery.PickupTime,
                         Distance = currentDelivery.Distance,
-                        ArrivalTime = currentDelivery.ArrivalTime,           // <-- propagate arrival time if set
+                        ArrivalTime = currentDelivery.ArrivalTime,
                         OrderStatus = ordStatus,
                         OrderDate = orderDO.OrderDate,
                         WaitingTime = (s_dal.Config.Clock - currentDelivery.PickupTime),

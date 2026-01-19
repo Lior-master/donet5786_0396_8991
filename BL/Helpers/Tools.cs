@@ -1,4 +1,5 @@
 ﻿using BO;
+using DalApi;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net;
@@ -13,6 +14,8 @@ namespace Helpers;
 /// </summary>
 internal static class Tools
 {
+    private static readonly IDal s_dal = Factory.Get;
+
     /// <summary>
     /// Converts an object to a formatted string representation of its public properties.
     /// </summary>
@@ -255,10 +258,16 @@ internal static class Tools
     /// </remarks>
     public static DO.Courier UpdateCourierActivity(DO.Courier courier, TimeSpan inactivityThreshold)
     {
-        // Use central app clock (AdminManager.Now) instead of DateTime.Now so simulator / tests are consistent.
-        if (AdminManager.Now - courier.StartDate > inactivityThreshold)
-            return courier with { IsActive = false };
+        var lastDeliverie = s_dal.Delivery
+            .ReadAll()
+            .Where(d => d.CourierId == courier.Id)
+            .OrderByDescending(d => d.PickupTime)
+            .FirstOrDefault();
 
+        if (lastDeliverie is not null && AdminManager.Now - lastDeliverie.ArrivalTime > inactivityThreshold) // last delivery time + threshold
+            return courier with { IsActive = false };
+        if (lastDeliverie is null && AdminManager.Now - courier.StartDate > inactivityThreshold) // no deliveries yet
+            return courier with { IsActive = false };
         return courier;
     }
 
