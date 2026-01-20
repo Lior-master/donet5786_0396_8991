@@ -3,6 +3,7 @@
 using BLApi;
 using BO;
 using Helpers;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Implementation of the <see cref="IAdmin"/> interface that provides administrative operations
@@ -17,14 +18,14 @@ internal class AdminImplementation : IAdmin
     /// <summary>
     /// Resets the database to its initial state, removing all data.
     /// </summary>
-    public void ResetDB()
-        => AdminManager.ResetDB();
+    public Task ResetDBAsync()
+        => AdminManager.ResetDBAsync();
 
     /// <summary>
     /// Initializes the database with default configuration and sample data.
     /// </summary>
-    public void InitializeDB()
-        => AdminManager.InitializeDB();
+    public Task InitializeDBAsync()
+        => AdminManager.InitializeDBAsync();
 
     /// <summary>
     /// Retrieves the current system clock value (which may be simulated time).
@@ -70,8 +71,8 @@ internal class AdminImplementation : IAdmin
     /// Updates the system configuration settings and notifies all registered observers.
     /// </summary>
     /// <param name="configuration">The new configuration settings to apply.</param>
-    public void SetConfig(Config configuration)
-        => AdminManager.SetConfig(configuration);
+    public Task SetConfigAsync(Config configuration)
+        => AdminManager.SetConfigAsync(configuration);
 
     /// <summary>
     /// Registers an observer to be notified whenever the system clock is updated.

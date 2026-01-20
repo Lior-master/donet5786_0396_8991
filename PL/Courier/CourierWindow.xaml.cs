@@ -241,8 +241,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
                 s_bl.Courier.AddObserver(courierId, _courierObserver); // Subscribe to updates
                 
                 // Load courier details from business layer on background thread
-                CourierCurrent = await Task.Run(() =>
-                    s_bl.Courier.GetCourierDetails(bossId, courierId));
+                CourierCurrent = await s_bl.Courier.GetCourierDetailsAsync(bossId, courierId);
                 
                 // Update assigned order status for UI binding
                 if (CourierCurrent.CurrentOrder is not null)
@@ -288,7 +287,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     /// </summary>
     private void RefreshCourierFromBl()
     {
-        Dispatcher.Invoke(async () =>
+        Dispatcher.BeginInvoke(async () =>
         {
             if (_isCreateMode || _courierId is null)
                 return;
@@ -296,18 +295,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
             try 
             {
                 // Add defensive check to prevent race condition
-                var courierExists = await Task.Run(() =>
-                {
-                    try
-                    {
-                        s_bl.Courier.GetCourierDetails(bossId, _courierId.Value);
-                        return true;
-                    }
-                    catch (BO.BLNotFoundException)
-                    {
-                        return false;
-                    }
-                });
+                var courierExists = await CheckCourierExistsAsync(_courierId.Value);
 
                 if (!courierExists)
                 {
@@ -317,8 +305,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
                 }
 
                 // Refresh courier data
-                CourierCurrent = await Task.Run(() =>
-                    s_bl.Courier.GetCourierDetails(bossId, _courierId.Value));
+                CourierCurrent = await s_bl.Courier.GetCourierDetailsAsync(bossId, _courierId.Value);
             }
             catch (BO.BLNotFoundException)
             {
@@ -328,6 +315,19 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
                 Close();
             }
         });
+    }
+
+    private async Task<bool> CheckCourierExistsAsync(int courierId)
+    {
+        try
+        {
+            await s_bl.Courier.GetCourierDetailsAsync(bossId, courierId);
+            return true;
+        }
+        catch (BO.BLNotFoundException)
+        {
+            return false;
+        }
     }
 
     /// <summary>

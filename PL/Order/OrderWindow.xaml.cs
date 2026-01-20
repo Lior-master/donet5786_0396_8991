@@ -76,7 +76,7 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
             {
                 Mouse.OverrideCursor = Cursors.Wait;
                 s_bl.Order.AddObserver(orderId, _orderObserver);
-                OrderCurrent = await Task.Run(() => s_bl.Order.GetOrderDetails(bossId, orderId));
+                OrderCurrent = await s_bl.Order.GetOrderDetailsAsync(bossId, orderId);
             }
             catch (Exception ex)
             {
@@ -98,23 +98,12 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
 
     private void RefreshOrderFromBl()
     {
-        Dispatcher.Invoke(async () =>
+        Dispatcher.BeginInvoke(async () =>
         {
             if (_isCreateMode || _orderId is null)
                 return;
             // Add defensive check to prevent race condition
-            var orderExists = await Task.Run(() =>
-            {
-                try
-                {
-                    s_bl.Order.GetOrderDetails(bossId, _orderId.Value);
-                    return true;
-                }
-                catch (BO.BLNotFoundException)
-                {
-                    return false;
-                }
-            });
+            var orderExists = await CheckOrderExistsAsync(_orderId.Value);
 
             if (!orderExists)
             {
@@ -123,9 +112,21 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
                 return;
             }
 
-            OrderCurrent = await Task.Run(() =>
-                s_bl.Order.GetOrderDetails(bossId, _orderId.Value));
+            OrderCurrent = await s_bl.Order.GetOrderDetailsAsync(bossId, _orderId.Value);
         });
+    }
+
+    private async Task<bool> CheckOrderExistsAsync(int orderId)
+    {
+        try
+        {
+            await s_bl.Order.GetOrderDetailsAsync(bossId, orderId);
+            return true;
+        }
+        catch (BO.BLNotFoundException)
+        {
+            return false;
+        }
     }
 
     private void btnCancel_Click(object sender, RoutedEventArgs e)
@@ -133,7 +134,7 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         Close();
     }
 
-    private void btnSave_Click(object sender, RoutedEventArgs e)
+    private async void btnSave_Click(object sender, RoutedEventArgs e)
     {
         try
         {
@@ -142,17 +143,23 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
 
             if (_isCreateMode)
             {
-                s_bl.Order.AddOrder(bossId, OrderCurrent);
+                await s_bl.Order.AddOrderAsync(bossId, OrderCurrent);
                 MessageBox.Show("Order created successfully.", "Success",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                s_bl.Order.UpdateOrderDetails(bossId, OrderCurrent);
+                await s_bl.Order.UpdateOrderDetailsAsync(bossId, OrderCurrent);
                 MessageBox.Show("Order updated successfully.", "Success",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
+            Close();
+        }
+        catch (BO.BLBadAddressException ex)
+        {
+            MessageBox.Show(ex.Message, "Address Warning",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
             Close();
         }
         catch (Exception ex)

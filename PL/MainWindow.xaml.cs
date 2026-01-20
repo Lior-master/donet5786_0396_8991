@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media; // Add this at the top with other using directives
@@ -122,7 +123,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            Dispatcher.Invoke(RefreshOrderSummary);
+            Dispatcher.BeginInvoke(async () => await RefreshOrderSummaryAsync());
         }
         catch { }
     }
@@ -130,7 +131,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //   ORDER SUMMARY REFRESH
     // ================================
-    private void RefreshOrderSummary()
+    private async Task RefreshOrderSummaryAsync()
     {
         try
         {
@@ -138,7 +139,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             // BL returns status-major layout:
             // idx = OrderStatus * 4 + ScheduleStatus
-            var raw = s_bl.Order.GetOrdersBySummary(bossId).ToArray();
+            var raw = (await s_bl.Order.GetOrdersBySummaryAsync(bossId)).ToArray();
 
             // We expect 5 statuses (Pending..Returned) and 3 schedules (OnTime, InRisk, Late)
             // UI wants schedule-major by ROWS in this order: OnTime, Late, InRisk, Unknown
@@ -187,14 +188,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //   INITIALIZATION ON OPENING
     // ================================
-    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         // Load current data
         CurrentTime = s_bl.Admin.GetClock();
         Configuration = s_bl.Admin.GetConfig();
         
         // Load order summary
-        RefreshOrderSummary();
+        await RefreshOrderSummaryAsync();
 
         // Register observers
         s_bl.Admin.AddClockObserver(ClockObserver);
@@ -332,13 +333,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Configuration = s_bl.Admin.GetConfig();
     }
 
-    private void ApplyConfig_Click(object sender, RoutedEventArgs e)
+    private async void ApplyConfig_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            s_bl.Admin.SetConfig(Configuration);
+            await s_bl.Admin.SetConfigAsync(Configuration);
             MessageBox.Show("Configuration updated successfully.",
                             "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (BO.BLBadAddressException ex)
+        {
+            MessageBox.Show(ex.Message,
+                            "Address Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
@@ -351,27 +357,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     //              BUTTONS: DATABASE
     // =======================================================
 
-    private void InitDB_Click(object sender, RoutedEventArgs e)
+    private async void InitDB_Click(object sender, RoutedEventArgs e)
     {
         if (MessageBox.Show("Initialize database?", "Confirm",
             MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
         {
-            s_bl.Admin.InitializeDB();
+            await s_bl.Admin.InitializeDBAsync();
             MessageBox.Show("Database initialized.");
             // Refresh order summary after DB initialization
-            RefreshOrderSummary();
+            await RefreshOrderSummaryAsync();
         }
     }
 
-    private void ResetDB_Click(object sender, RoutedEventArgs e)
+    private async void ResetDB_Click(object sender, RoutedEventArgs e)
     {
         if (MessageBox.Show("Reset database?", "Confirm",
             MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
         {
-            s_bl.Admin.ResetDB();
+            await s_bl.Admin.ResetDBAsync();
             MessageBox.Show("Database reset.");
             // Refresh order summary after DB reset
-            RefreshOrderSummary();
+            await RefreshOrderSummaryAsync();
         }
     }
 

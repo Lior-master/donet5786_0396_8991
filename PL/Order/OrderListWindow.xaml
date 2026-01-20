@@ -14,6 +14,7 @@
         Closed="Window_Closed">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <!-- Modern Button Style -->
         <Style x:Key="ModernButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#2196F3"/>
@@ -216,89 +217,100 @@
 
         <!-- Data Grid -->
         <Border Grid.Row="2" Background="White" CornerRadius="6" Padding="15" Margin="0,0,0,15">
-            <DataGrid Style="{StaticResource ModernDataGridStyle}"
-                      ItemsSource="{Binding OrderList}"
-                      IsReadOnly="True"
-                      AutoGenerateColumns="False"
-                      MouseDoubleClick="dgOrderList_MouseDoubleClick">
+            <Grid>
+                <DataGrid Style="{StaticResource ModernDataGridStyle}"
+                          ItemsSource="{Binding OrderList}"
+                          IsReadOnly="True"
+                          AutoGenerateColumns="False"
+                          MouseDoubleClick="dgOrderList_MouseDoubleClick">
 
-                <DataGrid.Columns>
+                    <DataGrid.Columns>
 
-                    <!-- Order Id -->
-                    <DataGridTextColumn Header="Order Id"
-                            Binding="{Binding OrderId}"
-                            Width="80"/>
+                        <!-- Order Id -->
+                        <DataGridTextColumn Header="Order Id"
+                                Binding="{Binding OrderId}"
+                                Width="80"/>
 
-                    <!-- Delivery Id  -->
-                    <DataGridTextColumn Header="Delivery Id"
-                            Binding="{Binding DeliveryId}"
-                            Width="90"/>
+                        <!-- Delivery Id  -->
+                        <DataGridTextColumn Header="Delivery Id"
+                                Binding="{Binding DeliveryId}"
+                                Width="90"/>
 
-                    <!-- Type  -->
-                    <DataGridTextColumn Header="Type"
-                            Binding="{Binding Type}"
-                            Width="100"/>
+                        <!-- Type  -->
+                        <DataGridTextColumn Header="Type"
+                                Binding="{Binding Type}"
+                                Width="100"/>
 
-                    <!-- Distance (km, formatted) -->
-                    <DataGridTextColumn Header="Distance (km)"
-                            Binding="{Binding Distance, StringFormat={}{0:0.0}}"
-                            Width="110"/>
+                        <!-- Distance (km, formatted) -->
+                        <DataGridTextColumn Header="Distance (km)"
+                                Binding="{Binding Distance, StringFormat={}{0:0.0}}"
+                                Width="110"/>
 
-                    <!-- Order Status -->
-                    <DataGridTextColumn Header="Status"
-                            Binding="{Binding Status}"
-                            Width="110"/>
+                        <!-- Order Status -->
+                        <DataGridTextColumn Header="Status"
+                                Binding="{Binding Status}"
+                                Width="110"/>
 
-                    <!-- Schedule Status -->
-                    <DataGridTextColumn Header="Schedule"
-                            Binding="{Binding ScheduleStatus}"
-                            Width="120"/>
+                        <!-- Schedule Status -->
+                        <DataGridTextColumn Header="Schedule"
+                                Binding="{Binding ScheduleStatus}"
+                                Width="120"/>
 
-                    <!-- Order End Time -->
-                    <DataGridTextColumn Header="Order Time"
-                            Binding="{Binding OrderEndTime}"
-                            Width="120"/>
+                        <!-- Order End Time -->
+                        <DataGridTextColumn Header="Order Time"
+                                Binding="{Binding OrderEndTime}"
+                                Width="120"/>
 
-                    <!-- Treatment End Time -->
-                    <DataGridTextColumn Header="Treatment Time"
-                            Binding="{Binding TreatmentEndTime}"
-                            Width="130"/>
+                        <!-- Treatment End Time -->
+                        <DataGridTextColumn Header="Treatment Time"
+                                Binding="{Binding TreatmentEndTime}"
+                                Width="130"/>
 
-                    <!-- Number of Couriers -->
-                    <DataGridTextColumn Header="Couriers"
-                            Binding="{Binding NumberOfCouriers}"
-                            Width="90"/>
+                        <!-- Number of Couriers -->
+                        <DataGridTextColumn Header="Couriers"
+                                Binding="{Binding NumberOfCouriers}"
+                                Width="90"/>
 
-                    <!-- Cancel Button Column -->
-                    <DataGridTemplateColumn Header="Action" Width="80">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Name="btnCancelOrder"
-                                        Content="❌ Cancel"
-                                        Click="btnCancelOrder_Click"
-                                        Tag="{Binding OrderId}">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource CancelButtonStyle}">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <!-- Show for Pending orders -->
-                                                <DataTrigger Binding="{Binding Status}" Value="Pending">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                                <!-- Show for Processing orders -->
-                                                <DataTrigger Binding="{Binding Status}" Value="Processing">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <!-- Cancel Button Column -->
+                        <DataGridTemplateColumn Header="Action" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Name="btnCancelOrder"
+                                            Content="❌ Cancel"
+                                            Click="btnCancelOrder_Click"
+                                            Tag="{Binding OrderId}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource CancelButtonStyle}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <!-- Show for Pending orders -->
+                                                    <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                    <!-- Show for Processing orders -->
+                                                    <DataTrigger Binding="{Binding Status}" Value="Processing">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                </DataGrid.Columns>
-            </DataGrid>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <Border Background="#80FFFFFF"
+                        IsHitTestVisible="False"
+                        Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <ProgressBar Width="220" Height="8" IsIndeterminate="True"/>
+                        <TextBlock Text="Loading orders..." Margin="0,8,0,0" Foreground="#666" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Border>
 
         <!-- Bottom Action Bar -->
