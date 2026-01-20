@@ -1,19 +1,13 @@
 ﻿using BO;
+using Helpers;
 using PL.Order;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace PL.Courier;
 
@@ -25,6 +19,9 @@ public partial class CourierListWindow : Window
     private bool _isOpen = false;
 
     static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
+
+    // Stage 7: Mutex for courier list observer
+    private readonly ObserverMutex _courierListMutex = new(); // stage 7
     
     public CourierListWindow()
     {
@@ -84,8 +81,27 @@ public partial class CourierListWindow : Window
     }
 
     private void courierListObserver()
-        // Ensure the UI refresh executes on the dispatcher thread.
-        => Dispatcher.Invoke(queryCourierList);
+    {
+        #region Stage 7 (for multithreading)
+        if (_courierListMutex.CheckAndSetLoadInProgressOrRestartRequired())
+            return;
+
+        Dispatcher.BeginInvoke(async () =>
+        {
+            try
+            {
+                queryCourierList();
+            }
+            finally
+            {
+                if (await _courierListMutex.UnsetLoadInProgressAndCheckRestartRequested())
+                {
+                    courierListObserver();
+                }
+            }
+        });
+        #endregion Stage 7 (for multithreading)
+    }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
@@ -97,7 +113,6 @@ public partial class CourierListWindow : Window
         }
         catch (Exception ex)
         {
-            // Some BL implementations might not support observers
             MessageBox.Show($"Observer registration failed: {ex.Message}", 
                            "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
@@ -113,10 +128,7 @@ public partial class CourierListWindow : Window
         {
             s_bl.Courier.RemoveObserver(courierListObserver);
         }
-        catch
-        {
-            // Ignore errors during cleanup
-        }
+        catch { }
         finally
         {
             _isOpen = false;

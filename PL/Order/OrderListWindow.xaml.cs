@@ -1,88 +1,38 @@
 ﻿using PL.Courier;
+using Helpers; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace PL.Order;
 
-/// <summary>
-/// Interaction logic for OrderListWindow.xaml.
-/// 
-/// This window displays a comprehensive list of orders with advanced filtering capabilities.
-/// It supports filtering by order status, order type, and schedule status.
-/// The window implements the observer pattern to automatically refresh the order list 
-/// when data changes in the business logic layer.
-/// 
-/// Key Features:
-/// - Dynamic filter visibility based on selected filter type
-/// - Real-time order list updates via observer pattern
-/// - DataGrid display with double-click to view order details
-/// - Cancel button for orders that can be cancelled (Pending or Processing status)
-/// - Email notification sent to courier when cancelling orders in delivery
-/// - Window state tracking to prevent duplicate initialization
-/// </summary>
 public partial class OrderListWindow : Window
 {
-    /// <summary>
-    /// Flag to track whether the window has been fully loaded.
-    /// Used to prevent duplicate observer registration and multiple initializations.
-    /// </summary>
     private bool _isOpen = false;
 
-    /// <summary>
-    /// Static reference to the Business Logic API singleton instance.
-    /// Used to access order, courier, and admin services throughout the window's lifetime.
-    /// </summary>
     static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
+
+    // Stage 7: Mutex for order list observer
+    private readonly ObserverMutex _orderListMutex = new(); // stage 7
     
-    /// <summary>
-    /// Initializes a new instance of the OrderListWindow.
-    /// Calls InitializeComponent to load XAML resources and initialize WPF controls.
-    /// </summary>
     public OrderListWindow()
     {
         InitializeComponent();
     }
-    
-    /// <summary>
-    /// Gets or sets the collection of orders to be displayed in the DataGrid.
-    /// This is a dependency property that binds to the DataGrid view in the XAML.
-    /// </summary>
-    /// <value>
-    /// An enumerable collection of <see cref="BO.OrderInList"/> objects.
-    /// Setting this value triggers automatic UI updates through data binding.
-    /// </value>
+
     public IEnumerable<BO.OrderInList> OrderList
     {
         get { return (IEnumerable<BO.OrderInList>)GetValue(OrderListProperty); }
         set { SetValue(OrderListProperty, value); }
     }
 
-    /// <summary>
-    /// Defines the OrderList dependency property for WPF data binding.
-    /// Enables the OrderList property to be bound to XAML controls like DataGrid.
-    /// </summary>
     public static readonly DependencyProperty OrderListProperty =
         DependencyProperty.Register("OrderList", typeof(IEnumerable<BO.OrderInList>), typeof(OrderListWindow), new PropertyMetadata(null));
 
-    /// <summary>
-    /// Gets or sets the current filter type applied to the order list.
-    /// Determines which specific filter control is visible and how the data is filtered.
-    /// </summary>
-    /// <value>
-    /// A <see cref="PL.FilterTypeOrder"/> enum value.
-    /// Default is <see cref="PL.FilterTypeOrder.All"/> (no filtering applied).
-    /// </value>
     public PL.FilterTypeOrder FilterTypeOrder { get; set; } = PL.FilterTypeOrder.All;
 
     public bool IsLoading
@@ -94,70 +44,16 @@ public partial class OrderListWindow : Window
     public static readonly DependencyProperty IsLoadingProperty =
         DependencyProperty.Register("IsLoading", typeof(bool), typeof(OrderListWindow), new PropertyMetadata(false));
 
-    /// <summary>
-    /// Gets or sets the order status filter value.
-    /// Used when <see cref="FilterTypeOrder"/> is set to <see cref="PL.FilterTypeOrder.ByOrderStatus"/>.
-    /// </summary>
-    /// <value>
-    /// A <see cref="BO.OrderStatus"/> enum value.
-    /// Default is <see cref="BO.OrderStatus.All"/> (displays all statuses).
-    /// </value>
     public BO.OrderStatus OrderStatus { get; set; } = BO.OrderStatus.All;
 
-    /// <summary>
-    /// Gets or sets the order type filter value.
-    /// Used when <see cref="FilterTypeOrder"/> is set to <see cref="PL.FilterTypeOrder.ByOrderType"/>.
-    /// </summary>
-    /// <value>
-    /// A <see cref="BO.OrderType"/> enum value representing the food/service category.
-    /// Default is <see cref="BO.OrderType.All"/> (displays all types).
-    /// </value>
     public BO.OrderType OrderType { get; set; } = BO.OrderType.All;
 
-    /// <summary>
-    /// Gets or sets the fragility level filter value.
-    /// Currently defined for potential future use in filtering logic.
-    /// </summary>
-    /// <value>
-    /// A <see cref="BO.FragilityLevel"/> enum value.
-    /// Default is <see cref="BO.FragilityLevel.All"/>.
-    /// </value>
     public BO.FragilityLevel FragilityLevel { get; set; } = BO.FragilityLevel.All;
 
-    /// <summary>
-    /// Gets or sets the schedule status filter value.
-    /// Used when <see cref="FilterTypeOrder"/> is set to <see cref="PL.FilterTypeOrder.BySheduleStatus"/>.
-    /// </summary>
-    /// <value>
-    /// A <see cref="BO.ScheduleStatus"/> enum value indicating delivery timing status.
-    /// Default is <see cref="BO.ScheduleStatus.All"/> (displays all schedule statuses).
-    /// </value>
     public BO.ScheduleStatus ScheduleStatus { get; set; } = BO.ScheduleStatus.All;
 
-    /// <summary>
-    /// Queries the business logic layer to retrieve the order list based on current filter settings.
-    /// Updates the <see cref="OrderList"/> property with the retrieved results.
-    /// 
-    /// This method:
-    /// 1. Retrieves the boss ID from the admin configuration
-    /// 2. Applies the appropriate filter based on <see cref="FilterTypeOrder"/>
-    /// 3. Calls the business logic to fetch filtered orders
-    /// 4. Updates the DataGrid through data binding
-    /// 5. Displays error messages if the operation fails
-    /// </summary>
-    /// <remarks>
-    /// The method supports the following filter scenarios:
-    /// - <see cref="PL.FilterTypeOrder.All"/>: Retrieves all orders without filtering
-    /// - <see cref="PL.FilterTypeOrder.ByOrderStatus"/>: Filters by order status (if not "All")
-    /// - <see cref="PL.FilterTypeOrder.ByOrderType"/>: Filters by order type (if not "All")
-    /// - <see cref="PL.FilterTypeOrder.BySheduleStatus"/>: Filters by schedule status (if not "All")
-    /// 
-    /// If a filter property is set to "All", it bypasses filtering for that category.
-    /// On exception, displays error message and sets OrderList to empty collection.
-    /// </remarks>
     private async Task<List<BO.OrderInList>> FetchOrderListAsync()
     {
-        // Retrieve the boss (administrator) ID from system configuration
         var bossId = s_bl.Admin.GetConfig().BossId;
 
         return FilterTypeOrder switch
@@ -209,99 +105,59 @@ public partial class OrderListWindow : Window
         }
     }
 
-    /// <summary>
-    /// Observer callback method invoked when order data changes in the business logic layer.
-    /// This method refreshes the order list to reflect the latest data.
-    /// </summary>
-    /// <remarks>
-    /// This method is registered as an observer with the <see cref="IBl.Order"/> service.
-    /// When orders are added, modified, or removed, this callback is automatically invoked.
-    /// Since observers can be called from background threads, this method marshals the call to the UI thread.
-    /// </remarks>
     private void orderListObserver()
     {
-        // Check if we need to marshal to UI thread
-        if (Dispatcher.CheckAccess())
+        #region Stage 7 (for multithreading)
+        if (_orderListMutex.CheckAndSetLoadInProgressOrRestartRequired())
+            return;
+
+        Dispatcher.BeginInvoke(async () =>
         {
-            // Already on UI thread, safe to call directly
-            _ = RefreshOrderListAsync();
-        }
-        else
-        {
-            // Called from background thread, marshal to UI thread
-            Dispatcher.BeginInvoke(async () => await RefreshOrderListAsync());
-        }
+            try
+            {
+                await RefreshOrderListAsync();
+            }
+            finally
+            {
+                if (await _orderListMutex.UnsetLoadInProgressAndCheckRestartRequested())
+                {
+                    orderListObserver();
+                }
+            }
+        });
+        #endregion Stage 7 (for multithreading)
     }
 
-    /// <summary>
-    /// Handles the Window_Loaded event, which fires when the window is fully initialized and ready for display.
-    /// 
-    /// This method performs the following initialization steps:
-    /// 1. Checks if the window is already open to prevent duplicate initialization
-    /// 2. Loads the initial order list based on current filter settings
-    /// 3. Registers the observer callback with the business logic layer
-    /// 4. Sets the <see cref="_isOpen"/> flag to track initialization state
-    /// 5. Gracefully handles observer registration failures
-    /// </summary>
-    /// <param name="sender">The event sender (the Window).</param>
-    /// <param name="e">The event arguments containing routed event information.</param>
-    /// <remarks>
-    /// If the observer is already registered or if the business logic doesn't support observers,
-    /// a warning is displayed but execution continues without throwing an exception.
-    /// The _isOpen flag is always set to true in the finally block to ensure the window
-    /// is marked as initialized even if observer registration fails.
-    /// </remarks>
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        // Check if window is already initialized to prevent duplicate loading
         if (_isOpen) return;
         
-        // Load the initial order list with current filter settings
         await RefreshOrderListAsync();
         try
         {
-            // Register the observer to receive notifications of order data changes
             s_bl.Order.AddObserver(orderListObserver);
             _isOpen = true;
         }
         catch (Exception ex)
         {
-            // Some BL implementations might not support observers, so this is not fatal
             MessageBox.Show($"Observer registration failed: {ex.Message}", 
                            "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {
-            // Always mark the window as opened to prevent re-initialization
             _isOpen = true;
         }
     }
 
-    /// <summary>
-    /// Handles the Window_Closed event, which fires when the window is being closed.
-    /// Cleans up resources by unregistering the observer from the business logic layer.
-    /// </summary>
-    /// <param name="sender">The event sender (the Window).</param>
-    /// <param name="e">The event arguments containing window close information.</param>
-    /// <remarks>
-    /// Errors during observer removal are silently ignored to prevent exceptions
-    /// from preventing the window from closing. The _isOpen flag is set to false
-    /// in the finally block to mark the window as closed.
-    /// </remarks>
     private void Window_Closed(object sender, EventArgs e)
     {
         try
         {
-            // Unregister the observer callback to prevent memory leaks
             s_bl.Order.RemoveObserver(orderListObserver);
         }
-        catch
-        {
-            // Ignore errors during cleanup to allow window closure to proceed
-        }
+        catch { }
         finally
         {
-            // Mark the window as closed
             _isOpen = false;
         }
     }

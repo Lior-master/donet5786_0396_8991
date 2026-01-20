@@ -1,6 +1,7 @@
 ﻿using BlApi;
 using BO;
 using PL.Courier;
+using Helpers; 
 using PL.Order;
 using System;
 using System.ComponentModel;
@@ -9,7 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media; // Add this at the top with other using directives
+using System.Windows.Media;
 
 namespace PL;
 
@@ -25,6 +26,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     private static OrderListWindow? _orderListWindowInstance;
     private static CourierListWindow? _courierListWindowInstance;
+
+    // ================================
+    //   STAGE 7: OBSERVER MUTEXES
+    // ================================
+    private readonly ObserverMutex _clockMutex = new(); // stage 7
+    private readonly ObserverMutex _configMutex = new(); // stage 7
+    private readonly ObserverMutex _orderSummaryMutex = new(); // stage 7
 
     // ================================
     //   DEPENDENCY PROPERTY: CLOCK
@@ -87,17 +95,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     private void ClockObserver()
     {
-        try
+        #region Stage 7 (for multithreading)
+        if (_clockMutex.CheckAndSetLoadInProgressOrRestartRequired())
+            return;
+
+        Dispatcher.BeginInvoke(async () =>
         {
-            // Marshal call to UI thread
-            Dispatcher.Invoke(() =>
+            try
             {
                 CurrentTime = s_bl.Admin.GetClock();
                 // Refresh order summary when clock updates
-                RefreshOrderSummaryAsync().ConfigureAwait(false);
-            });
-        }
-        catch { }
+                await RefreshOrderSummaryAsync();
+            }
+            catch { }
+            finally
+            {
+                if (await _clockMutex.UnsetLoadInProgressAndCheckRestartRequested())
+                {
+                    ClockObserver();
+                }
+            }
+        });
+        #endregion Stage 7 (for multithreading)
     }
 
     // ================================
@@ -105,15 +124,26 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     private void ConfigObserver()
     {
-        try
+        #region Stage 7 (for multithreading)
+        if (_configMutex.CheckAndSetLoadInProgressOrRestartRequired())
+            return;
+
+        Dispatcher.BeginInvoke(async () =>
         {
-            // Marshal call to UI thread
-            Dispatcher.Invoke(() =>
+            try
             {
                 Configuration = s_bl.Admin.GetConfig();
-            });
-        }
-        catch { }
+            }
+            catch { }
+            finally
+            {
+                if (await _configMutex.UnsetLoadInProgressAndCheckRestartRequested())
+                {
+                    ConfigObserver();
+                }
+            }
+        });
+        #endregion Stage 7 (for multithreading)
     }
 
     // ================================
@@ -121,11 +151,26 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     private void OrderSummaryObserver()
     {
-        try
+        #region Stage 7 (for multithreading)
+        if (_orderSummaryMutex.CheckAndSetLoadInProgressOrRestartRequired())
+            return;
+
+        Dispatcher.BeginInvoke(async () =>
         {
-            Dispatcher.BeginInvoke(async () => await RefreshOrderSummaryAsync());
-        }
-        catch { }
+            try
+            {
+                await RefreshOrderSummaryAsync();
+            }
+            catch { }
+            finally
+            {
+                if (await _orderSummaryMutex.UnsetLoadInProgressAndCheckRestartRequested())
+                {
+                    OrderSummaryObserver();
+                }
+            }
+        });
+        #endregion Stage 7 (for multithreading)
     }
 
     // ================================
