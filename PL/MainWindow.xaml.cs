@@ -59,6 +59,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         DependencyProperty.Register("Configuration", typeof(Config), typeof(MainWindow));
 
     // ================================
+    //   DEPENDENCY PROPERTY: SIMULATOR INTERVAL
+    // ================================
+    public double Interval
+    {
+        get => (double)GetValue(IntervalProperty);
+        set => SetValue(IntervalProperty, value);
+    }
+
+    public static readonly DependencyProperty IntervalProperty =
+        DependencyProperty.Register("Interval", typeof(double), typeof(MainWindow), 
+            new PropertyMetadata(1.0)); // Default value of 1.0
+
+    // ================================
     //   ORDER SUMMARY DATA BINDING
     // ================================
     private int[] _orderSummaryData = new int[15]; // 3 ScheduleStatus × 5 OrderStatus
@@ -515,17 +528,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             else
             {
-                string SimulatorIntervalInputText = SimulatorIntervalInput.Text;
-                SimulatorIntervalInputText = SimulatorIntervalInputText.Replace('.', ',');
-                // Start simulator
-                if (!double.TryParse(SimulatorIntervalInputText, out double interval) || interval < 0)
+                // Start simulator using the bound Interval property
+                if (Interval <= 0)
                 {
                     MessageBox.Show("Please enter a valid positive number for clock speed.",
                                     "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                s_bl.Admin.StartSimulator(interval);
+                s_bl.Admin.StartSimulator(Interval);
                 _simulatorRunning = true;
                 
                 // Update UI

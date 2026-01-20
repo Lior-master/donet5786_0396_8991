@@ -586,7 +586,7 @@
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                         <TextBox Name="SimulatorIntervalInput" 
                                  Style="{StaticResource ModernTextBoxStyle}"
-                                 Text="1"
+                                 Text="{Binding Interval, UpdateSourceTrigger=PropertyChanged}"
                                  Width="60" Height="32"
                                  VerticalContentAlignment="Center"
                                  Margin="0,0,10,0"/>
