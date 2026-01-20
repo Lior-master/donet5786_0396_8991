@@ -2,6 +2,7 @@
 using DalApi;
 using DO;
 using System.Xml.Linq;
+using System.Runtime.CompilerServices;
 
 internal class DeliveryImplementation : IDelivery
 {
@@ -20,6 +21,7 @@ internal class DeliveryImplementation : IDelivery
         };
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public void Create(Delivery item)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
@@ -29,6 +31,7 @@ internal class DeliveryImplementation : IDelivery
         ;
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public void Delete(int id)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
@@ -44,6 +47,7 @@ internal class DeliveryImplementation : IDelivery
         throw new DalDoesNotExistException($"Object Delivery with ID {id} doesnt exist");
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public void DeleteAll()
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
@@ -51,6 +55,7 @@ internal class DeliveryImplementation : IDelivery
         XmlTools.SaveListToXMLSerializer(deliveries, Config.s_deliveries_xml);
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public Delivery? Read(int id)
     {
         XElement? deliveryElem = XmlTools.LoadListFromXMLElement(Config.s_deliveries_xml).Elements()
@@ -58,6 +63,7 @@ internal class DeliveryImplementation : IDelivery
         return deliveryElem == null ? null : getDelivery(deliveryElem);
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public IEnumerable<Delivery> ReadAll(Func<Delivery, bool>? filter = null)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
@@ -68,6 +74,7 @@ internal class DeliveryImplementation : IDelivery
         }
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public void Update(Delivery item)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
