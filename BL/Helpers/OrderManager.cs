@@ -261,35 +261,27 @@ internal static class OrderManager
 
         double distance = (lat == 0 && lon == 0)
             ? 0
-            : Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
+            : await Tools.BirdDistanceAsync(config.CompanyLatitude, config.CompanyLongitude, lat, lon).ConfigureAwait(false);
 
         double speed = config.CarSpeed;
         if (lastByPickup != null)
-            speed = Tools.GetSpeed(lastByPickup.Transport, config);
+            speed = await Tools.GetSpeedAsync(lastByPickup.Transport, config).ConfigureAwait(false);
 
-        DO.DeliveryTransport transport = lastByPickup != null
-            ? lastByPickup.Transport
-            : DO.DeliveryTransport.Car;
+        DateTime? estArrival = distance > 0
+            ? await Tools.CalculateEstimatedArrivalAsync(order.OrderDate, distance, speed).ConfigureAwait(false)
+            : null;
 
-        DateTime? estArrival = Tools.EstimateArrival(now, transport, distance);
         DateTime maxArrival = order.OrderDate.Add(config.MaxDeliveryTime);
-        var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
 
-        var schedule = Tools.CalculateScheduleStatus(
+        var orderStatus = await Tools.CalculateOrderStatusAsync(orderDeliveries).ConfigureAwait(false);
+
+        var schedule = await Tools.CalculateScheduleStatusAsync(
             orderStatus,
             order.OrderDate,
             estArrival,
             maxArrival,
             realArrival
-        );
-
-        // FIX: Ensure TreatmentEndTime is never negative
-        TimeSpan treatmentTime = TimeSpan.Zero;
-        if (lastByPickup != null)
-        {
-            var rawTreatmentTime = lastByPickup.PickupTime - order.OrderDate;
-            treatmentTime = rawTreatmentTime > TimeSpan.Zero ? rawTreatmentTime : TimeSpan.Zero;
-        }
+        ).ConfigureAwait(false);
 
         return new BO.OrderInList
         {
@@ -300,7 +292,7 @@ internal static class OrderManager
             Status = orderStatus,
             ScheduleStatus = schedule,
             OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : now - order.OrderDate,
-            TreatmentEndTime = treatmentTime,
+            TreatmentEndTime = lastByPickup != null ? lastByPickup.PickupTime - order.OrderDate : TimeSpan.Zero,
             NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
         };
     }
@@ -502,21 +494,26 @@ internal static class OrderManager
             }
 
             // Calculate straight-line distance from company to customer
-            double distance = Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
+            double distance = await Tools.BirdDistanceAsync(config.CompanyLatitude, config.CompanyLongitude, lat, lon)
+                .ConfigureAwait(false);
 
             // Choose speed based on the last delivery's transport method, or default to car speed
             double speed = config.CarSpeed;
             if (lastDelivery != null)
-                speed = Tools.GetSpeed(lastDelivery.Transport, config);
+                speed = await Tools.GetSpeedAsync(lastDelivery.Transport, config).ConfigureAwait(false);
 
             // Calculate estimated arrival time and maximum acceptable arrival time
-            DateTime? estArrival = distance > 0 ? (DateTime?)Tools.CalculateEstimatedArrival(doOrder.OrderDate, distance, speed) : null;
+            DateTime? estArrival = distance > 0
+                ? (DateTime?)await Tools.CalculateEstimatedArrivalAsync(doOrder.OrderDate, distance, speed)
+                    .ConfigureAwait(false)
+                : null;
             DateTime? maxArrival = estArrival?.Add(config.RiskRange);
             DateTime? realArrival = lastDelivery?.ArrivalTime;
 
             // Calculate order and schedule status from delivery records
-            var status = Tools.CalculateOrderStatus(deliveries);
-            var schedule = Tools.CalculateScheduleStatus(status, doOrder.OrderDate, estArrival, maxArrival, realArrival);
+            var status = await Tools.CalculateOrderStatusAsync(deliveries).ConfigureAwait(false);
+            var schedule = await Tools.CalculateScheduleStatusAsync(status, doOrder.OrderDate, estArrival, maxArrival, realArrival)
+                .ConfigureAwait(false);
 
             // Calculate total estimated delivery duration
             TimeSpan arrivalEstDuration = estArrival != null ? estArrival.Value - doOrder.OrderDate : TimeSpan.Zero;
@@ -1202,7 +1199,7 @@ internal static class OrderManager
                 throw new BO.BLInvalidOperationException($"No active delivery for courier {courierId} on order {orderId}.");
 
             var config = AdminManager.GetConfig();
-            var ordStatus = Tools.CalculateOrderStatus(deliveries);
+            var ordStatus = await Tools.CalculateOrderStatusAsync(deliveries).ConfigureAwait(false);
 
             double? distance = currentDelivery.Distance;
             if (!distance.HasValue)
@@ -1225,21 +1222,22 @@ internal static class OrderManager
             }
 
             DateTime estimatedArrival = distance.HasValue
-                ? Tools.EstimateArrival(currentDelivery.PickupTime, currentDelivery.Transport, distance.Value)
-                : Tools.EstimateArrivalFallback(currentDelivery.PickupTime);
+                ? await Tools.EstimateArrivalAsync(currentDelivery.PickupTime, currentDelivery.Transport, distance.Value)
+                    .ConfigureAwait(false)
+                : await Tools.EstimateArrivalFallbackAsync(currentDelivery.PickupTime).ConfigureAwait(false);
 
-            var scheduleStatus = Tools.CalculateScheduleStatus(
+            var scheduleStatus = await Tools.CalculateScheduleStatusAsync(
                 ordStatus,
                 orderDO.OrderDate,
                 distance.HasValue
-                    ? Tools.CalculateEstimatedArrival(
+                    ? await Tools.CalculateEstimatedArrivalAsync(
                         orderDO.OrderDate,
                         distance.Value,
-                        Tools.GetSpeed(currentDelivery.Transport, config)
-                      )
+                        await Tools.GetSpeedAsync(currentDelivery.Transport, config).ConfigureAwait(false)
+                      ).ConfigureAwait(false)
                     : null,
                 orderDO.OrderDate.Add(config.MaxDeliveryTime),
-                currentDelivery.ArrivalTime);
+                currentDelivery.ArrivalTime).ConfigureAwait(false);
 
             return new BO.OrderInProgress
             {
@@ -1411,7 +1409,7 @@ internal static class OrderManager
         double companyLon)
     {
         var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
-        var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
+        var orderStatus = await Tools.CalculateOrderStatusAsync(orderDeliveries).ConfigureAwait(false);
 
         if (orderStatus == BO.OrderStatus.Delivered ||
             orderStatus == BO.OrderStatus.Returned ||
@@ -1425,9 +1423,10 @@ internal static class OrderManager
         double custLat = o.Latitude ?? 0;
         double custLon = o.Longitude ?? 0;
 
-        double birdDistance = Tools.BirdDistance(
-            companyLat, companyLon,
-            custLat, custLon);
+        double birdDistance = await Tools.BirdDistanceAsync(
+                companyLat, companyLon,
+                custLat, custLon)
+            .ConfigureAwait(false);
 
         if (custLat == 0 && custLon == 0 && !string.IsNullOrWhiteSpace(o.CustomerAddress))
         {
@@ -1437,7 +1436,8 @@ internal static class OrderManager
 
             custLat = coords.Value.Latitude;
             custLon = coords.Value.Longitude;
-            birdDistance = Tools.BirdDistance(companyLat, companyLon, custLat, custLon);
+            birdDistance = await Tools.BirdDistanceAsync(companyLat, companyLon, custLat, custLon)
+                .ConfigureAwait(false);
         }
 
         if (custLat == 0 && custLon == 0)
@@ -1447,18 +1447,18 @@ internal static class OrderManager
             .ConfigureAwait(false);
 
         TimeSpan? addedTime = now - o.OrderDate;
-        DateTime? estArrival = Tools.EstimateArrival(now, (DO.DeliveryTransport)courier.Transport, distance);
 
+        DateTime? estArrival = await Tools.EstimateArrivalAsync(now, courier.Transport, distance).ConfigureAwait(false);
         TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
 
         DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
 
-        var scheduleStatus = Tools.CalculateScheduleStatus(
+        var scheduleStatus = await Tools.CalculateScheduleStatusAsync(
             orderStatus,
             o.OrderDate,
             estArrival,
             maxDeliveredTime,
-            null);
+            null).ConfigureAwait(false);
 
         return new BO.OpenOrderInList
         {
@@ -1505,22 +1505,8 @@ internal static class OrderManager
             var orders = s_dal.Order.ReadAll().ToList();
             var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
 
-            var boCourier = new BO.Courier
-            {
-                Id = courier.Id,
-                Name = courier.Name,
-                Phone = courier.Phone,
-                Email = courier.Email,
-                Password = courier.Password,
-                IsActive = courier.IsActive,
-                Transport = (BO.DeliveryTransport)courier.Transport,
-                StartDate = courier.StartDate,
-                Administrator = (BO.Administrator)courier.Administrator,
-                MaxDistance = courier.MaxDistance
-            };
-
             IEnumerable<Task<BO.OpenOrderInList?>> tasks = orders.Select(o =>
-                BuildOpenOrderInListAsync(o, deliveriesAll, boCourier, config, now, companyLat, companyLon));
+                BuildOpenOrderInListAsync(o, deliveriesAll, courier, config, now, companyLat, companyLon));
 
             var result = new List<BO.OpenOrderInList>();
             foreach (var task in tasks)

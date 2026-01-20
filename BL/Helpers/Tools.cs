@@ -52,6 +52,9 @@ internal static class Tools
         return sb.ToString();
     }
 
+    public static Task<string> ToStringPropertyAsync<T>(this T t)
+        => Task.FromResult(ToStringProperty(t));
+
     /// <summary>
     /// Central ETA computation when distance is already known.
     /// Uses a consistent speed source (configuration) and a single formula: ETA = pickupTime + distance/speed.
@@ -69,12 +72,18 @@ internal static class Tools
         return pickupTime.AddHours(distanceKm / speed);
     }
 
+    public static Task<DateTime> EstimateArrivalAsync(DateTime pickupTime, DO.DeliveryTransport transport, double distanceKm)
+        => Task.FromResult(EstimateArrival(pickupTime, transport, distanceKm));
+
     /// <summary>
     /// Safe fallback ETA used when distance is unknown or cannot be computed.
     /// Keeps behavior explicit and centralized (instead of scattered "AddMinutes(30)" in multiple places).
     /// </summary>
     public static DateTime EstimateArrivalFallback(DateTime pickupTime)
         => pickupTime.AddMinutes(30);
+
+    public static Task<DateTime> EstimateArrivalFallbackAsync(DateTime pickupTime)
+        => Task.FromResult(EstimateArrivalFallback(pickupTime));
 
     /// <summary>
     /// Calculates the great-circle distance between two geographic points using the Haversine formula.
@@ -108,6 +117,9 @@ internal static class Tools
         // Distance = R * 2 * atan2(√a, √(1−a))
         return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
+
+    public static Task<double> BirdDistanceAsync(double lat1, double lon1, double lat2, double lon2)
+        => Task.FromResult(BirdDistance(lat1, lon1, lat2, lon2));
 
     /// <summary>
     /// Determines the overall order status based on delivery records, prioritizing successful deliveries.
@@ -161,6 +173,9 @@ internal static class Tools
             _ => BO.OrderStatus.Pending
         };
     }
+
+    public static Task<BO.OrderStatus> CalculateOrderStatusAsync(List<DO.Delivery> deliveries)
+        => Task.FromResult(CalculateOrderStatus(deliveries));
 
     /// <summary>
     /// Calculates the actual road distance between two geographic points using the LocationIQ routing API.
@@ -276,6 +291,9 @@ internal static class Tools
         };
     }
 
+    public static Task<double> GetSpeedAsync(DO.DeliveryTransport transport, BO.Config config)
+        => Task.FromResult(GetSpeed(transport, config));
+
     /// <summary>
     /// Updates a courier's active status based on inactivity duration.
     /// Deactivates the courier if they have been inactive longer than the specified threshold.
@@ -305,6 +323,9 @@ internal static class Tools
         return courier;
     }
 
+    public static Task<DO.Courier> UpdateCourierActivityAsync(DO.Courier courier, TimeSpan inactivityThreshold)
+        => Task.FromResult(UpdateCourierActivity(courier, inactivityThreshold));
+
     /// <summary>
     /// Determines whether a delivery was completed on time.
     /// </summary>
@@ -325,6 +346,9 @@ internal static class Tools
 
         return d.ArrivalTime <= expectedTime;
     }
+
+    public static Task<bool> IsDeliveryOnTimeAsync(DO.Delivery d, DateTime expectedTime)
+        => Task.FromResult(IsDeliveryOnTime(d, expectedTime));
 
     // =========================
     // LocationIQ Geocoding
@@ -659,6 +683,9 @@ internal static class Tools
         return orderDate.AddHours(hours);
     }
 
+    public static Task<DateTime> CalculateEstimatedArrivalAsync(DateTime orderDate, double distanceKm, double speedKmH)
+        => Task.FromResult(CalculateEstimatedArrival(orderDate, distanceKm, speedKmH));
+
     /// <summary>
     /// Determines the schedule status of a delivery (OnTime, InRisk, or Late)
     /// based on order status, estimated arrival, maximum allowed arrival, and actual arrival times.
@@ -737,4 +764,12 @@ internal static class Tools
 
         return BO.ScheduleStatus.OnTime;
     }
+
+    public static Task<BO.ScheduleStatus> CalculateScheduleStatusAsync(
+        BO.OrderStatus status,
+        DateTime orderDate,
+        DateTime? estimatedArrival,
+        DateTime? maxArrival,
+        DateTime? realArrival)
+        => Task.FromResult(CalculateScheduleStatus(status, orderDate, estimatedArrival, maxArrival, realArrival));
 }
