@@ -1445,6 +1445,10 @@ internal static class OrderManager
                 double custLat = o.Latitude ?? 0;
                 double custLon = o.Longitude ?? 0;
 
+                double birdDistance = Tools.BirdDistance(
+                    companyLat, companyLon,
+                    custLat, custLon);
+
                 if (custLat == 0 && custLon == 0 && !string.IsNullOrWhiteSpace(o.CustomerAddress))
                 {
                     try
@@ -1461,10 +1465,10 @@ internal static class OrderManager
                 }
 
                 // Bird distance is measured from the company (per your project design)
-                var birdDistance = Tools.BirdDistance(companyLat, companyLon, custLat, custLon);
+                var Distance = Tools.CalculateRouteDistanceAsync(companyLat, companyLon, custLat, custLon).GetAwaiter().GetResult();
 
                 // Filter by courier personal max distance (if defined)
-                if (courier.MaxDistance != null && birdDistance > courier.MaxDistance.Value)
+                if (courier.MaxDistance != null && Distance > courier.MaxDistance.Value)
                     continue;
 
                 // Added time since order creation
@@ -1472,7 +1476,7 @@ internal static class OrderManager
 
                 // Estimated delivery time:
                 // Use courier transport speed from config; estimate from "now" using bird distance.
-                DateTime? estArrival = Tools.EstimateArrival(now, courier.Transport, birdDistance);
+                DateTime? estArrival = Tools.EstimateArrival(now, courier.Transport, Distance);
 
                 TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
 
@@ -1497,7 +1501,7 @@ internal static class OrderManager
                         : null,
                     CustomerAddress = o.CustomerAddress ?? string.Empty,
                     BirdDistance = birdDistance,
-                    Distance = birdDistance,
+                    Distance = Distance,
                     AddedTime = addedTime,
                     ScheduleStatus = scheduleStatus,
                     EstimatedDeliveryTime = estSpan,

@@ -212,6 +212,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // Stop simulator if running
             if (_simulatorRunning)
             {
+                s_bl.Admin.Stop();
                 _simulatorRunning = false;
             }
 
@@ -430,12 +431,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _orderListWindowInstance.Show();
     }
 
-    private bool _simulatorRunning = false;
 
     // =======================================================
     //          SIMULATOR CONTROL
     // =======================================================
-    
+
+    private bool _simulatorRunning = false;
+   
     private void SimulatorToggle_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -457,8 +459,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             else
             {
+                string SimulatorIntervalInputText = SimulatorIntervalInput.Text;
+                SimulatorIntervalInputText = SimulatorIntervalInputText.Replace('.', ',');
                 // Start simulator
-                if (!int.TryParse(SimulatorIntervalInput.Text, out int interval) || interval <= 0)
+                if (!double.TryParse(SimulatorIntervalInputText, out double interval) || interval < 0)
                 {
                     MessageBox.Show("Please enter a valid positive number for clock speed.",
                                     "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);

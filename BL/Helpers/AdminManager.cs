@@ -204,7 +204,7 @@ internal static class AdminManager //stage 4
     /// The Interval for clock updating
     /// in minutes by second (default value is 1, will be set on Start())    
     /// </summary>
-    private static int s_interval = 1;
+    private static double s_interval = 1;
     /// <summary>
     /// The flag that signs whether simulator is running
     /// 
@@ -218,7 +218,7 @@ internal static class AdminManager //stage 4
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7                                                 
-    internal static void Start(int interval)
+    internal static void Start(double interval)
     {
         if (s_thread is null)
         {
