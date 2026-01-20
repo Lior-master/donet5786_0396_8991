@@ -860,7 +860,7 @@ internal static class CourierManager
         HashSet<int> updatedCourierIds,
         HashSet<int> updatedOrderIds)
     {
-        const double CANCELLATION_PROBABILITY = 0.10;
+        const double CANCELLATION_PROBABILITY = 0.03;
         TimeSpan minDeliveryDuration = TimeSpan.FromMinutes(15);
 
         try
@@ -919,53 +919,56 @@ internal static class CourierManager
                                  statusRoll < 0.98 ? BO.DeliveredStatus.Absent :
                                  BO.DeliveredStatus.Failed;
 
-                lock (AdminManager.BlMutex) // stage 7
-                {
-                    var updatedDelivery = delivery with
-                    {
-                        ArrivalTime = now,
-                        DeliveredStatus = (DO.DeliveredStatus)deliveryStatus
-                    };
 
-                    try
+
+                var updatedDelivery = delivery with
+                {
+                    ArrivalTime = now,
+                    DeliveredStatus = (DO.DeliveredStatus)deliveryStatus
+                };
+
+                try
+                {
+                    lock (AdminManager.BlMutex)
                     {
                         s_dal.Delivery.Update(updatedDelivery);
-                        notificationNeeded = true;
-                        updatedCourierIds.Add(courier.Id);
-                        updatedOrderIds.Add(delivery.OrderId);
                     }
-                    catch
-                    {
-                        // silently ignore (might have been updated elsewhere)
-                    }
+                    notificationNeeded = true;
+                    updatedCourierIds.Add(courier.Id);
+                    updatedOrderIds.Add(delivery.OrderId);
+                }
+                catch
+                {
+                    // silently ignore (might have been updated elsewhere)
                 }
             }
+
             else if (random.NextDouble() < CANCELLATION_PROBABILITY)
             {
-                lock (AdminManager.BlMutex) // stage 7
+
+                try
                 {
-                    try
+                    var cancelledDelivery = delivery with
                     {
-                        var cancelledDelivery = delivery with
-                        {
-                            ArrivalTime = now,
-                            DeliveredStatus = DO.DeliveredStatus.Canceled
-                        };
+                        ArrivalTime = now,
+                        DeliveredStatus = DO.DeliveredStatus.Canceled
+                    };
 
+                    lock (AdminManager.BlMutex) // stage 7
                         s_dal.Delivery.Update(cancelledDelivery);
-                        notificationNeeded = true;
-                        updatedCourierIds.Add(courier.Id);
-                        updatedOrderIds.Add(delivery.OrderId);
+                    notificationNeeded = true;
+                    updatedCourierIds.Add(courier.Id);
+                    updatedOrderIds.Add(delivery.OrderId);
 
-                        System.Diagnostics.Debug.WriteLine(
-                            $"Delivery {delivery.Id} for order {delivery.OrderId} cancelled by admin (insufficient time elapsed)");
-                    }
-                    catch
-                    {
-                        // silently ignore
-                    }
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Delivery {delivery.Id} for order {delivery.OrderId} cancelled by admin (insufficient time elapsed)");
+                }
+                catch
+                {
+                    // silently ignore
                 }
             }
+
         }
         catch (Exception ex)
         {
