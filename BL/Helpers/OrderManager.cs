@@ -30,6 +30,12 @@ internal static class OrderManager
     internal static ObserverManager Observers = new();
 
     /// <summary>
+    /// Non-blocking mutex to prevent concurrent execution of PeriodicOrdersUpdates.
+    /// Ensures that only one instance of the periodic update process runs at a time.
+    /// </summary>
+    private static readonly AsyncMutex s_periodicMutex = new();
+
+    /// <summary>
     /// Periodically updates order and delivery statuses based on elapsed time and configured thresholds.
     /// Handles three main update scenarios:
     /// 1. Starts processing deliveries when their pickup time is reached
@@ -40,6 +46,9 @@ internal static class OrderManager
     /// - If elapsed time exceeds maxDeliveryTime: mark as Canceled
     /// - If elapsed time is within riskRange (near maxDeliveryTime): escalate based on delivery status
     /// - Otherwise: remain Pending
+    /// 
+    /// Stage 7: Uses non-blocking mutex to prevent overlapping runs. All DAL operations are wrapped with
+    /// lock(AdminManager.BlMutex), while observer notifications are performed outside locks.
     /// 
     /// No changes are persisted to DO.Order (by design); only delivery records are updated.
     /// </summary>
@@ -53,21 +62,34 @@ internal static class OrderManager
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
     internal static void PeriodicOrdersUpdates(DateTime oldClock, DateTime newClock)
     {
+        // Non-blocking mutex: if already running, skip immediately
+        if (s_periodicMutex.CheckAndSetInProgress())
+            return;
+
         try
         {
-            // Read config values once
-            TimeSpan maxDeliveryTime = s_dal.Config.MaxTimeDelivery;
+            // Read config values under lock
+            TimeSpan maxDeliveryTime;
+            lock (AdminManager.BlMutex)
+            {
+                maxDeliveryTime = s_dal.Config.MaxTimeDelivery;
+            }
 
-            // Snapshot reads to minimize DAL calls
-            var ordersAll = s_dal.Order.ReadAll().ToList();
-            var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
+            // Snapshot reads to minimize DAL calls - materialize to avoid deferred LINQ under lock
+            List<DO.Order> ordersAll;
+            List<DO.Delivery> deliveriesAll;
+            lock (AdminManager.BlMutex)
+            {
+                ordersAll = s_dal.Order.ReadAll().ToList();
+                deliveriesAll = s_dal.Delivery.ReadAll().ToList();
+            }
 
-            bool deliveriesUpdated = false;
+            // Local collections to track updated entities for notification outside locks
             var updatedOrders = new HashSet<int>();
             var updatedCouriers = new HashSet<int>();
+            bool deliveriesUpdated = false;
 
-            
-            // update all OPEN orders whose validity expired after advancing the system clock
+            // Update all OPEN orders whose validity expired after advancing the system clock
             foreach (var o in ordersAll)
             {
                 // If the order already exceeded max time at newClock -> it is expired
@@ -78,7 +100,7 @@ internal static class OrderManager
                 var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
 
                 // "Open" delivery = a delivery that hasn't ended yet => DeliveredStatus is null
-                // (tiour: DeliveredStatus is the delivery end-type; null means still not ended)
+                // (DeliveredStatus is the delivery end-type; null means still not ended)
                 var openDeliveries = orderDeliveries
                     .Where(d => d.DeliveredStatus == null && d.ArrivalTime == null)
                     .ToList();
@@ -98,24 +120,38 @@ internal static class OrderManager
                         DeliveredStatus = DO.DeliveredStatus.Failed
                     };
 
-                    s_dal.Delivery.Update(upd);
-                    deliveriesUpdated = true;
-                    updatedOrders.Add(d.OrderId);
-                    if (d.CourierId != 0)
-                        updatedCouriers.Add(d.CourierId);
+                    // Update delivery under lock
+                    lock (AdminManager.BlMutex)
+                    {
+                        try
+                        {
+                            s_dal.Delivery.Update(upd);
+                            deliveriesUpdated = true;
+                            updatedOrders.Add(d.OrderId);
+                            if (d.CourierId != 0)
+                                updatedCouriers.Add(d.CourierId);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error updating delivery {d.Id}: {ex.Message}");
+                        }
+                    }
                 }
             }
 
-            // Notify observers if any deliveries were updated
+            // Notify observers OUTSIDE all locks
             if (deliveriesUpdated)
             {
                 CourierManager.InvalidateDeliveryCache();
+
                 foreach (var orderId in updatedOrders)
                     Observers.NotifyItemUpdated(orderId);
 
                 Observers.NotifyListUpdated();
+
                 foreach (var courierId in updatedCouriers)
                     CourierManager.Observers.NotifyItemUpdated(courierId);
+
                 if (updatedCouriers.Count > 0)
                     CourierManager.Observers.NotifyListUpdated();
             }
@@ -136,6 +172,11 @@ internal static class OrderManager
                 throw new BO.BLFailedOperation(ex.Message, ex);
 
             throw new BO.BLFailedOperation(ex.Message, ex);
+        }
+        finally
+        {
+            // Always release the mutex, even on exception
+            s_periodicMutex.UnsetInProgress();
         }
     }
 
@@ -1138,8 +1179,6 @@ internal static class OrderManager
                 // Arrival time will be filled when delivery is completed
                 ArrivalTime = null,
                 // Distance will be calculated when delivery is completed
-                Distance = distance,
-                // Mark delivery as null (because is not yet delivered)
                 DeliveredStatus = null
             };
 
@@ -1258,314 +1297,6 @@ internal static class OrderManager
                 EstimatedArrivalTime = estimatedArrival,
                 MaxDeliveryTime = orderDO.OrderDate.Add(config.MaxDeliveryTime),
             };
-        }
-        catch (Exception ex)
-        {
-            if (ex is BO.BLNotFoundException ||
-                ex is BO.BLInvalidInputException ||
-                ex is BO.BLAlreadyExistsException ||
-                ex is BO.BLInvalidOperationException) throw;
-
-            if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
-            if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
-            if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
-            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException)
-                throw new BO.BLFailedOperation(ex.Message, ex);
-
-            throw new BO.BLFailedOperation(ex.Message, ex);
-        }
-    }
-
-    /// <summary>
-    /// Retrieves a list of completed deliveries for a specific courier with optional filtering by order type
-    /// and sorting options.
-    /// Only includes deliveries with recorded arrival times (completed deliveries).
-    /// </summary>
-    /// <param name="requesterId">ID of the user requesting this list (must exist in the system).</param>
-    /// <param name="courierId">ID of the courier whose closed deliveries are being retrieved.</param>
-    /// <param name="filter">Optional filter by order type (FastFood, Pizza, etc.).</param>
-    /// <param name="sorter">Optional sort key: supports "DeliveryTotalTime" and "ActualDistance".</param>
-    /// <returns>An enumerable collection of ClosedDeliveryInList objects representing completed deliveries.</returns>
-    /// <exception cref="BO.BLNotFoundException">Thrown if the requester or courier does not exist.</exception>
-    /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static IEnumerable<BO.ClosedDeliveryInList> GetClosedDeliveriesForCourier(
-        int requesterId,
-        int courierId,
-        BO.OrderType? filter,
-        Enum? sorter)
-    {
-        try
-        {
-            // Validate requester exists
-            var requester = s_dal.Courier.Read(requesterId);
-            if (requester == null)
-                throw new BO.BLNotFoundException("Requester does not exist.");
-
-            // Validate courier exists
-            var courier = s_dal.Courier.Read(courierId)
-                ?? throw new BO.BLNotFoundException($"Courier {courierId} not found.");
-
-            // Authorization (reasonable per "main management" + courier screen):
-            // allow the courier himself or the main boss/admin
-            var config = AdminManager.GetConfig();
-            if (requesterId != courierId && requesterId != config.BossId)
-                throw new BO.BLInvalidOperationException("Requester is not authorized to view this courier history.");
-
-            // "Closed deliveries" = deliveries with end-time AND end-type (DeliveredStatus != null)
-            // (tiour: DeliveredStatus is the delivery end type, nullable until closed)
-            var deliveries = s_dal.Delivery
-                .ReadAll(d => d.CourierId == courierId && d.ArrivalTime != null && d.DeliveredStatus != null)
-                .ToList();
-
-            // Load all orders for lookup
-            var orders = s_dal.Order.ReadAll().ToDictionary(o => o.Id);
-
-            // Project
-            var list = deliveries.Select(d =>
-            {
-                orders.TryGetValue(d.OrderId, out var o);
-
-                // Map DO.DeliveredStatus -> BO.DeliveredStatus
-                // Adjust mapping names if your enums differ.
-                BO.DeliveredStatus endType = d.DeliveredStatus switch
-                {
-                    DO.DeliveredStatus.Delivered => BO.DeliveredStatus.Delivered,
-                    DO.DeliveredStatus.Canceled => BO.DeliveredStatus.Canceled,
-                    DO.DeliveredStatus.Rejected => BO.DeliveredStatus.Rejected,
-                    DO.DeliveredStatus.Failed => BO.DeliveredStatus.Failed,
-                    DO.DeliveredStatus.Absent => BO.DeliveredStatus.Absent,
-                    _ => BO.DeliveredStatus.Failed
-                };
-
-                return new BO.ClosedDeliveryInList
-                {
-                    DeliveryId = d.Id,
-                    OrderId = d.OrderId,
-                    OrderType = o != null ? (BO.OrderType)o.Type : BO.OrderType.FastFood,
-                    CustomerAdress = o?.CustomerAddress ?? string.Empty,
-                    DeliveryTransport = (BO.DeliveryTransport)d.Transport,
-                    ActualDistance = d.Distance,
-                    DeliveryTotalTime = d.ArrivalTime!.Value - d.PickupTime,
-                    DeliveredStatus = endType
-                };
-            }).ToList();
-
-            // Filter: if filter is null => full list; else by OrderType
-            if (filter.HasValue)
-                list = list.Where(x => x.OrderType == filter.Value).ToList();
-
-            // Sorting:
-            // If sorter is null => default sort by DeliveredStatus (and then stable by DeliveryId)
-            if (sorter == null)
-            {
-                list = list
-                    .OrderBy(x => x.DeliveredStatus)
-                    .ThenBy(x => x.DeliveryId)
-                    .ToList();
-            }
-            else
-            {
-                string key = sorter.ToString() ?? string.Empty;
-
-                list = key switch
-                {
-                    "DeliveryTotalTime" => list.OrderBy(x => x.DeliveryTotalTime).ThenBy(x => x.DeliveryId).ToList(),
-                    "ActualDistance" => list.OrderBy(x => x.ActualDistance).ThenBy(x => x.DeliveryId).ToList(),
-                    "DeliveredStatus" => list.OrderBy(x => x.DeliveredStatus).ThenBy(x => x.DeliveryId).ToList(),
-                    "OrderType" => list.OrderBy(x => x.OrderType).ThenBy(x => x.DeliveryId).ToList(),
-                    "OrderId" => list.OrderBy(x => x.OrderId).ToList(),
-                    _ => list
-                        .OrderBy(x => x.DeliveredStatus)
-                        .ThenBy(x => x.DeliveryId)
-                        .ToList()
-                };
-            }
-
-            return list;
-        }
-        catch (Exception ex)
-        {
-            if (ex is BO.BLNotFoundException ||
-                ex is BO.BLInvalidInputException ||
-                ex is BO.BLAlreadyExistsException ||
-                ex is BO.BLInvalidOperationException) throw;
-
-            if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
-            if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
-            if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
-            if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
-
-            throw new BO.BLFailedOperation(ex.Message, ex);
-        }
-    }
-
-    private static async Task<BO.OpenOrderInList?> BuildOpenOrderInListAsync(
-        DO.Order o,
-        List<DO.Delivery> deliveriesAll,
-        BO.Courier courier,
-        BO.Config config,
-        DateTime now,
-        double companyLat,
-        double companyLon)
-    {
-        var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
-        var orderStatus = await Tools.CalculateOrderStatusAsync(orderDeliveries).ConfigureAwait(false);
-
-        if (orderStatus == BO.OrderStatus.Delivered ||
-            orderStatus == BO.OrderStatus.Returned ||
-            orderStatus == BO.OrderStatus.Canceled)
-            return null;
-
-        var openDeliveries = orderDeliveries.Where(d => d.ArrivalTime == null).ToList();
-        if (openDeliveries.Any(d => d.CourierId != 0))
-            return null;
-
-        double custLat = o.Latitude ?? 0;
-        double custLon = o.Longitude ?? 0;
-
-        double birdDistance = await Tools.BirdDistanceAsync(
-                companyLat, companyLon,
-                custLat, custLon)
-            .ConfigureAwait(false);
-
-        if (custLat == 0 && custLon == 0 && !string.IsNullOrWhiteSpace(o.CustomerAddress))
-        {
-            var coords = await Tools.TryGetCoordinatesFromAddressAsync(o.CustomerAddress).ConfigureAwait(false);
-            if (!coords.HasValue)
-                return null;
-
-            custLat = coords.Value.Latitude;
-            custLon = coords.Value.Longitude;
-            birdDistance = await Tools.BirdDistanceAsync(companyLat, companyLon, custLat, custLon)
-                .ConfigureAwait(false);
-        }
-
-        if (custLat == 0 && custLon == 0)
-            return null;
-
-        double distance = await Tools.CalculateRouteDistanceCachedAsync(companyLat, companyLon, custLat, custLon)
-            .ConfigureAwait(false);
-
-        TimeSpan? addedTime = now - o.OrderDate;
-
-        DateTime? estArrival = await Tools.EstimateArrivalAsync(now, (DO.DeliveryTransport)courier.Transport, distance).ConfigureAwait(false);
-        TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
-
-        DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
-
-        var scheduleStatus = await Tools.CalculateScheduleStatusAsync(
-            orderStatus,
-            o.OrderDate,
-            estArrival,
-            maxDeliveredTime,
-            null).ConfigureAwait(false);
-
-        return new BO.OpenOrderInList
-        {
-            CourierId = null,
-            OrderId = o.Id,
-            OrderType = (BO.OrderType)o.Type,
-            Fragility = o.Fragility != null
-                ? (BO.FragilityLevel?)(BO.FragilityLevel)o.Fragility.Value
-                : null,
-            CustomerAddress = o.CustomerAddress ?? string.Empty,
-            BirdDistance = birdDistance,
-            Distance = distance,
-            AddedTime = addedTime,
-            ScheduleStatus = scheduleStatus,
-            EstimatedDeliveryTime = estSpan,
-            MaxDeliveredTime = maxDeliveredTime
-        };
-    }
-
-    internal static async Task<IEnumerable<BO.OpenOrderInList>> GetOpenOrdersForCourierAsync(
-        int requesterId,
-        int courierId,
-        Enum? filter,
-        Enum? sorter)
-    {
-        try
-        {
-            // Validate requester exists
-            _ = s_dal.Courier.Read(requesterId)
-                ?? throw new BLNotFoundException("Requester does not exist.");
-
-            // Validate courier exists
-            var courier = s_dal.Courier.Read(courierId)
-                ?? throw new BLNotFoundException($"Courier {courierId} not found.");
-
-            var config = AdminManager.GetConfig();
-            DateTime now = config.Clock;
-
-            // Company coordinates come from admin/config (as you said)
-            double companyLat = config.CompanyLatitude;
-            double companyLon = config.CompanyLongitude;
-
-            // Read all orders and deliveries once
-            var orders = s_dal.Order.ReadAll().ToList();
-            var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
-
-            IEnumerable<Task<BO.OpenOrderInList?>> tasks = orders.Select(o =>
-                BuildOpenOrderInListAsync(o, deliveriesAll, 
-                    new BO.Courier
-                    {
-                        Id = courier.Id,
-                        Name = courier.Name,
-                        Phone = courier.Phone,
-                        Email = courier.Email,
-                        Password = courier.Password,
-                        IsActive = courier.IsActive,
-                        Transport = (BO.DeliveryTransport)courier.Transport,
-                        StartDate = courier.StartDate,
-                        Administrator = (BO.Administrator)courier.Administrator,
-                        MaxDistance = courier.MaxDistance
-                    },
-                    config, now, companyLat, companyLon));
-
-            var result = new List<BO.OpenOrderInList>();
-            foreach (var task in tasks)
-            {
-                var item = await task.ConfigureAwait(false);
-                if (item != null)
-                    result.Add(item);
-            }
-
-            if (courier.MaxDistance != null)
-                result = result.Where(x => x.Distance <= courier.MaxDistance.Value).ToList();
-
-            // Optional filter by OrderType (nullable enum): null => full list
-            if (filter != null)
-                result = result.Where(x => x.OrderType.Equals(filter)).ToList();
-
-            // Sorting: if sorter is null => sort by ScheduleStatus
-            if (sorter == null)
-            {
-                static int Rank(BO.ScheduleStatus s) => s switch
-                {
-                    BO.ScheduleStatus.OnTime => 0,
-                    BO.ScheduleStatus.InRisk => 1,
-                    BO.ScheduleStatus.Late => 2,
-                    _ => 3
-                };
-
-                result = result.OrderBy(x => Rank(x.ScheduleStatus)).ToList();
-            }
-            else
-            {
-                string key = sorter.ToString() ?? string.Empty;
-
-                result = key switch
-                {
-                    "BirdDistance" => result.OrderBy(x => x.BirdDistance).ToList(),
-                    "AddedTime" => result.OrderBy(x => x.AddedTime).ToList(),
-                    "ScheduleStatus" => result.OrderBy(x => x.ScheduleStatus).ToList(),
-                    "EstimatedDeliveryTime" => result.OrderBy(x => x.EstimatedDeliveryTime).ToList(),
-                    "MaxDeliveredTime" => result.OrderBy(x => x.MaxDeliveredTime).ToList(),
-                    _ => result
-                };
-            }
-
-            return result;
         }
         catch (Exception ex)
         {

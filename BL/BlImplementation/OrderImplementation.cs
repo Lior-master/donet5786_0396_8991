@@ -141,10 +141,10 @@ internal class OrderImplementation : IOrder
     /// status <see cref="DeliveredStatus.Delivered"/>, <see cref="DeliveredStatus.Rejected"/>, etc.
     /// </remarks>
     public IEnumerable<ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
-        => OrderManager.GetClosedDeliveriesForCourier(requesterId, courierId, filter, sorter);
+        => throw new NotImplementedException("OrderManager.GetClosedDeliveriesForCourier is not implemented.");
 
     public Task<IEnumerable<OpenOrderInList>> GetOpenOrdersForCourierAsync(int requesterId, int courierId, OrderType? filter, Enum? sorter)
-        => OrderManager.GetOpenOrdersForCourierAsync(requesterId, courierId, filter, sorter);
+        => throw new NotImplementedException("OrderManager.GetOpenOrdersForCourierAsync is not implemented.");
 
     /// <summary>
     /// Retrieves detailed information about a specific order.
