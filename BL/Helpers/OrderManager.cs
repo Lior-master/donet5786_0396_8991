@@ -1119,6 +1119,12 @@ internal static class OrderManager
                         $"order is already assigned to courier {active.CourierId} ({assignedName}) since {active.PickupTime:yyyy-MM-dd HH:mm}.");
                 }
 
+                if (deliveriesForOrder.Any(d => d.DeliveredStatus == DO.DeliveredStatus.Delivered))
+                {
+                    throw new BO.BLInvalidOperationException(
+                        $"Cannot assign order {orderId} to courier {courierId}: order was already delivered.");
+                }
+
                 // Check terminal order status from deliveries history
                 var orderStatus = Tools.CalculateOrderStatus(deliveriesForOrder);
                 if (orderStatus == BO.OrderStatus.Delivered ||
@@ -1379,13 +1385,8 @@ internal static class OrderManager
                         if (ods.Count == 0)
                             return true;
 
-                        if (ods.Any(d => d.ArrivalTime == null))
-                            return false;
-
-                        return !ods.All(d =>
-                            d.DeliveredStatus == DO.DeliveredStatus.Delivered ||
-                            d.DeliveredStatus == DO.DeliveredStatus.Rejected ||
-                            d.DeliveredStatus == DO.DeliveredStatus.Canceled);
+                        var status = Tools.CalculateOrderStatus(ods);
+                        return status == BO.OrderStatus.Pending;
                     })
                     .ToList();
             }
