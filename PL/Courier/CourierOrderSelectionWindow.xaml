@@ -103,147 +103,156 @@
         </Border>
 
         <!-- Orders List -->
-        <ListBox x:Name="lstOpenOrders"
-                 Grid.Row="2"
-                 Margin="6"
-                 ItemsSource="{Binding OpenOrders}"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 Background="White"
-                 BorderBrush="#DDD">
+        <Grid Grid.Row="2" Margin="6">
+            <ListBox x:Name="lstOpenOrders"
+                     ItemsSource="{Binding OpenOrders}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     Background="White"
+                     BorderBrush="#DDD">
 
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Border Style="{StaticResource OrderCardStyle}"
-                            BorderThickness="2"
-                            Margin="3"
-                            Padding="12"
-                            CornerRadius="6">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource OrderCardStyle}"
+                                BorderThickness="2"
+                                Margin="3"
+                                Padding="12"
+                                CornerRadius="6">
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0">
+                                <StackPanel Grid.Column="0">
 
-                                <!-- Order ID + Type -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <TextBlock Text="🚚 Order #" FontWeight="Bold" Foreground="#007BFF"/>
-                                    <TextBlock Text="{Binding OrderId}" FontWeight="Bold" Foreground="#007BFF"/>
-                                    <TextBlock Text=" - " Margin="5,0" Foreground="#666"/>
-                                    <TextBlock Text="{Binding OrderType}" FontWeight="SemiBold" Foreground="#6F42C1"/>
+                                    <!-- Order ID + Type -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <TextBlock Text="🚚 Order #" FontWeight="Bold" Foreground="#007BFF"/>
+                                        <TextBlock Text="{Binding OrderId}" FontWeight="Bold" Foreground="#007BFF"/>
+                                        <TextBlock Text=" - " Margin="5,0" Foreground="#666"/>
+                                        <TextBlock Text="{Binding OrderType}" FontWeight="SemiBold" Foreground="#6F42C1"/>
 
-                                    <!-- Fragility (optional) -->
-                                    <TextBlock Text="{Binding Fragility, StringFormat=' ({0})'}"
-                                               Foreground="#DC3545"
-                                               FontStyle="Italic">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Fragility}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                        <!-- Fragility (optional) -->
+                                        <TextBlock Text="{Binding Fragility, StringFormat=' ({0})'}"
+                                                   Foreground="#DC3545"
+                                                   FontStyle="Italic">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Fragility}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
 
-                                    <!-- Urgent indicator -->
-                                    <TextBlock Text=" 🚨 URGENT"
-                                               Foreground="#DC3545"
-                                               FontWeight="Bold"
-                                               Margin="10,0,0,0">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding ScheduleStatus}" Value="Late">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                        <!-- Urgent indicator -->
+                                        <TextBlock Text=" 🚨 URGENT"
+                                                   Foreground="#DC3545"
+                                                   FontWeight="Bold"
+                                                   Margin="10,0,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ScheduleStatus}" Value="Late">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Address -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <TextBlock Text="📍 " FontSize="14"/>
+                                        <TextBlock Text="{Binding CustomerAddress}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="#333"
+                                                   MaxWidth="450"/>
+                                    </StackPanel>
+
+                                    <!-- Bird distance -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <TextBlock Text="📏 Distance: " Foreground="#666"/>
+                                        <TextBlock Text="{Binding BirdDistance, StringFormat='{}{0:F1} km'}"
+                                                   Foreground="#333"/>
+                                        <TextBlock Text=" (direct)" Foreground="#999" FontStyle="Italic"/>
+                                    </StackPanel>
+
+                                    <!-- Timing -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <TextBlock Text="⏱️ Est. Delivery: " Foreground="#666"/>
+                                        <TextBlock Text="{Binding EstimatedDeliveryTime, StringFormat='{}{0:hh\\:mm}'}"
+                                                   Foreground="#333"/>
+
+                                        <TextBlock Text=" | Deadline: " Margin="10,0,0,0" Foreground="#666"/>
+                                        <TextBlock Text="{Binding MaxDeliveredTime, StringFormat='{}{0:HH:mm}'}"
+                                                   Foreground="#DC3545"
+                                                   FontWeight="SemiBold"/>
+                                    </StackPanel>
+
+                                    <!-- Status + AddedTime (optional) -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <TextBlock Text="📊 Status: " Foreground="#666"/>
+                                        <TextBlock Text="{Binding ScheduleStatus}" Style="{StaticResource StatusTextStyle}"/>
+
+                                        <TextBlock Text=" | Added: " Margin="10,0,0,0" Foreground="#666">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding AddedTime}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
+                                        <TextBlock Foreground="#333"
+                                                   Text="{Binding AddedTime, StringFormat='{}{0:hh\\:mm} ago'}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding AddedTime}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+
                                 </StackPanel>
 
-                                <!-- Address -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <TextBlock Text="📍 " FontSize="14"/>
-                                    <TextBlock Text="{Binding CustomerAddress}"
-                                               TextWrapping="Wrap"
-                                               Foreground="#333"
-                                               MaxWidth="450"/>
-                                </StackPanel>
+                                <!-- Choose button -->
+                                <Button Grid.Column="1"
+                                        Style="{StaticResource DynamicChooseButtonStyle}"
+                                        Click="BtnChooseOrder_Click"
+                                        VerticalAlignment="Center"
+                                        Margin="10,0,0,0"/>
+                            </Grid>
 
-                                <!-- Bird distance -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <TextBlock Text="📏 Distance: " Foreground="#666"/>
-                                    <TextBlock Text="{Binding BirdDistance, StringFormat='{}{0:F1} km'}"
-                                               Foreground="#333"/>
-                                    <TextBlock Text=" (direct)" Foreground="#999" FontStyle="Italic"/>
-                                </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
-                                <!-- Timing -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <TextBlock Text="⏱️ Est. Delivery: " Foreground="#666"/>
-                                    <TextBlock Text="{Binding EstimatedDeliveryTime, StringFormat='{}{0:hh\\:mm}'}"
-                                               Foreground="#333"/>
-
-                                    <TextBlock Text=" | Deadline: " Margin="10,0,0,0" Foreground="#666"/>
-                                    <TextBlock Text="{Binding MaxDeliveredTime, StringFormat='{}{0:HH:mm}'}"
-                                               Foreground="#DC3545"
-                                               FontWeight="SemiBold"/>
-                                </StackPanel>
-
-                                <!-- Status + AddedTime (optional) -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <TextBlock Text="📊 Status: " Foreground="#666"/>
-                                    <TextBlock Text="{Binding ScheduleStatus}" Style="{StaticResource StatusTextStyle}"/>
-
-                                    <TextBlock Text=" | Added: " Margin="10,0,0,0" Foreground="#666">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding AddedTime}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-
-                                    <TextBlock Foreground="#333"
-                                               Text="{Binding AddedTime, StringFormat='{}{0:hh\\:mm} ago'}">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding AddedTime}" Value="{x:Null}">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </StackPanel>
-
-                            </StackPanel>
-
-                            <!-- Choose button -->
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource DynamicChooseButtonStyle}"
-                                    Click="BtnChooseOrder_Click"
-                                    VerticalAlignment="Center"
-                                    Margin="10,0,0,0"/>
-                        </Grid>
-
-                    </Border>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+            <Border Background="#80FFFFFF"
+                    IsHitTestVisible="False"
+                    Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <ProgressBar Width="220" Height="8" IsIndeterminate="True"/>
+                    <TextBlock Text="Loading open orders..." Margin="0,8,0,0" Foreground="#666" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
 
         <!-- Footer -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="6">

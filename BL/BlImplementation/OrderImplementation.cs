@@ -5,6 +5,7 @@ using BO;
 using Helpers;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Implementation of the <see cref="IOrder"/> interface that provides business logic operations
@@ -70,8 +71,8 @@ internal class OrderImplementation : IOrder
     /// Authorization is validated by the <see cref="OrderManager"/>. The order will be assigned a unique ID
     /// and initial status of <see cref="OrderStatus.Pending"/>. All registered observers will be notified of this change.
     /// </remarks>
-    public void AddOrder(int requesterId, Order order)
-        => OrderManager.AddOrder(requesterId, order);
+    public Task AddOrderAsync(int requesterId, Order order)
+        => OrderManager.AddOrderAsync(requesterId, order);
 
     /// <summary>
     /// Assigns an open order to a specific courier for delivery.
@@ -83,11 +84,11 @@ internal class OrderImplementation : IOrder
     /// Authorization is validated by the <see cref="OrderManager"/>. The order's status is typically updated
     /// to <see cref="OrderStatus.Processing"/> upon successful assignment. All registered observers will be notified.
     /// </remarks>
-    public void AssignOrderToCourier(int requesterId, int orderId, int courierId)
-        => OrderManager.AssignOrderToCourier(requesterId, orderId, courierId);
+    public Task AssignOrderToCourierAsync(int requesterId, int orderId, int courierId)
+        => OrderManager.AssignOrderToCourierAsync(requesterId, orderId, courierId);
 
-    public OrderInProgress GetOrderInProgressSnapshot(int requesterId, int courierId, int orderId)
-        => OrderManager.GetOrderInProgressSnapshot(requesterId, courierId, orderId);
+    public Task<OrderInProgress> GetOrderInProgressSnapshotAsync(int requesterId, int courierId, int orderId)
+        => OrderManager.GetOrderInProgressSnapshotAsync(requesterId, courierId, orderId);
 
     /// <summary>
     /// Cancels an open order, preventing it from being processed or delivered.
@@ -112,8 +113,8 @@ internal class OrderImplementation : IOrder
     /// Authorization is validated by the <see cref="OrderManager"/>. The delivery status is updated to reflect
     /// the completion state (e.g., <see cref="DeliveredStatus.Delivered"/>). All registered observers will be notified.
     /// </remarks>
-    public void FinishOrder(int requesterId, int courierId, int deliveryId,BO.DeliveredStatus deliveredStatus)
-        => OrderManager.FinishOrder(requesterId, courierId, deliveryId,deliveredStatus);
+    public Task FinishOrderAsync(int requesterId, int courierId, int deliveryId,BO.DeliveredStatus deliveredStatus)
+        => OrderManager.FinishOrderAsync(requesterId, courierId, deliveryId,deliveredStatus);
 
     /// <summary>
     /// Retrieves a filtered and sorted list of closed (completed) deliveries for a specific courier.
@@ -130,8 +131,8 @@ internal class OrderImplementation : IOrder
     public IEnumerable<ClosedDeliveryInList> GetClosedDeliveriesForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
         => OrderManager.GetClosedDeliveriesForCourier(requesterId, courierId, filter, sorter);
 
-    public IEnumerable<OpenOrderInList> GetOpenOrdersForCourier(int requesterId, int courierId, OrderType? filter, Enum? sorter)
-        => OrderManager.GetOpenOrdersForCourier(requesterId, courierId, filter, sorter);
+    public Task<IEnumerable<OpenOrderInList>> GetOpenOrdersForCourierAsync(int requesterId, int courierId, OrderType? filter, Enum? sorter)
+        => OrderManager.GetOpenOrdersForCourierAsync(requesterId, courierId, filter, sorter);
 
     /// <summary>
     /// Retrieves detailed information about a specific order.
@@ -144,8 +145,8 @@ internal class OrderImplementation : IOrder
     /// permissions to view the order details. This method returns the complete order information including
     /// delivery address, type, and distance metrics.
     /// </remarks>
-    public Order GetOrderDetails(int requesterId, int orderId)
-        => OrderManager.GetOrderDetails(requesterId, orderId);
+    public Task<Order> GetOrderDetailsAsync(int requesterId, int orderId)
+        => OrderManager.GetOrderDetailsAsync(requesterId, orderId);
 
     /// <summary>
     /// Retrieves a summary of order IDs for a specific requester (typically counts or aggregate statistics).
@@ -156,8 +157,8 @@ internal class OrderImplementation : IOrder
     /// Authorization is validated by the <see cref="OrderManager"/>. The exact semantics of the summary
     /// depends on the requester's role (customer, courier, director, etc.).
     /// </remarks>
-    public IEnumerable<int> GetOrdersBySummary(int requesterId)
-        => OrderManager.GetOrderSummary(requesterId);
+    public Task<IEnumerable<int>> GetOrdersBySummaryAsync(int requesterId)
+        => OrderManager.GetOrderSummaryAsync(requesterId);
 
     /// <summary>
     /// Retrieves a filtered, optionally grouped, and sorted list of orders for a specific requester.
@@ -171,11 +172,11 @@ internal class OrderImplementation : IOrder
     /// Authorization is validated by the <see cref="OrderManager"/>. This method returns lightweight list view models
     /// suitable for display in user interfaces. The specific orders returned depend on the requester's role and permissions.
     /// </remarks>
-    public IEnumerable<OrderInList> orderInLists(int requesterId, Enum? filter, object? Object, Enum? sorter)
-        => OrderManager.orderInLists(requesterId, filter, Object, sorter);
+    public Task<IEnumerable<OrderInList>> orderInListsAsync(int requesterId, Enum? filter, object? Object, Enum? sorter)
+        => OrderManager.orderInListsAsync(requesterId, filter, Object, sorter);
 
-    public IEnumerable<BO.OrderInList> orderInListsDoubleFilter(int requesterId, Enum? filter1, Enum? filter2)
-        => OrderManager.orderInListsDoubleFilter(requesterId,filter1,filter2);
+    public Task<IEnumerable<BO.OrderInList>> orderInListsDoubleFilterAsync(int requesterId, Enum? filter1, Enum? filter2)
+        => OrderManager.orderInListsDoubleFilterAsync(requesterId,filter1,filter2);
 
     /// <summary>
     /// Removes (deletes) an order from the system completely.
@@ -198,6 +199,6 @@ internal class OrderImplementation : IOrder
     /// Authorization is validated by the <see cref="OrderManager"/>. The requester must have appropriate permissions
     /// to modify the order. Updates typically allowed only for certain fields or statuses. All registered observers will be notified.
     /// </remarks>
-    public void UpdateOrderDetails(int requesterId, Order order)
-        => OrderManager.UpdateOrderDetails(requesterId, order);
+    public Task UpdateOrderDetailsAsync(int requesterId, Order order)
+        => OrderManager.UpdateOrderDetailsAsync(requesterId, order);
 }

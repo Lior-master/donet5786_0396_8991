@@ -5,6 +5,7 @@ using System.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Helpers;
 
@@ -412,7 +413,7 @@ internal static class CourierManager
     /// <returns>A Courier object containing full details, performance metrics, and current order information.</returns>
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester or courier ID does not exist.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static BO.Courier GetCourierDetails(int requesterId, int courierId)
+    internal static async Task<BO.Courier> GetCourierDetailsAsync(int requesterId, int courierId)
     {
         try
         {
@@ -476,14 +477,14 @@ internal static class CourierManager
                     {
                         try
                         {
-                            // Geocode customer address and compute route distance from company to customer
-                            (double Lat, double Lon) coord = Tools.GetCoordinatesFromAddressAsync(orderDO.CustomerAddress)
-                                .GetAwaiter().GetResult();
-
-                            distance = Tools.CalculateRouteDistanceAsync(
-                                config.CompanyLatitude, config.CompanyLongitude,
-                                coord.Lat, coord.Lon
-                            ).GetAwaiter().GetResult();
+                            var coord = await Tools.TryGetCoordinatesFromAddressAsync(orderDO.CustomerAddress).ConfigureAwait(false);
+                            if (coord.HasValue)
+                            {
+                                distance = await Tools.CalculateRouteDistanceCachedAsync(
+                                    config.CompanyLatitude, config.CompanyLongitude,
+                                    coord.Value.Latitude, coord.Value.Longitude
+                                ).ConfigureAwait(false);
+                            }
                         }
                         catch
                         {
@@ -785,7 +786,7 @@ internal static class CourierManager
     /// - Order selection probability: 50% (courier "changes mind" sometimes)
     /// - Delivery completion probability: probabilistic based on distance and random wait time
     /// </remarks>
-    internal static void SimulateCourierActivity()
+    internal static async Task SimulateCourierActivityAsync()
     {
         try
         {
@@ -832,8 +833,9 @@ internal static class CourierManager
                 else
                 {
                     // Courier has no active delivery - maybe assign one
-                    HandleCourierOrderSelection(courier, config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds);
-            }
+                    await HandleCourierOrderSelectionAsync(courier, config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds)
+                        .ConfigureAwait(false);
+                }
             }
 
             // Step 4: Trigger notifications outside of locks
@@ -861,7 +863,7 @@ internal static class CourierManager
     /// Decides probabilistically if the courier "chooses" to view available orders,
     /// then probabilistically selects one to start delivery if available.
     /// </summary>
-    private static void HandleCourierOrderSelection(
+    private static async Task HandleCourierOrderSelectionAsync(
         DO.Courier courier,
         BO.Config config,
         DateTime now,
@@ -881,8 +883,8 @@ internal static class CourierManager
         {
             // Get available orders for this courier using existing BL method
             // This replicates what would happen if the courier opened the order selection screen
-            var availableOrders = OrderManager.GetOpenOrdersForCourier(
-                config.BossId, courier.Id, null, null).ToList();
+            var availableOrders = (await OrderManager.GetOpenOrdersForCourierAsync(
+                config.BossId, courier.Id, null, null).ConfigureAwait(false)).ToList();
 
             if (availableOrders.Count == 0)
                 return;
