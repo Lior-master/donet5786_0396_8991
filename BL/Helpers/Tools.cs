@@ -310,11 +310,15 @@ internal static class Tools
     /// </remarks>
     public static DO.Courier UpdateCourierActivity(DO.Courier courier, TimeSpan inactivityThreshold)
     {
-        var lastDeliverie = s_dal.Delivery
-            .ReadAll()
-            .Where(d => d.CourierId == courier.Id)
-            .OrderByDescending(d => d.PickupTime)
-            .FirstOrDefault();
+        DO.Delivery? lastDeliverie; 
+        lock (AdminManager.BlMutex)
+        {
+            lastDeliverie = s_dal.Delivery
+                        .ReadAll()
+                        .Where(d => d.CourierId == courier.Id)
+                        .OrderByDescending(d => d.PickupTime)
+                        .FirstOrDefault();
+        }
 
         if (lastDeliverie is not null && AdminManager.Now - lastDeliverie.ArrivalTime > inactivityThreshold) // last delivery time + threshold
             return courier with { IsActive = false };
