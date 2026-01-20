@@ -78,114 +78,131 @@ internal static class AdminManager //stage 4
     /// <summary>
     /// Method for setting current configuration variables values for any BL class that may need it
     /// </summary>
-    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
-    internal static void SetConfig(BO.Config configuration) //stage 4
+    internal static async Task SetConfigAsync(BO.Config configuration) //stage 4
     {
         bool configChanged = false; // stage 5
+        bool badAddress = false;
+        bool shouldGeocode = false;
+        string companyAddress = configuration.CompanyAddress;
 
-        if (s_dal.Config.BossId != configuration.BossId)
+        lock (BlMutex) //stage 7
         {
-            s_dal.Config.BossId = configuration.BossId;
-            configChanged = true;
+            if (s_dal.Config.BossId != configuration.BossId)
+            {
+                s_dal.Config.BossId = configuration.BossId;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.BossPassword != configuration.BossPassword)
+            {
+                s_dal.Config.BossPassword = configuration.BossPassword;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.CarSpeed != configuration.CarSpeed)
+            {
+                s_dal.Config.CarSpeed = configuration.CarSpeed;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.MotorcycleSpeed != configuration.MotorcycleSpeed)
+            {
+                s_dal.Config.MotorcycleSpeed = configuration.MotorcycleSpeed;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.BikeSpeed != configuration.BikeSpeed)
+            {
+                s_dal.Config.BikeSpeed = configuration.BikeSpeed;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.WalkingSpeed != configuration.WalkingSpeed)
+            {
+                s_dal.Config.WalkingSpeed = configuration.WalkingSpeed;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.MaxTimeDelivery != configuration.MaxDeliveryTime)
+            {
+                s_dal.Config.MaxTimeDelivery = configuration.MaxDeliveryTime;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.RiskRange != configuration.RiskRange)
+            {
+                s_dal.Config.RiskRange = configuration.RiskRange;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.Inactivity != configuration.InactivityThreshold)
+            {
+                s_dal.Config.Inactivity = configuration.InactivityThreshold;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.CompanyAdress != configuration.CompanyAddress)
+            {
+                s_dal.Config.CompanyAdress = configuration.CompanyAddress;
+                s_dal.Config.Latitude = 0;
+                s_dal.Config.Longitude = 0;
+                shouldGeocode = !string.IsNullOrWhiteSpace(companyAddress) &&
+                    !string.Equals(companyAddress.Trim(), Tools.InvalidAddressMarker, StringComparison.OrdinalIgnoreCase);
+                if (string.Equals(companyAddress.Trim(), Tools.InvalidAddressMarker, StringComparison.OrdinalIgnoreCase))
+                    badAddress = true;
+                configChanged = true;
+            }
+
+            if (s_dal.Config.MaxDistance != configuration.MaxDistance)
+            {
+                s_dal.Config.MaxDistance = configuration.MaxDistance;
+                configChanged = true;
+            }
         }
 
-        if (s_dal.Config.BossPassword != configuration.BossPassword)
+        if (shouldGeocode)
         {
-            s_dal.Config.BossPassword = configuration.BossPassword;
-            configChanged = true;
-        }
-
-        if (s_dal.Config.CarSpeed != configuration.CarSpeed)
-        {
-            s_dal.Config.CarSpeed = configuration.CarSpeed;
-            configChanged = true;
-        }
-
-        if (s_dal.Config.MotorcycleSpeed != configuration.MotorcycleSpeed)
-        {
-            s_dal.Config.MotorcycleSpeed = configuration.MotorcycleSpeed;
-            configChanged = true;
-        }
-
-        if (s_dal.Config.BikeSpeed != configuration.BikeSpeed)
-        {
-            s_dal.Config.BikeSpeed = configuration.BikeSpeed;
-            configChanged = true;
-        }
-
-        if (s_dal.Config.WalkingSpeed != configuration.WalkingSpeed)
-        {
-            s_dal.Config.WalkingSpeed = configuration.WalkingSpeed;
-            configChanged = true;
-        }
-
-        if (s_dal.Config.MaxTimeDelivery != configuration.MaxDeliveryTime)
-        {
-            s_dal.Config.MaxTimeDelivery = configuration.MaxDeliveryTime;
-            configChanged = true;
-        }
-
-        if (s_dal.Config.RiskRange != configuration.RiskRange)
-        {
-            s_dal.Config.RiskRange = configuration.RiskRange;
-            configChanged = true;
-        }
-
-        if (s_dal.Config.Inactivity != configuration.InactivityThreshold)
-        {
-            s_dal.Config.Inactivity = configuration.InactivityThreshold;
-            configChanged = true;
-        }
-
-        if (s_dal.Config.CompanyAdress != configuration.CompanyAddress)
-        {
-            s_dal.Config.CompanyAdress = configuration.CompanyAddress;
-            (double lat, double lon) = Tools.GetCoordinatesFromAddressAsync(configuration.CompanyAddress).GetAwaiter().GetResult();
-            s_dal.Config.Latitude = lat;
-            s_dal.Config.Longitude = lon;
-            configChanged = true;
-        }
-
-        //if (s_dal.Config.Latitude != configuration.CompanyLatitude)
-        //{
-        //    s_dal.Config.Latitude = configuration.CompanyLatitude;
-        //    configChanged = true;
-        //}
-
-        //if (s_dal.Config.Longitude != configuration.CompanyLongitude)
-        //{
-        //    s_dal.Config.Longitude = configuration.CompanyLongitude;
-        //    configChanged = true;
-        //}
-
-        if (s_dal.Config.MaxDistance != configuration.MaxDistance)
-        {
-            s_dal.Config.MaxDistance = configuration.MaxDistance;
-            configChanged = true;
+            var coords = await Tools.TryGetCoordinatesFromAddressAsync(companyAddress).ConfigureAwait(false);
+            lock (BlMutex)
+            {
+                if (coords.HasValue)
+                {
+                    s_dal.Config.Latitude = coords.Value.Latitude;
+                    s_dal.Config.Longitude = coords.Value.Longitude;
+                }
+                else
+                {
+                    s_dal.Config.CompanyAdress = Tools.InvalidAddressMarker;
+                    badAddress = true;
+                }
+            }
         }
 
         if (configChanged) // stage 5
             ConfigUpdatedObservers?.Invoke(); // stage 5
+
+        if (badAddress)
+            throw new BO.BLBadAddressException("Company address is invalid. Configuration saved with INVALID_ADDRESS.");
     }
 
-    internal static void ResetDB() //stage 4-7
+    internal static async Task ResetDBAsync() //stage 4-7
     {
         lock (BlMutex) //stage 7
         {
             s_dal.ResetDB(); //stage 4
             AdminManager.UpdateClock(AdminManager.Now); //stage 5 - needed since we want the label on Pl to be updated
-            AdminManager.SetConfig(AdminManager.GetConfig()); //stage 5 - needed to update PL 
         }
+        await AdminManager.SetConfigAsync(AdminManager.GetConfig()).ConfigureAwait(false); //stage 5 - needed to update PL 
     }
 
-    internal static void InitializeDB() //stage 4-7
+    internal static async Task InitializeDBAsync() //stage 4-7
     {
         lock (BlMutex) //stage 7
         {
             DalTest.Initialization.Do(); //stage 4
             AdminManager.UpdateClock(AdminManager.Now);  //stage 5 - needed since we want the label on Pl to be updated           
-            AdminManager.SetConfig(AdminManager.GetConfig()); //stage 5 - needed for update the PL
         }
+        await AdminManager.SetConfigAsync(AdminManager.GetConfig()).ConfigureAwait(false); //stage 5 - needed for update the PL
     }
 
     #endregion Stage 4-7
@@ -253,7 +270,7 @@ internal static class AdminManager //stage 4
             //Add calls here to any logic simulation that was required in stage 7
             //for example: course registration simulation
             if (_simulateTask is null || _simulateTask.IsCompleted)//stage 7
-                _simulateTask = Task.Run(() => CourierManager.SimulateCourierActivity());
+                _simulateTask = Task.Run(async () => await CourierManager.SimulateCourierActivityAsync().ConfigureAwait(false));
 
             //etc...
 

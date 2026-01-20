@@ -42,6 +42,18 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set
+        {
+            if (_isLoading == value)
+                return;
+            _isLoading = value;
+            OnPropertyChanged();
+        }
+    }
+
     public CourierOrderSelectionWindow(int courierId)
     {
         InitializeComponent();
@@ -53,7 +65,7 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         lstOpenOrders.ItemsSource = OpenOrders;
 
         // Observer must marshal back to UI thread
-        _ordersObserver = () => _ = Dispatcher.InvokeAsync(RefreshOpenOrdersAsync);
+        _ordersObserver = () => Dispatcher.BeginInvoke(async () => await RefreshOpenOrdersAsync());
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -106,28 +118,23 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
 
     private async Task RefreshOpenOrdersAsync()
     {
-        if (_isLoading)
+        if (IsLoading)
             return;
 
-        _isLoading = true;
+        IsLoading = true;
         var filter = GetSelectedFilter();
         try
         {
             txtStatus.Text = "Loading open orders...";
-            var list = await Task.Run(() => GetOpenOrdersFromBl(filter));
+            OpenOrders.Clear();
+            var list = (await s_bl.Order.GetOpenOrdersForCourierAsync(_bossId, _courierId, filter, null)).ToList();
             UpdateOpenOrdersCollection(list);
             UpdateStatusMessages(filter);
         }
         finally
         {
-            _isLoading = false;
+            IsLoading = false;
         }
-    }
-
-    private System.Collections.Generic.List<OpenOrderInList> GetOpenOrdersFromBl(BO.OrderType? filter)
-    {
-        // Minimal local logic: let BL do filtering; PL only does basic display ordering
-        return s_bl.Order.GetOpenOrdersForCourier(_bossId, _courierId, filter, null).ToList();
     }
 
     private void UpdateOpenOrdersCollection(System.Collections.Generic.List<OpenOrderInList> list)
@@ -185,8 +192,7 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
             BeginBusy("🚚 Assigning order...");
 
             // Assigner la commande au coursier
-            await Task.Run(() =>
-                s_bl.Order.AssignOrderToCourier(_bossId, selected.OrderId, _courierId));
+            await s_bl.Order.AssignOrderToCourierAsync(_bossId, selected.OrderId, _courierId);
 
             // IMPORTANT: Stocker l'ID de l'ordre assigné
             AssignedOrderId = selected.OrderId;

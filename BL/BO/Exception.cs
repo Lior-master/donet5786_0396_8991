@@ -186,3 +186,22 @@ public class BLFailedOperation : Exception
     /// <param name="innerException">The exception that is the cause of the current exception, or <c>null</c> if no inner exception is specified.</param>
     public BLFailedOperation(string message, Exception innerException) : base(message, innerException) { }
 }
+
+/// <summary>
+/// Exception thrown when an address is invalid or cannot be resolved, but the operation succeeded.
+/// Used to surface a non-fatal warning to the UI after persistence.
+/// </summary>
+public class BLBadAddressException : Exception
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BLBadAddressException"/> class with a specified error message.
+    /// </summary>
+    public BLBadAddressException(string? message) : base(message) { }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BLBadAddressException"/> class with a specified error message
+    /// and a reference to the inner exception that is the cause of this exception.
+    /// </summary>
+    /// <param name="innerException">The exception that is the cause of the current exception.</param>
+    public BLBadAddressException(string message, Exception innerException) : base(message, innerException) { }
+}

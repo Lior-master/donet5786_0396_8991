@@ -4,6 +4,7 @@ using DO;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Net.Mail;
 using System.Net;
 
@@ -153,7 +154,7 @@ internal static class OrderManager
     /// <returns>A flattened integer array representing order count summary by status combinations.</returns>
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester does not exist.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static IEnumerable<int> GetOrderSummary(int requesterId)
+    internal static async Task<IEnumerable<int>> GetOrderSummaryAsync(int requesterId)
     {
         try
         {
@@ -176,7 +177,7 @@ internal static class OrderManager
 
             int[] summary = new int[statusCount * scheduleCount];
 
-            var list = orderInLists(requesterId, null, null, null).ToList();
+            var list = (await orderInListsAsync(requesterId, null, null, null).ConfigureAwait(false)).ToList();
 
             var groups = list
                 .Where(l => l.Status != BO.OrderStatus.All && l.ScheduleStatus != BO.ScheduleStatus.All)
@@ -225,7 +226,94 @@ internal static class OrderManager
     /// <returns>An enumerable collection of OrderInList objects representing orders with calculated metrics.</returns>
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester does not exist.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static IEnumerable<BO.OrderInList> orderInLists(int requesterId, Enum? filter, object? Object, Enum? sorter)
+    private static async Task<BO.OrderInList> BuildOrderInListAsync(
+        DO.Order order,
+        List<DO.Delivery> deliveriesDO,
+        BO.Config config,
+        DateTime now)
+    {
+        var orderDeliveries = deliveriesDO.Where(d => d.OrderId == order.Id).ToList();
+
+        var lastByPickup = orderDeliveries
+            .OrderByDescending(d => d.PickupTime)
+            .FirstOrDefault();
+
+        int? deliveryId = lastByPickup?.Id;
+
+        var lastFinished = orderDeliveries
+            .Where(d => d.ArrivalTime != null)
+            .OrderByDescending(d => d.ArrivalTime)
+            .FirstOrDefault();
+
+        DateTime? realArrival = lastFinished?.ArrivalTime;
+
+        double lat = order.Latitude ?? 0;
+        double lon = order.Longitude ?? 0;
+        if (lat == 0 && lon == 0)
+        {
+            var coords = await Tools.TryGetCoordinatesFromAddressAsync(order.CustomerAddress).ConfigureAwait(false);
+            if (coords.HasValue)
+            {
+                lat = coords.Value.Latitude;
+                lon = coords.Value.Longitude;
+            }
+        }
+
+        double distance = (lat == 0 && lon == 0)
+            ? 0
+            : Tools.BirdDistance(config.CompanyLatitude, config.CompanyLongitude, lat, lon);
+
+        double speed = config.CarSpeed;
+        if (lastByPickup != null)
+            speed = Tools.GetSpeed(lastByPickup.Transport, config);
+
+        DateTime? estArrival = distance > 0
+            ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, speed)
+            : null;
+
+        DateTime maxArrival = order.OrderDate.Add(config.MaxDeliveryTime);
+
+        var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
+
+        var schedule = Tools.CalculateScheduleStatus(
+            orderStatus,
+            order.OrderDate,
+            estArrival,
+            maxArrival,
+            realArrival
+        );
+
+        return new BO.OrderInList
+        {
+            DeliveryId = deliveryId,
+            OrderId = order.Id,
+            Type = (BO.OrderType)order.Type,
+            Distance = distance,
+            Status = orderStatus,
+            ScheduleStatus = schedule,
+            OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : now - order.OrderDate,
+            TreatmentEndTime = lastByPickup != null ? lastByPickup.PickupTime - order.OrderDate : TimeSpan.Zero,
+            NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
+        };
+    }
+
+    private static async Task<List<BO.OrderInList>> BuildOrderInListsAsync(
+        List<DO.Order> doOrders,
+        List<DO.Delivery> deliveriesDO,
+        BO.Config config,
+        DateTime now)
+    {
+        IEnumerable<Task<BO.OrderInList>> tasks = doOrders.Select(order =>
+            BuildOrderInListAsync(order, deliveriesDO, config, now));
+
+        var list = new List<BO.OrderInList>();
+        foreach (var task in tasks)
+            list.Add(await task.ConfigureAwait(false));
+
+        return list;
+    }
+
+    internal static async Task<IEnumerable<BO.OrderInList>> orderInListsAsync(int requesterId, Enum? filter, object? Object, Enum? sorter)
     {
         try
         {
@@ -235,82 +323,9 @@ internal static class OrderManager
 
             var doOrders = s_dal.Order.ReadAll().ToList();
             var deliveriesDO = s_dal.Delivery.ReadAll().ToList();
-
             var now = AdminManager.Now;
 
-            var list = doOrders.Select(order =>
-            {
-                var orderDeliveries = deliveriesDO.Where(d => d.OrderId == order.Id).ToList();
-
-                var lastByPickup = orderDeliveries
-                    .OrderByDescending(d => d.PickupTime)
-                    .FirstOrDefault();
-
-                int? deliveryId = lastByPickup?.Id;
-
-                var lastFinished = orderDeliveries
-                    .Where(d => d.ArrivalTime != null)
-                    .OrderByDescending(d => d.ArrivalTime)
-                    .FirstOrDefault();
-
-                DateTime? realArrival = lastFinished?.ArrivalTime;
-
-                double lat = order.Latitude ?? 0;
-                double lon = order.Longitude ?? 0;
-                if (lat == 0 && lon == 0)
-                {
-                    try
-                    {
-                        var coords = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
-                        lat = coords.Latitude;
-                        lon = coords.Longitude;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new BO.BLFailedOperation(ex.Message, ex);
-                    }
-                }
-
-                double distance = Tools.BirdDistance(
-                    config.CompanyLatitude,
-                    config.CompanyLongitude,
-                    lat,
-                    lon
-                );
-
-                double speed = config.CarSpeed;
-                if (lastByPickup != null)
-                    speed = Tools.GetSpeed(lastByPickup.Transport, config);
-
-                DateTime? estArrival = distance > 0
-                    ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, speed)
-                    : null;
-
-                DateTime maxArrival = order.OrderDate.Add(config.MaxDeliveryTime);
-
-                var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
-
-                var schedule = Tools.CalculateScheduleStatus(
-                    orderStatus,
-                    order.OrderDate,
-                    estArrival,
-                    maxArrival,
-                    realArrival
-                );
-
-                return new BO.OrderInList
-                {
-                    DeliveryId = deliveryId,
-                    OrderId = order.Id,
-                    Type = (BO.OrderType)order.Type,
-                    Distance = distance,
-                    Status = orderStatus,
-                    ScheduleStatus = schedule,
-                    OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : now - order.OrderDate,
-                    TreatmentEndTime = lastByPickup != null ? lastByPickup.PickupTime - order.OrderDate : TimeSpan.Zero,
-                    NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
-                };
-            }).ToList();
+            var list = await BuildOrderInListsAsync(doOrders, deliveriesDO, config, now).ConfigureAwait(false);
 
             if (filter != null)
             {
@@ -379,7 +394,7 @@ internal static class OrderManager
         }
     }
 
-    internal static IEnumerable<BO.OrderInList> orderInListsDoubleFilter(int requesterId, Enum? filter1, Enum? filter2)
+    internal static async Task<IEnumerable<BO.OrderInList>> orderInListsDoubleFilterAsync(int requesterId, Enum? filter1, Enum? filter2)
     {
         try
         {
@@ -387,87 +402,12 @@ internal static class OrderManager
             if (requesterId != config.BossId)
                 throw new BO.BLInvalidOperationException("Requester is not authorized for order management operations.");
 
-            // Base list (même logique que orderInLists)
             var doOrders = s_dal.Order.ReadAll().ToList();
             var deliveriesDO = s_dal.Delivery.ReadAll().ToList();
             var now = AdminManager.Now;
 
-            var list = doOrders.Select(order =>
-            {
-                var orderDeliveries = deliveriesDO.Where(d => d.OrderId == order.Id).ToList();
+            var list = await BuildOrderInListsAsync(doOrders, deliveriesDO, config, now).ConfigureAwait(false);
 
-                var lastByPickup = orderDeliveries
-                    .OrderByDescending(d => d.PickupTime)
-                    .FirstOrDefault();
-
-                int? deliveryId = lastByPickup?.Id;
-
-                var lastFinished = orderDeliveries
-                    .Where(d => d.ArrivalTime != null)
-                    .OrderByDescending(d => d.ArrivalTime)
-                    .FirstOrDefault();
-
-                DateTime? realArrival = lastFinished?.ArrivalTime;
-
-                double lat = order.Latitude ?? 0;
-                double lon = order.Longitude ?? 0;
-                if (lat == 0 && lon == 0)
-                {
-                    try
-                    {
-                        var coords = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
-                        lat = coords.Latitude;
-                        lon = coords.Longitude;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new BO.BLFailedOperation(ex.Message, ex);
-                    }
-                }
-
-                double distance = Tools.BirdDistance(
-                    config.CompanyLatitude,
-                    config.CompanyLongitude,
-                    lat,
-                    lon
-                );
-
-                double speed = config.CarSpeed;
-                if (lastByPickup != null)
-                    speed = Tools.GetSpeed(lastByPickup.Transport, config);
-
-                DateTime? estArrival = distance > 0
-                    ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, speed)
-                    : null;
-
-                DateTime maxArrival = order.OrderDate.Add(config.MaxDeliveryTime);
-
-                var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
-
-                var schedule = Tools.CalculateScheduleStatus(
-                    orderStatus,
-                    order.OrderDate,
-                    estArrival,
-                    maxArrival,
-                    realArrival
-                );
-
-                return new BO.OrderInList
-                {
-                    DeliveryId = deliveryId,
-                    OrderId = order.Id,
-                    Type = (BO.OrderType)order.Type,
-                    Distance = distance,
-                    Status = orderStatus,
-                    ScheduleStatus = schedule,
-                    OrderEndTime = realArrival != null ? realArrival.Value - order.OrderDate : now - order.OrderDate,
-                    TreatmentEndTime = lastByPickup != null ? lastByPickup.PickupTime - order.OrderDate : TimeSpan.Zero,
-                    NumberOfCouriers = orderDeliveries.Select(d => d.CourierId).Distinct().Count()
-                };
-            }).ToList();
-
-            // --- Double filtre ---
-            // Applique un filtre si non-null, en déduisant la propriété à filtrer selon le type de l'enum
             static List<BO.OrderInList> ApplyOneFilter(List<BO.OrderInList> src, Enum? f)
             {
                 if (f is null) return src;
@@ -481,11 +421,9 @@ internal static class OrderManager
                 };
             }
 
-            // Important: si un des deux est null, on applique juste l'autre (et si les deux null => aucun filtre)
             list = ApplyOneFilter(list, filter1);
             list = ApplyOneFilter(list, filter2);
 
-            // Tri par défaut (comme ton cas sorter == null dans orderInLists)
             list = list
                 .OrderBy(l => l.Status)
                 .ThenBy(l => l.OrderId)
@@ -518,7 +456,7 @@ internal static class OrderManager
     /// <returns>A full Order object containing all details, delivery history, and schedule information.</returns>
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester or order does not exist.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static BO.Order GetOrderDetails(int requesterId, int orderId)
+    internal static async Task<BO.Order> GetOrderDetailsAsync(int requesterId, int orderId)
     {
         try
         {
@@ -546,16 +484,11 @@ internal static class OrderManager
             double lon = doOrder.Longitude ?? 0;
             if (lat == 0 && lon == 0)
             {
-                try
+                var coords = await Tools.TryGetCoordinatesFromAddressAsync(doOrder.CustomerAddress).ConfigureAwait(false);
+                if (coords.HasValue)
                 {
-                    // Attempt to geocode the customer address if coordinates are missing
-                    var coords = Tools.GetCoordinatesFromAddressAsync(doOrder.CustomerAddress).GetAwaiter().GetResult();
-                    lat = coords.Latitude;
-                    lon = coords.Longitude;
-                }
-                catch
-                {
-                    // Fallback to 0,0 if geocoding fails
+                    lat = coords.Value.Latitude;
+                    lon = coords.Value.Longitude;
                 }
             }
 
@@ -643,7 +576,7 @@ internal static class OrderManager
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester or order does not exist.</exception>
     /// <exception cref="BO.BLInvalidInputException">Thrown if required fields (customer name or address) are empty.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static void UpdateOrderDetails(int requesterId, BO.Order order)
+    internal static async Task UpdateOrderDetailsAsync(int requesterId, BO.Order order)
     {
         try
         {
@@ -657,30 +590,6 @@ internal static class OrderManager
             if (existingOrder == null)
                 throw new BLNotFoundException($"Order with id {order.Id} does not exist.");
 
-            // Get coordinates with better error handling
-            (double Latitude, double Longitude) coordinates;
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(order.CustomerAddress))
-                {
-                    // Attempt to geocode the provided customer address
-                    coordinates = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
-                }
-                else
-                {
-                    // Use existing coordinates if no address is provided
-                    coordinates = (existingOrder.Latitude ?? 0, existingOrder.Longitude ?? 0);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log the geocoding error for debugging purposes
-                System.Diagnostics.Debug.WriteLine($"Geocoding failed for address '{order.CustomerAddress}': {ex.Message}");
-                
-                // Fallback to existing coordinates or default to 0,0
-                coordinates = (existingOrder.Latitude ?? 0, existingOrder.Longitude ?? 0);
-            }
-
             // Validate required fields are not empty
             if (string.IsNullOrWhiteSpace(order.CustomerName))
                 throw new BLInvalidInputException("Customer name cannot be empty.");
@@ -688,13 +597,46 @@ internal static class OrderManager
             if (string.IsNullOrWhiteSpace(order.CustomerAddress))
                 throw new BLInvalidInputException("Customer address cannot be empty.");
 
+            string addressToSave = order.CustomerAddress;
+            bool badAddress = false;
+
+            double? latitude = existingOrder.Latitude;
+            double? longitude = existingOrder.Longitude;
+            bool addressChanged = !string.Equals(existingOrder.CustomerAddress, order.CustomerAddress, StringComparison.Ordinal);
+            if (addressChanged)
+            {
+                latitude = null;
+                longitude = null;
+
+                if (!string.IsNullOrWhiteSpace(order.CustomerAddress) &&
+                    !string.Equals(order.CustomerAddress.Trim(), Tools.InvalidAddressMarker, StringComparison.OrdinalIgnoreCase))
+                {
+                    var coords = await Tools.TryGetCoordinatesFromAddressAsync(order.CustomerAddress).ConfigureAwait(false);
+                    if (coords.HasValue)
+                    {
+                        latitude = coords.Value.Latitude;
+                        longitude = coords.Value.Longitude;
+                    }
+                    else
+                    {
+                        addressToSave = Tools.InvalidAddressMarker;
+                        badAddress = true;
+                    }
+                }
+                else
+                {
+                    addressToSave = Tools.InvalidAddressMarker;
+                    badAddress = true;
+                }
+            }
+
             // Map BO.Order to DO.Order with proper null handling and fallback to existing values
             var doOrder = new DO.Order
             {
                 Id = order.Id,
                 Type = (DO.OrderType)order.Type,
                 CustomerName = order.CustomerName,
-                CustomerAddress = order.CustomerAddress,
+                CustomerAddress = addressToSave,
                 // Use provided phone or keep existing
                 CustomerPhone = order.CustomerPhone ?? existingOrder.CustomerPhone,
                 // Use provided order date or keep existing; avoid DateTime.MinValue
@@ -704,8 +646,8 @@ internal static class OrderManager
                 // Use provided weight or keep existing
                 weight = order.Weight ?? existingOrder.weight,
                 // Use geocoded coordinates
-                Latitude = coordinates.Latitude,
-                Longitude = coordinates.Longitude,
+                Latitude = latitude,
+                Longitude = longitude,
                 // Use provided description or keep existing
                 Description = order.OrderDescription ?? existingOrder.Description,
                 // Use provided fragility level or keep existing
@@ -718,6 +660,9 @@ internal static class OrderManager
             // Notify subscribers of both item-specific and list-level changes
             Observers.NotifyItemUpdated(order.Id);
             Observers.NotifyListUpdated();
+
+            if (badAddress)
+                throw new BLBadAddressException("Customer address is invalid. Order saved with INVALID_ADDRESS.");
         }
         catch (Exception ex)
         {
@@ -915,7 +860,7 @@ internal static class OrderManager
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester does not exist.</exception>
     /// <exception cref="BO.BLInvalidInputException">Thrown if required fields (customer name or address) are empty.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static void AddOrder(int requesterId, BO.Order order)
+    internal static async Task AddOrderAsync(int requesterId, BO.Order order)
     {
         try
         {
@@ -924,36 +869,38 @@ internal static class OrderManager
             if (requester == null)
                 throw new BLNotFoundException($"Requester with id {requesterId} does not exist.");
 
-            // Get coordinates with better error handling
-            (double Latitude, double Longitude) coordinates;
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(order.CustomerAddress))
-                {
-                    // Attempt to geocode the provided customer address
-                    coordinates = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
-                }
-                else
-                {
-                    // Default coordinates if no address provided
-                    coordinates = (0, 0);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log the geocoding error for debugging purposes
-                System.Diagnostics.Debug.WriteLine($"Geocoding failed for address '{order.CustomerAddress}': {ex.Message}");
-                
-                // Fallback to default coordinates
-                coordinates = (0, 0);
-            }
-
             // Validate required fields are not empty
             if (string.IsNullOrWhiteSpace(order.CustomerName))
                 throw new BLInvalidInputException("Customer name cannot be empty.");
     
             if (string.IsNullOrWhiteSpace(order.CustomerAddress))
                 throw new BLInvalidInputException("Customer address cannot be empty.");
+
+            string addressToSave = order.CustomerAddress;
+            bool badAddress = false;
+            double? latitude = null;
+            double? longitude = null;
+
+            if (!string.IsNullOrWhiteSpace(order.CustomerAddress) &&
+                !string.Equals(order.CustomerAddress.Trim(), Tools.InvalidAddressMarker, StringComparison.OrdinalIgnoreCase))
+            {
+                var coords = await Tools.TryGetCoordinatesFromAddressAsync(order.CustomerAddress).ConfigureAwait(false);
+                if (coords.HasValue)
+                {
+                    latitude = coords.Value.Latitude;
+                    longitude = coords.Value.Longitude;
+                }
+                else
+                {
+                    addressToSave = Tools.InvalidAddressMarker;
+                    badAddress = true;
+                }
+            }
+            else
+            {
+                addressToSave = Tools.InvalidAddressMarker;
+                badAddress = true;
+            }
 
             // Ensure StartDate is valid (avoid DateTime.MinValue)
             DateTime startDate = order.OrderDate == default ? AdminManager.Now : order.OrderDate;
@@ -964,14 +911,14 @@ internal static class OrderManager
                 Id = order.Id,
                 Type = (DO.OrderType)order.Type,
                 CustomerName = order.CustomerName,
-                CustomerAddress = order.CustomerAddress,
+                CustomerAddress = addressToSave,
                 CustomerPhone = order.CustomerPhone,
                 OrderDate = startDate,
                 size = order.Volume,
                 weight = order.Weight,
                 // Use geocoded coordinates
-                Latitude = coordinates.Latitude,
-                Longitude = coordinates.Longitude,
+                Latitude = latitude,
+                Longitude = longitude,
                 Description = order.OrderDescription,
                 // Convert nullable fragility level to DO layer
                 Fragility = order.Fragility.HasValue ? (DO.FragilityLevel)order.Fragility.Value : null
@@ -982,6 +929,9 @@ internal static class OrderManager
             
             // Notify subscribers that the order list has been updated
             Observers.NotifyListUpdated();
+
+            if (badAddress)
+                throw new BLBadAddressException("Customer address is invalid. Order saved with INVALID_ADDRESS.");
         }
         catch (Exception ex)
         {
@@ -1010,7 +960,7 @@ internal static class OrderManager
     /// <param name="deliveryId">ID of the delivery being marked as completed.</param>
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester, courier, delivery, or associated order does not exist.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static void FinishOrder(int requesterId, int courierId, int deliveryId,BO.DeliveredStatus deliveredStatus)
+    internal static async Task FinishOrderAsync(int requesterId, int courierId, int deliveryId,BO.DeliveredStatus deliveredStatus)
     {
         try
         {
@@ -1028,22 +978,29 @@ internal static class OrderManager
 
             // Compute coordinates and distance for the delivery
             
+            bool badAddress = false;
             double lat = order.Latitude ?? 0;
             double lon = order.Longitude ?? 0;
             if (lat == 0 && lon == 0)
             {
-                try
+                var coords = await Tools.TryGetCoordinatesFromAddressAsync(order.CustomerAddress).ConfigureAwait(false);
+                if (coords.HasValue)
                 {
-                    // Attempt to geocode the customer address if coordinates are missing
-                    var coords = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
-                    lat = coords.Latitude;
-                    lon = coords.Longitude;
+                    lat = coords.Value.Latitude;
+                    lon = coords.Value.Longitude;
                 }
-                catch { }
+                else
+                {
+                    badAddress = true;
+                }
             }
 
-            // Calculate the actual distance traveled
-            double distance = Tools.CalculateRouteDistanceAsync(config.CompanyLatitude, config.CompanyLongitude, lat, lon).GetAwaiter().GetResult();
+            double? distance = null;
+            if (lat != 0 || lon != 0)
+            {
+                distance = await Tools.CalculateRouteDistanceCachedAsync(
+                    config.CompanyLatitude, config.CompanyLongitude, lat, lon).ConfigureAwait(false);
+            }
 
             // Update the delivery record with completion information
             var updated = delivery with
@@ -1067,6 +1024,9 @@ internal static class OrderManager
 
             CourierManager.Observers.NotifyItemUpdated(courierId);
             CourierManager.Observers.NotifyListUpdated();
+
+            if (badAddress)
+                throw new BLBadAddressException("Customer address is invalid. Delivery saved without distance.");
         }
         catch (Exception ex)
         {
@@ -1093,7 +1053,7 @@ internal static class OrderManager
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester, courier, or order does not exist.</exception>
     /// <exception cref="BO.BLInvalidOperationException">Thrown if the courier is inactive or holds a Director role.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static void AssignOrderToCourier(int requesterId, int orderId, int courierId)
+    internal static async Task AssignOrderToCourierAsync(int requesterId, int orderId, int courierId)
     {
         try
         {
@@ -1117,8 +1077,15 @@ internal static class OrderManager
             double? distance = null;
             try
             {
-                (double Latitude, double Longitude) coord = Tools.GetCoordinatesFromAddressAsync(order.CustomerAddress).GetAwaiter().GetResult();
-                distance = Tools.CalculateRouteDistanceAsync(AdminManager.GetConfig().CompanyLatitude, AdminManager.GetConfig().CompanyLongitude, coord.Latitude, coord.Longitude).GetAwaiter().GetResult();
+                var coord = await Tools.TryGetCoordinatesFromAddressAsync(order.CustomerAddress).ConfigureAwait(false);
+                if (coord.HasValue)
+                {
+                    distance = await Tools.CalculateRouteDistanceCachedAsync(
+                        AdminManager.GetConfig().CompanyLatitude,
+                        AdminManager.GetConfig().CompanyLongitude,
+                        coord.Value.Latitude,
+                        coord.Value.Longitude).ConfigureAwait(false);
+                }
             }
             catch { }
 
@@ -1178,7 +1145,7 @@ internal static class OrderManager
     /// <exception cref="BO.BLNotFoundException">Thrown if requester, courier, or order does not exist.</exception>
     /// <exception cref="BO.BLInvalidOperationException">Thrown if no active delivery exists for the courier/order.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static BO.OrderInProgress GetOrderInProgressSnapshot(int requesterId, int courierId, int orderId)
+    internal static async Task<BO.OrderInProgress> GetOrderInProgressSnapshotAsync(int requesterId, int courierId, int orderId)
     {
         try
         {
@@ -1204,13 +1171,14 @@ internal static class OrderManager
             {
                 try
                 {
-                    (double Lat, double Lon) coord = Tools.GetCoordinatesFromAddressAsync(orderDO.CustomerAddress)
-                        .GetAwaiter().GetResult();
-
-                    distance = Tools.CalculateRouteDistanceAsync(
-                        config.CompanyLatitude, config.CompanyLongitude,
-                        coord.Lat, coord.Lon
-                    ).GetAwaiter().GetResult();
+                    var coord = await Tools.TryGetCoordinatesFromAddressAsync(orderDO.CustomerAddress).ConfigureAwait(false);
+                    if (coord.HasValue)
+                    {
+                        distance = await Tools.CalculateRouteDistanceCachedAsync(
+                            config.CompanyLatitude, config.CompanyLongitude,
+                            coord.Value.Latitude, coord.Value.Longitude
+                        ).ConfigureAwait(false);
+                    }
                 }
                 catch
                 {
@@ -1395,7 +1363,84 @@ internal static class OrderManager
         }
     }
 
-    internal static IEnumerable<BO.OpenOrderInList> GetOpenOrdersForCourier(
+    private static async Task<BO.OpenOrderInList?> BuildOpenOrderInListAsync(
+        DO.Order o,
+        List<DO.Delivery> deliveriesAll,
+        BO.Courier courier,
+        BO.Config config,
+        DateTime now,
+        double companyLat,
+        double companyLon)
+    {
+        var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
+        var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
+
+        if (orderStatus == BO.OrderStatus.Delivered ||
+            orderStatus == BO.OrderStatus.Returned ||
+            orderStatus == BO.OrderStatus.Canceled)
+            return null;
+
+        var openDeliveries = orderDeliveries.Where(d => d.ArrivalTime == null).ToList();
+        if (openDeliveries.Any(d => d.CourierId != 0))
+            return null;
+
+        double custLat = o.Latitude ?? 0;
+        double custLon = o.Longitude ?? 0;
+
+        double birdDistance = Tools.BirdDistance(
+            companyLat, companyLon,
+            custLat, custLon);
+
+        if (custLat == 0 && custLon == 0 && !string.IsNullOrWhiteSpace(o.CustomerAddress))
+        {
+            var coords = await Tools.TryGetCoordinatesFromAddressAsync(o.CustomerAddress).ConfigureAwait(false);
+            if (!coords.HasValue)
+                return null;
+
+            custLat = coords.Value.Latitude;
+            custLon = coords.Value.Longitude;
+            birdDistance = Tools.BirdDistance(companyLat, companyLon, custLat, custLon);
+        }
+
+        if (custLat == 0 && custLon == 0)
+            return null;
+
+        double distance = await Tools.CalculateRouteDistanceCachedAsync(companyLat, companyLon, custLat, custLon)
+            .ConfigureAwait(false);
+
+        TimeSpan? addedTime = now - o.OrderDate;
+
+        DateTime? estArrival = Tools.EstimateArrival(now, courier.Transport, distance);
+        TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
+
+        DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
+
+        var scheduleStatus = Tools.CalculateScheduleStatus(
+            orderStatus,
+            o.OrderDate,
+            estArrival,
+            maxDeliveredTime,
+            null);
+
+        return new BO.OpenOrderInList
+        {
+            CourierId = null,
+            OrderId = o.Id,
+            OrderType = (BO.OrderType)o.Type,
+            Fragility = o.Fragility != null
+                ? (BO.FragilityLevel?)(BO.FragilityLevel)o.Fragility.Value
+                : null,
+            CustomerAddress = o.CustomerAddress ?? string.Empty,
+            BirdDistance = birdDistance,
+            Distance = distance,
+            AddedTime = addedTime,
+            ScheduleStatus = scheduleStatus,
+            EstimatedDeliveryTime = estSpan,
+            MaxDeliveredTime = maxDeliveredTime
+        };
+    }
+
+    internal static async Task<IEnumerable<BO.OpenOrderInList>> GetOpenOrdersForCourierAsync(
         int requesterId,
         int courierId,
         Enum? filter,
@@ -1422,92 +1467,19 @@ internal static class OrderManager
             var orders = s_dal.Order.ReadAll().ToList();
             var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
 
+            IEnumerable<Task<BO.OpenOrderInList?>> tasks = orders.Select(o =>
+                BuildOpenOrderInListAsync(o, deliveriesAll, courier, config, now, companyLat, companyLon));
+
             var result = new List<BO.OpenOrderInList>();
-
-            foreach (var o in orders)
+            foreach (var task in tasks)
             {
-                // Compute order status from deliveries
-                var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
-                var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
-
-                // Only open orders (not closed)
-                if (orderStatus == BO.OrderStatus.Delivered ||
-                    orderStatus == BO.OrderStatus.Returned ||
-                    orderStatus == BO.OrderStatus.Canceled)
-                    continue;
-
-                // If there is any open delivery assigned to a courier -> not available
-                var openDeliveries = orderDeliveries.Where(d => d.ArrivalTime == null).ToList();
-                if (openDeliveries.Any(d => d.CourierId != 0))
-                    continue;
-
-                // Resolve customer coordinates (fallback: geocode from address)
-                double custLat = o.Latitude ?? 0;
-                double custLon = o.Longitude ?? 0;
-
-                double birdDistance = Tools.BirdDistance(
-                    companyLat, companyLon,
-                    custLat, custLon);
-
-                if (custLat == 0 && custLon == 0 && !string.IsNullOrWhiteSpace(o.CustomerAddress))
-                {
-                    try
-                    {
-                        var coords = Tools.GetCoordinatesFromAddressAsync(o.CustomerAddress).GetAwaiter().GetResult();
-                        custLat = coords.Latitude;
-                        custLon = coords.Longitude;
-                    }
-                    catch
-                    {
-                        // If we cannot locate the customer, we cannot calculate distance reliably -> skip
-                        continue;
-                    }
-                }
-
-                // Bird distance is measured from the company (per your project design)
-                var Distance = Tools.CalculateRouteDistanceAsync(companyLat, companyLon, custLat, custLon).GetAwaiter().GetResult();
-
-                // Filter by courier personal max distance (if defined)
-                if (courier.MaxDistance != null && Distance > courier.MaxDistance.Value)
-                    continue;
-
-                // Added time since order creation
-                TimeSpan? addedTime = now - o.OrderDate;
-
-                // Estimated delivery time:
-                // Use courier transport speed from config; estimate from "now" using bird distance.
-                DateTime? estArrival = Tools.EstimateArrival(now, courier.Transport, Distance);
-
-                TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
-
-                // Latest acceptable delivery time (orderDate + MaxDeliveryTime)
-                DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
-
-                // Schedule status based on your updated rules (no Unknown)
-                var scheduleStatus = Tools.CalculateScheduleStatus(
-                    orderStatus,
-                    o.OrderDate,
-                    estArrival,
-                    maxDeliveredTime,
-                    null);
-
-                result.Add(new BO.OpenOrderInList
-                {
-                    CourierId = null,
-                    OrderId = o.Id,
-                    OrderType = (BO.OrderType)o.Type,
-                    Fragility = o.Fragility != null
-                        ? (BO.FragilityLevel?)(BO.FragilityLevel)o.Fragility.Value
-                        : null,
-                    CustomerAddress = o.CustomerAddress ?? string.Empty,
-                    BirdDistance = birdDistance,
-                    Distance = Distance,
-                    AddedTime = addedTime,
-                    ScheduleStatus = scheduleStatus,
-                    EstimatedDeliveryTime = estSpan,
-                    MaxDeliveredTime = maxDeliveredTime
-                });
+                var item = await task.ConfigureAwait(false);
+                if (item != null)
+                    result.Add(item);
             }
+
+            if (courier.MaxDistance != null)
+                result = result.Where(x => x.Distance <= courier.MaxDistance.Value).ToList();
 
             // Optional filter by OrderType (nullable enum): null => full list
             if (filter != null)

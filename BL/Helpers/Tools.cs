@@ -15,6 +15,7 @@ namespace Helpers;
 internal static class Tools
 {
     private static readonly IDal s_dal = Factory.Get;
+    internal const string InvalidAddressMarker = "INVALID_ADDRESS";
 
     /// <summary>
     /// Converts an object to a formatted string representation of its public properties.
@@ -360,6 +361,11 @@ internal static class Tools
     private static readonly ConcurrentDictionary<string, (double lat, double lon)> s_geoCache = new();
 
     /// <summary>
+    /// Thread-safe cache for route distance calculations to avoid duplicate concurrent requests.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, Task<double>> s_routeDistanceCache = new();
+
+    /// <summary>
     /// Static constructor: initializes TLS 1.2 and default HTTP headers for geocoding client.
     /// </summary>
     /// <remarks>
@@ -517,6 +523,54 @@ internal static class Tools
             // Catch and wrap any unexpected exceptions
             System.Diagnostics.Debug.WriteLine($"Unexpected exception in LocationIQ geocoding: {ex.GetType().Name}: {ex.Message}");
             throw new BLFailedOperation($"Unexpected error during geocoding: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to resolve coordinates for an address and returns null when the address is invalid.
+    /// Network or service failures still throw so callers can decide whether to cancel the operation.
+    /// </summary>
+    public static async Task<(double Latitude, double Longitude)?> TryGetCoordinatesFromAddressAsync(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            return null;
+
+        if (string.Equals(address.Trim(), InvalidAddressMarker, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        try
+        {
+            var coords = await GetCoordinatesFromAddressAsync(address).ConfigureAwait(false);
+            return coords;
+        }
+        catch (BLNotFoundException)
+        {
+            return null;
+        }
+        catch (BLInvalidInputException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Cached wrapper around <see cref="CalculateRouteDistanceAsync"/> to prevent duplicate concurrent requests.
+    /// </summary>
+    public static async Task<double> CalculateRouteDistanceCachedAsync(
+        double lat1, double lon1,
+        double lat2, double lon2)
+    {
+        string key = string.Format(CultureInfo.InvariantCulture, "Driving:{0:F6},{1:F6}:{2:F6},{3:F6}", lat1, lon1, lat2, lon2);
+        var task = s_routeDistanceCache.GetOrAdd(key, _ => CalculateRouteDistanceAsync(lat1, lon1, lat2, lon2));
+
+        try
+        {
+            return await task.ConfigureAwait(false);
+        }
+        catch
+        {
+            s_routeDistanceCache.TryRemove(key, out _);
+            throw;
         }
     }
 
