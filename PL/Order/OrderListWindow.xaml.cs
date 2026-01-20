@@ -612,13 +612,14 @@ public partial class OrderListWindow : Window
     public void ApplyFiltersAndRefresh(PL.FilterTypeOrder filterType, BO.ScheduleStatus? scheduleStatus = null, BO.OrderStatus? orderStatus = null)
     {
         FilterTypeOrder = filterType;
-        
+
         if (scheduleStatus.HasValue)
             ScheduleStatus = scheduleStatus.Value;
-        
+
         if (orderStatus.HasValue)
             OrderStatus = orderStatus.Value;
-        
-        queryOrderList();
+
+        // Call the correct method to refresh the order list
+        _ = RefreshOrderListAsync();
     }
 }

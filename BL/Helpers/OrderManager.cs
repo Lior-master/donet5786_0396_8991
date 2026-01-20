@@ -383,7 +383,8 @@ internal static class OrderManager
             if (ex is BO.BLNotFoundException ||
                 ex is BO.BLInvalidInputException ||
                 ex is BO.BLAlreadyExistsException ||
-                ex is BO.BLInvalidOperationException) throw;
+                ex is BO.BLInvalidOperationException)
+                throw;
 
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -1055,8 +1056,8 @@ internal static class OrderManager
     /// <param name="requesterId">ID of the user requesting this assignment (must exist in the system).</param>
     /// <param name="orderId">ID of the order to be assigned.</param>
     /// <param name="courierId">ID of the courier to receive the assignment.</param>
-    /// <exception cref="BO.BLNotFoundException">Thrown if the requester, courier, or order does not exist.</exception>
-    /// <exception cref="BO.BLInvalidOperationException">Thrown if the courier is inactive or holds a Director role.</exception>
+    /// <exception cref = "BO.BLNotFoundException" > Thrown if the requester, courier, or order does not exist.</exception>
+    /// <exception cref="BO.BLInvalidOperationException">Thrown if the courier is inactive, holds a Director role, or order already has an active delivery.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
     internal static async Task AssignOrderToCourierAsync(int requesterId, int orderId, int courierId)
     {
@@ -1078,6 +1079,35 @@ internal static class OrderManager
             // Verify courier is not a Director (delivery personnel must be Couriers, not Directors)
             if (courier.Administrator == DO.Administrator.Director)
                 throw new BO.BLInvalidOperationException($"Cannot assign order {orderId} to courier {courierId}: courier is a Director.");
+
+            // FIXED: Check if order already has an active delivery
+            var existingActiveDeliveries = s_dal.Delivery.ReadAll(d => 
+                d.OrderId == orderId && 
+                d.ArrivalTime == null && 
+                d.DeliveredStatus == null).ToList();
+
+            if (existingActiveDeliveries.Count > 0)
+            {
+                var activeDelivery = existingActiveDeliveries.First();
+                var assignedCourier = s_dal.Courier.Read(activeDelivery.CourierId);
+                throw new BO.BLInvalidOperationException(
+                    $"Cannot assign order {orderId} to courier {courierId}: " +
+                    $"order is already assigned to courier {activeDelivery.CourierId} ({assignedCourier?.Name ?? "Unknown"}) " +
+                    $"since {activeDelivery.PickupTime:yyyy-MM-dd HH:mm}.");
+            }
+
+            // ADDITIONAL CHECK: Verify order is actually available for assignment
+            var orderDeliveries = s_dal.Delivery.ReadAll(d => d.OrderId == orderId).ToList();
+            var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
+
+            if (orderStatus == BO.OrderStatus.Delivered || 
+                orderStatus == BO.OrderStatus.Returned || 
+                orderStatus == BO.OrderStatus.Canceled)
+            {
+                throw new BO.BLInvalidOperationException(
+                    $"Cannot assign order {orderId} to courier {courierId}: " +
+                    $"order is already {orderStatus.ToString().ToLower()}.");
+            }
 
             double? distance = null;
             try

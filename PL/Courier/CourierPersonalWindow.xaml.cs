@@ -312,7 +312,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private void BtnFinish_Click(object sender, RoutedEventArgs e)
+    private async void BtnFinish_Click(object sender, RoutedEventArgs e)
     {
         try
         {
