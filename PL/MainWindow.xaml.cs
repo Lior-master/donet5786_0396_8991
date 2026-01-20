@@ -436,7 +436,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     //          SIMULATOR CONTROL
     // =======================================================
 
-     private bool _simulatorRunning = false;
+    private bool _simulatorRunning = false;
    
     private void SimulatorToggle_Click(object sender, RoutedEventArgs e)
     {
