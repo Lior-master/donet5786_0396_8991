@@ -9,6 +9,8 @@ using System.Xml.Serialization;
 static class XmlTools
 {
     const string s_xmlDir = @"..\xml\";
+    private static readonly object s_fileLock = new object();
+
     static XmlTools()
     {
         if (!Directory.Exists(s_xmlDir))
@@ -19,31 +21,38 @@ static class XmlTools
     public static void SaveListToXMLSerializer<T>(List<T> list, string xmlFileName) where T : class
     {
         string xmlFilePath = s_xmlDir + xmlFileName;
-
-        try
+        
+        lock (s_fileLock)  // Add lock
         {
-            using FileStream file = new(xmlFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            new XmlSerializer(typeof(List<T>)).Serialize(file, list);
-        }
-        catch (Exception ex)
-        {
-            throw new DalXMLFileLoadCreateException($"fail to create xml file: {s_xmlDir + xmlFilePath}, {ex.Message}");
+            try
+            {
+                using FileStream file = new(xmlFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                new XmlSerializer(typeof(List<T>)).Serialize(file, list);
+            }
+            catch (Exception ex)
+            {
+                throw new DalXMLFileLoadCreateException($"fail to create xml file: {s_xmlDir + xmlFileName}, {ex.Message}");
+            }
         }
     }
+
     public static List<T> LoadListFromXMLSerializer<T>(string xmlFileName) where T : class
     {
         string xmlFilePath = s_xmlDir + xmlFileName;
 
-        try
+        lock (s_fileLock)  // Add lock
         {
-            if (!File.Exists(xmlFilePath)) return new();
-            using FileStream file = new(xmlFilePath, FileMode.Open);
-            XmlSerializer x = new(typeof(List<T>));
-            return x.Deserialize(file) as List<T> ?? new();
-        }
-        catch (Exception ex)
-        {
-            throw new DalXMLFileLoadCreateException($"fail to load xml file: {xmlFilePath}, {ex.Message}");
+            try
+            {
+                if (!File.Exists(xmlFilePath)) return new();
+                using FileStream file = new(xmlFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                XmlSerializer x = new(typeof(List<T>));
+                return x.Deserialize(file) as List<T> ?? new();
+            }
+            catch (Exception ex)
+            {
+                throw new DalXMLFileLoadCreateException($"fail to load xml file: {xmlFilePath}, {ex.Message}");
+            }
         }
     }
     #endregion
@@ -53,30 +62,36 @@ static class XmlTools
     {
         string xmlFilePath = s_xmlDir + xmlFileName;
 
-        try
+        lock (s_fileLock)
         {
-            rootElem.Save(xmlFilePath);
-        }
-        catch (Exception ex)
-        {
-            throw new DalXMLFileLoadCreateException($"fail to create xml file: {s_xmlDir + xmlFilePath}, {ex.Message}");
+            try
+            {
+                rootElem.Save(xmlFilePath);
+            }
+            catch (Exception ex)
+            {
+                throw new DalXMLFileLoadCreateException($"fail to create xml file: {s_xmlDir + xmlFileName}, {ex.Message}");
+            }
         }
     }
     public static XElement LoadListFromXMLElement(string xmlFileName)
     {
         string xmlFilePath = s_xmlDir + xmlFileName;
 
-        try
+        lock (s_fileLock)
         {
-            if (File.Exists(xmlFilePath))
-                return XElement.Load(xmlFilePath);
-            XElement rootElem = new(xmlFileName);
-            rootElem.Save(xmlFilePath);
-            return rootElem;
-        }
-        catch (Exception ex)
-        {
-            throw new DalXMLFileLoadCreateException($"fail to load xml file: {s_xmlDir + xmlFilePath}, {ex.Message}");
+            try
+            {
+                if (File.Exists(xmlFilePath))
+                    return XElement.Load(xmlFilePath);
+                XElement rootElem = new(xmlFileName);
+                rootElem.Save(xmlFilePath);
+                return rootElem;
+            }
+            catch (Exception ex)
+            {
+                throw new DalXMLFileLoadCreateException($"fail to load xml file: {s_xmlDir + xmlFileName}, {ex.Message}");
+            }
         }
     }
     #endregion

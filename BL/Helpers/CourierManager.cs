@@ -836,8 +836,14 @@ internal static class CourierManager
                 else
                 {
                     // Courier has no active delivery - maybe assign one
-                    await HandleCourierOrderSelectionAsync(courier, config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds)
-                        .ConfigureAwait(false);
+                    var (orderNotification, courierIds, orderIds) = await HandleCourierOrderSelectionAsync(courier, config, now, random)
+    .ConfigureAwait(false);
+if (orderNotification)
+{
+    notificationNeeded = true;
+    foreach (var id in courierIds) updatedCourierIds.Add(id);
+    foreach (var id in orderIds) updatedOrderIds.Add(id);
+}
                 }
             }
 
@@ -866,11 +872,12 @@ internal static class CourierManager
     /// Decides probabilistically if the courier "chooses" to view available orders,
     /// then probabilistically selects one to start delivery if available.
     /// </summary>
-    private static async Task HandleCourierOrderSelectionAsync(
+    private static async Task<(bool notificationNeeded, HashSet<int> updatedCourierIds, HashSet<int> updatedOrderIds)>
+    HandleCourierOrderSelectionAsync(
         DO.Courier courier,
         BO.Config config,
         DateTime now,
-            Random random)
+        Random random)
     {
         const double AVAILABILITY_PROBABILITY = 0.15; // 15% chance courier chooses to view orders
         const double ORDER_SELECTION_PROBABILITY = 0.50; // 50% chance to actually select an order

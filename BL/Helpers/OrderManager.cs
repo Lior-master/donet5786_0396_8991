@@ -1448,7 +1448,7 @@ internal static class OrderManager
 
         TimeSpan? addedTime = now - o.OrderDate;
 
-        DateTime? estArrival = await Tools.EstimateArrivalAsync(now, courier.Transport, distance).ConfigureAwait(false);
+        DateTime? estArrival = await Tools.EstimateArrivalAsync(now, (DO.DeliveryTransport)courier.Transport, distance).ConfigureAwait(false);
         TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
 
         DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
@@ -1506,7 +1506,21 @@ internal static class OrderManager
             var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
 
             IEnumerable<Task<BO.OpenOrderInList?>> tasks = orders.Select(o =>
-                BuildOpenOrderInListAsync(o, deliveriesAll, courier, config, now, companyLat, companyLon));
+                BuildOpenOrderInListAsync(o, deliveriesAll, 
+                    new BO.Courier
+                    {
+                        Id = courier.Id,
+                        Name = courier.Name,
+                        Phone = courier.Phone,
+                        Email = courier.Email,
+                        Password = courier.Password,
+                        IsActive = courier.IsActive,
+                        Transport = (BO.DeliveryTransport)courier.Transport,
+                        StartDate = courier.StartDate,
+                        Administrator = (BO.Administrator)courier.Administrator,
+                        MaxDistance = courier.MaxDistance
+                    },
+                    config, now, companyLat, companyLon));
 
             var result = new List<BO.OpenOrderInList>();
             foreach (var task in tasks)
