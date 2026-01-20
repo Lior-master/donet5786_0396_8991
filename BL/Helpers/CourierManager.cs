@@ -26,13 +26,13 @@ internal static class CourierManager
     /// Enables real-time UI updates when courier data is modified.
     /// </summary>
     internal static ObserverManager Observers = new();
-    
+
     /// <summary>
     /// Cache for delivery data to prevent concurrent file access issues.
     /// Thread-safe collection that stores deliveries with timestamp for cache invalidation.
     /// </summary>
     private static readonly ConcurrentDictionary<string, (DateTime timestamp, IEnumerable<Delivery> data)> _deliveryCache = new();
-    
+
     /// <summary>
     /// Cache expiration time in minutes. Deliveries are cached for 5 minutes to balance performance and data freshness.
     /// </summary>
@@ -49,7 +49,7 @@ internal static class CourierManager
         var now = DateTime.Now;
 
         // Try to get from cache first
-        if (_deliveryCache.TryGetValue(cacheKey, out var cached) && 
+        if (_deliveryCache.TryGetValue(cacheKey, out var cached) &&
             (now - cached.timestamp) < CacheExpiration)
         {
             return cached.data;
@@ -59,8 +59,8 @@ internal static class CourierManager
         try
         {
             var deliveries = s_dal.Delivery.ReadAll().ToList(); // Materialize to avoid multiple enumerations
-            _deliveryCache.AddOrUpdate(cacheKey, 
-                (now, deliveries), 
+            _deliveryCache.AddOrUpdate(cacheKey,
+                (now, deliveries),
                 (key, old) => (now, deliveries));
             return deliveries;
         }
@@ -141,10 +141,10 @@ internal static class CourierManager
                 Administrator = (DO.Administrator)newCourier.Administrator,
                 Password = newCourier.Password
             };
-            
+
             // Persist the new courier to the data layer
             s_dal.Courier.Create(courierDO);
-            
+
             // Notify subscribers that the courier list has been updated
             Observers.NotifyListUpdated();
         }
@@ -152,7 +152,7 @@ internal static class CourierManager
         {
             // Re-throw business logic exceptions without modification
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
-            
+
             // Map Data Access Layer exceptions to Business Logic Layer exceptions
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -161,7 +161,7 @@ internal static class CourierManager
             throw new BO.BLFailedOperation(ex.Message, ex);
         }
     }
-    
+
     /// <summary>
     /// Periodically updates courier activity status by marking inactive couriers as inactive if they exceed the inactivity threshold.
     /// Compares the old and new clock times to determine if any couriers have become inactive since the last check.
@@ -210,14 +210,14 @@ internal static class CourierManager
                 {
                     var updated = x.Courier with { IsActive = false };
                     s_dal.Courier.Update(updated);
-                    
+
                     // Notify subscribers that this specific courier has been modified
                     Observers.NotifyItemUpdated(updated.Id);
-                    
+
                     return updated;
                 })
                 .ToList();
-                
+
             // If any couriers were modified, notify list observers for bulk refresh
             if (updatedCouriers.Any())
             {
@@ -228,7 +228,7 @@ internal static class CourierManager
         {
             // Re-throw business logic exceptions without modification
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
-            
+
             // Map Data Access Layer exceptions to Business Logic Layer exceptions
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -258,15 +258,15 @@ internal static class CourierManager
                 // Search for the courier with the given ID
                 var courier = s_dal.Courier.ReadAll()
                     .FirstOrDefault(c => c.Id == Id);
-                
+
                 // Verify the courier exists
                 if (courier == null)
                     throw new BO.BLNotFoundException("User with this Id not found.");
-                
+
                 // Verify the password matches the stored credential
                 if (courier.Password != password)
                     throw new BO.BLInvalidInputException("Wrong password.");
-                
+
                 // Return the courier's administrator role
                 return (BO.Administrator)courier.Administrator;
             }
@@ -280,7 +280,7 @@ internal static class CourierManager
         {
             // Re-throw business logic exceptions without modification
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException) throw;
-            
+
             // Map Data Access Layer exceptions to Business Logic Layer exceptions
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -321,11 +321,11 @@ internal static class CourierManager
             if (Filter != null)
             {
                 // Filter by administrator role (Director, Courier, Customer)
-                if(Filter is BO.Administrator adminStatus)
+                if (Filter is BO.Administrator adminStatus)
                     couriers = couriers.Where(c => (BO.Administrator)c.Administrator == adminStatus);
 
                 // Filter by transport method (Motorcycle, Bike, Car, Foot)
-                else if(Filter is BO.DeliveryTransport transportType)
+                else if (Filter is BO.DeliveryTransport transportType)
                     couriers = couriers.Where(c => (BO.DeliveryTransport)c.Transport == transportType);
             }
 
@@ -394,7 +394,7 @@ internal static class CourierManager
         {
             // Re-throw business logic exceptions without modification
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
-            
+
             // Map Data Access Layer exceptions to Business Logic Layer exceptions
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -612,7 +612,7 @@ internal static class CourierManager
             {
                 throw new BLNotFoundException("requesterId doesn't exist");
             }
-            
+
             // Retrieve the existing courier and apply updates
             try
             {
@@ -636,7 +636,7 @@ internal static class CourierManager
 
                 // Persist the updated courier to the data layer
                 s_dal.Courier.Update(existingCourier);
-                
+
                 // Notify subscribers of both item-specific and list-level changes
                 Observers.NotifyItemUpdated(updatedCourier.Id);
                 Observers.NotifyListUpdated();
@@ -650,7 +650,7 @@ internal static class CourierManager
         {
             // Re-throw business logic exceptions without modification
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
-            
+
             // Map Data Access Layer exceptions to Business Logic Layer exceptions
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -688,10 +688,10 @@ internal static class CourierManager
 
             // Create an updated copy with the Director role using record immutability
             var updated = courier with { Administrator = DO.Administrator.Director };
-            
+
             // Persist the promotion to the data layer
             s_dal.Courier.Update(updated);
-            
+
             // Notify subscribers of both item-specific and list-level changes
             Observers.NotifyItemUpdated(courierId);
             Observers.NotifyListUpdated();
@@ -700,7 +700,7 @@ internal static class CourierManager
         {
             // Re-throw business logic exceptions without modification
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException || ex is BO.BLUnauthorizedException) throw;
-            
+
             // Map Data Access Layer exceptions to Business Logic Layer exceptions
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -747,10 +747,10 @@ internal static class CourierManager
 
             // Delete the courier from the data layer
             s_dal.Courier.Delete(courierId);
-            
+
             // Invalidate delivery cache since courier relationships may have changed
             InvalidateDeliveryCache();
-            
+
             // Notify subscribers that this item has been deleted and the list has changed
             Observers.NotifyItemUpdated(courierId);
             Observers.NotifyListUpdated();
@@ -759,7 +759,7 @@ internal static class CourierManager
         {
             // Re-throw business logic exceptions without modification
             if (ex is BO.BLNotFoundException || ex is BO.BLInvalidInputException || ex is BO.BLAlreadyExistsException || ex is BO.BLInvalidOperationException) throw;
-            
+
             // Map Data Access Layer exceptions to Business Logic Layer exceptions
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -830,20 +830,19 @@ internal static class CourierManager
 
                 if (courierInProgressDeliveries.Count > 0)
                 {
-                    HandleDeliveryCompletion(courier, courierInProgressDeliveries.First(), 
+                    HandleDeliveryCompletion(courier, courierInProgressDeliveries.First(),
                         config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds);
                 }
                 else
                 {
                     // Courier has no active delivery - maybe assign one
-                    var (orderNotification, courierIds, orderIds) = await HandleCourierOrderSelectionAsync(courier, config, now, random)
-    .ConfigureAwait(false);
-if (orderNotification)
-{
-    notificationNeeded = true;
-    foreach (var id in courierIds) updatedCourierIds.Add(id);
-    foreach (var id in orderIds) updatedOrderIds.Add(id);
-}
+                    var (orderNotification, courierIds, orderIds) = await HandleCourierOrderSelectionAsync(courier, config, now, random).ConfigureAwait(false);
+                    if (orderNotification)
+                    {
+                        notificationNeeded = true;
+                        foreach (var id in courierIds) updatedCourierIds.Add(id);
+                        foreach (var id in orderIds) updatedOrderIds.Add(id);
+                    }
                 }
             }
 
@@ -983,7 +982,7 @@ if (orderNotification)
 
             // Calculate the distance from company to delivery address
             double distance = 0;
-            if (order.Latitude.HasValue && order.Longitude.HasValue && 
+            if (order.Latitude.HasValue && order.Longitude.HasValue &&
                 (order.Latitude != 0 || order.Longitude != 0))
             {
                 distance = Tools.BirdDistance(

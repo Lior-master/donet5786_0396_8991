@@ -255,13 +255,7 @@ internal static class AdminManager //stage 4
         {
             UpdateClock(Now.AddMinutes(s_interval));
 
-            //TO_DO: //stage 7
-            //Add calls here to any logic simulation that was required in stage 7
-            //for example: course registration simulation
-            if (_simulateTask is null || _simulateTask.IsCompleted)//stage 7
-                _simulateTask = Task.Run(async () => await CourierManager.SimulateCourierActivityAsync().ConfigureAwait(false));
-
-            //etc...
+            _ = Task.Run(async () => await CourierManager.SimulateCourierActivityAsync().ConfigureAwait(false));
 
             try
             {
