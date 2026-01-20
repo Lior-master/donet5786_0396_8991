@@ -30,6 +30,12 @@ internal static class OrderManager
     internal static ObserverManager Observers = new();
 
     /// <summary>
+    /// Non-blocking mutex to prevent concurrent execution of PeriodicOrdersUpdates.
+    /// Ensures that only one instance of the periodic update process runs at a time.
+    /// </summary>
+    private static readonly AsyncMutex s_periodicMutex = new();
+
+    /// <summary>
     /// Periodically updates order and delivery statuses based on elapsed time and configured thresholds.
     /// Handles three main update scenarios:
     /// 1. Starts processing deliveries when their pickup time is reached
@@ -40,6 +46,9 @@ internal static class OrderManager
     /// - If elapsed time exceeds maxDeliveryTime: mark as Canceled
     /// - If elapsed time is within riskRange (near maxDeliveryTime): escalate based on delivery status
     /// - Otherwise: remain Pending
+    /// 
+    /// Stage 7: Uses non-blocking mutex to prevent overlapping runs. All DAL operations are wrapped with
+    /// lock(AdminManager.BlMutex), while observer notifications are performed outside locks.
     /// 
     /// No changes are persisted to DO.Order (by design); only delivery records are updated.
     /// </summary>
@@ -53,9 +62,13 @@ internal static class OrderManager
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
     internal static void PeriodicOrdersUpdates(DateTime oldClock, DateTime newClock)
     {
+        // Non-blocking mutex: if already running, skip immediately
+        if (s_periodicMutex.CheckAndSetInProgress())
+            return;
+
         try
         {
-            // Read config values once
+            // Read config values under lock
             TimeSpan maxDeliveryTime;
             lock (AdminManager.BlMutex)
             {
@@ -63,20 +76,15 @@ internal static class OrderManager
             }
 
             // Snapshot reads to minimize DAL calls
-            List<DO.Order> ordersAll;
-            List<DO.Delivery> deliveriesAll;
-            lock (AdminManager.BlMutex)
-            {
-                ordersAll = s_dal.Order.ReadAll().ToList();
-                deliveriesAll = s_dal.Delivery.ReadAll().ToList();
-            }
+            var ordersAll = s_dal.Order.ReadAll().ToList();
+            var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
 
-            bool deliveriesUpdated = false;
+            // Local collections to track updated entities for notification outside locks
             var updatedOrders = new HashSet<int>();
             var updatedCouriers = new HashSet<int>();
+            bool deliveriesUpdated = false;
 
-            
-            // update all OPEN orders whose validity expired after advancing the system clock
+            // Update all OPEN orders whose validity expired after advancing the system clock
             foreach (var o in ordersAll)
             {
                 // If the order already exceeded max time at newClock -> it is expired
@@ -87,7 +95,7 @@ internal static class OrderManager
                 var orderDeliveries = deliveriesAll.Where(d => d.OrderId == o.Id).ToList();
 
                 // "Open" delivery = a delivery that hasn't ended yet => DeliveredStatus is null
-                // (tiour: DeliveredStatus is the delivery end-type; null means still not ended)
+                // (DeliveredStatus is the delivery end-type; null means still not ended)
                 var openDeliveries = orderDeliveries
                     .Where(d => d.DeliveredStatus == null && d.ArrivalTime == null)
                     .ToList();
@@ -107,11 +115,7 @@ internal static class OrderManager
                         DeliveredStatus = DO.DeliveredStatus.Failed
                     };
 
-                    lock (AdminManager.BlMutex)
-                    {
-                        s_dal.Delivery.Update(upd);
-                    }
-                    
+                    s_dal.Delivery.Update(upd);
                     deliveriesUpdated = true;
                     updatedOrders.Add(d.OrderId);
                     if (d.CourierId != 0)
@@ -119,16 +123,19 @@ internal static class OrderManager
                 }
             }
 
-            // Notify observers if any deliveries were updated
+            // Notify observers OUTSIDE all locks
             if (deliveriesUpdated)
             {
                 CourierManager.InvalidateDeliveryCache();
+
                 foreach (var orderId in updatedOrders)
                     Observers.NotifyItemUpdated(orderId);
 
                 Observers.NotifyListUpdated();
+
                 foreach (var courierId in updatedCouriers)
                     CourierManager.Observers.NotifyItemUpdated(courierId);
+
                 if (updatedCouriers.Count > 0)
                     CourierManager.Observers.NotifyListUpdated();
             }
@@ -149,6 +156,11 @@ internal static class OrderManager
                 throw new BO.BLFailedOperation(ex.Message, ex);
 
             throw new BO.BLFailedOperation(ex.Message, ex);
+        }
+        finally
+        {
+            // Always release the mutex, even on exception
+            s_periodicMutex.UnsetInProgress();
         }
     }
 
@@ -1317,8 +1329,6 @@ internal static class OrderManager
                 // Arrival time will be filled when delivery is completed
                 ArrivalTime = null,
                 // Distance will be calculated when delivery is completed
-                Distance = distance,
-                // Mark delivery as null (because is not yet delivered)
                 DeliveredStatus = null
             };
 
@@ -1494,14 +1504,14 @@ internal static class OrderManager
     {
         try
         {
-            // Validate requester/courier exists
-            DO.Courier? requester;
-            DO.Courier? courier;
-            lock (AdminManager.BlMutex)
-            {
-                requester = s_dal.Courier.Read(requesterId) ?? throw new BO.BLNotFoundException("Requester does not exist.");
-                courier = s_dal.Courier.Read(courierId) ?? throw new BO.BLNotFoundException($"Courier {courierId} not found.");
-            }
+            // Validate requester exists
+            var requester = s_dal.Courier.Read(requesterId);
+            if (requester == null)
+                throw new BO.BLNotFoundException("Requester does not exist.");
+
+            // Validate courier exists
+            var courier = s_dal.Courier.Read(courierId)
+                ?? throw new BO.BLNotFoundException($"Courier {courierId} not found.");
 
             // Authorization (reasonable per "main management" + courier screen):
             // allow the courier himself or the main boss/admin
@@ -1510,15 +1520,13 @@ internal static class OrderManager
                 throw new BO.BLInvalidOperationException("Requester is not authorized to view this courier history.");
 
             // "Closed deliveries" = deliveries with end-time AND end-type (DeliveredStatus != null)
-            List<DO.Delivery>? deliveries;
-            Dictionary<int, DO.Order> orders;
-            lock (AdminManager.BlMutex)
-            {
-                deliveries = s_dal.Delivery
+            // (tiour: DeliveredStatus is the delivery end type, nullable until closed)
+            var deliveries = s_dal.Delivery
                 .ReadAll(d => d.CourierId == courierId && d.ArrivalTime != null && d.DeliveredStatus != null)
                 .ToList();
-                orders = s_dal.Order.ReadAll().ToDictionary(o => o.Id);
-            }
+
+            // Load all orders for lookup
+            var orders = s_dal.Order.ReadAll().ToDictionary(o => o.Id);
 
             // Project
             var list = deliveries.Select(d =>
@@ -1687,18 +1695,12 @@ internal static class OrderManager
         try
         {
             // Validate requester exists
-            DO.Courier? courier;
-            List<DO.Order>? orders;
-            List<DO.Delivery>? deliveriesAll;
-            lock (AdminManager.BlMutex)
-            {
-                _ = s_dal.Courier.Read(requesterId)
+            _ = s_dal.Courier.Read(requesterId)
                 ?? throw new BLNotFoundException("Requester does not exist.");
-                courier = s_dal.Courier.Read(courierId)
+
+            // Validate courier exists
+            var courier = s_dal.Courier.Read(courierId)
                 ?? throw new BLNotFoundException($"Courier {courierId} not found.");
-                orders = s_dal.Order.ReadAll().ToList();
-                deliveriesAll = s_dal.Delivery.ReadAll().ToList();
-            }
 
             var config = AdminManager.GetConfig();
             DateTime now = config.Clock;
@@ -1706,6 +1708,10 @@ internal static class OrderManager
             // Company coordinates come from admin/config (as you said)
             double companyLat = config.CompanyLatitude;
             double companyLon = config.CompanyLongitude;
+
+            // Read all orders and deliveries once
+            var orders = s_dal.Order.ReadAll().ToList();
+            var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
 
             IEnumerable<Task<BO.OpenOrderInList?>> tasks = orders.Select(o =>
                 BuildOpenOrderInListAsync(o, deliveriesAll, 

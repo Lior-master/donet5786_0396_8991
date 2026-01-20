@@ -213,7 +213,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // Stop simulator if running
             if (_simulatorRunning)
             {
-                s_bl.Admin.Stop();
+                s_bl.Admin.StopSimulator();
                 _simulatorRunning = false;
             }
 
@@ -456,7 +456,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (_simulatorRunning)
             {
                 // Stop simulator
-                s_bl.Admin.Stop();
+                s_bl.Admin.StopSimulator();
                 _simulatorRunning = false;
                 
                 // Update UI
@@ -480,7 +480,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     return;
                 }
 
-                s_bl.Admin.Start(interval);
+                s_bl.Admin.StartSimulator((int)interval);
                 _simulatorRunning = true;
                 
                 // Update UI

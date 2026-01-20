@@ -37,7 +37,10 @@ internal static class CourierManager
     /// Cache expiration time in minutes. Deliveries are cached for 5 minutes to balance performance and data freshness.
     /// </summary>
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
-
+    /// <summary>
+    /// Non-blocking mutex for periodic updates to prevent overlapping runs (Stage 7).
+    /// </summary>
+    private static readonly AsyncMutex s_periodicMutex = new();
     /// <summary>
     /// Thread-safe method to get delivery data, using cache when available and valid.
     /// Falls back to database access when cache is expired or missing.
@@ -178,6 +181,9 @@ internal static class CourierManager
     /// Periodically updates courier activity status by marking inactive couriers as inactive if they exceed the inactivity threshold.
     /// Compares the old and new clock times to determine if any couriers have become inactive since the last check.
     /// Notifies observers when courier statuses are modified.
+    /// 
+    /// Stage 7: Uses non-blocking mutex to prevent overlapping runs. All DAL operations are wrapped with
+    /// lock(AdminManager.BlMutex), while observer notifications are performed outside locks.
     /// </summary>
     /// <param name="oldClock">The previous clock time (start of the period being checked).</param>
     /// <param name="newClock">The current clock time (end of the period being checked).</param>
@@ -189,11 +195,15 @@ internal static class CourierManager
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
     internal static void PeriodicCouriersUpdates(DateTime oldClock, DateTime newClock)
     {
+        // Non-blocking mutex: if already running, skip immediately
+        if (s_periodicMutex.CheckAndSetInProgress())
+            return;
+
         try
         {
             // Retrieve the configured inactivity threshold from system settings
             TimeSpan inactivityThreshold;
-            lock (AdminManager.BlMutex) // FIXED: Added lock around DAL call
+            lock (AdminManager.BlMutex)
             {
                 inactivityThreshold = s_dal.Config.Inactivity;
             }
@@ -202,13 +212,8 @@ internal static class CourierManager
             var allDeliveries = GetDeliveries();
 
             // Process all active couriers to check for inactivity
-            List<DO.Courier> allCouriers;
-            lock (AdminManager.BlMutex) // FIXED: Added lock around DAL call
-            {
-                allCouriers = s_dal.Courier.ReadAll().Where(c => c.IsActive).ToList();
-            }
-
-            var updatedCouriers = allCouriers
+            var updatedCouriers = s_dal.Courier.ReadAll()
+                .Where(c => c.IsActive)
                 // Calculate the last arrival time for each courier
                 .Select(c => new
                 {
@@ -230,11 +235,7 @@ internal static class CourierManager
                 .Select(x =>
                 {
                     var updated = x.Courier with { IsActive = false };
-                    
-                    lock (AdminManager.BlMutex) // FIXED: Added lock around DAL call
-                    {
-                        s_dal.Courier.Update(updated);
-                    }
+                    s_dal.Courier.Update(updated);
 
                     // Notify subscribers that this specific courier has been modified
                     Observers.NotifyItemUpdated(updated.Id);
@@ -243,9 +244,12 @@ internal static class CourierManager
                 })
                 .ToList();
 
-            // If any couriers were modified, notify list observers for bulk refresh
-            if (updatedCouriers.Any())
+            // Notify observers OUTSIDE all locks
+            if (notificationNeeded)
             {
+                foreach (var courierId in updatedCourierIds)
+                    Observers.NotifyItemUpdated(courierId);
+
                 Observers.NotifyListUpdated();
             }
         }
@@ -260,6 +264,11 @@ internal static class CourierManager
             if (ex is DO.DalFormatException) throw new BO.BLInvalidInputException(ex.Message, ex);
             if (ex is DO.DalNullReferenceException || ex is DO.DalXMLFileLoadCreateException) throw new BO.BLFailedOperation(ex.Message, ex);
             throw new BO.BLFailedOperation(ex.Message, ex);
+        }
+        finally
+        {
+            // Always release the mutex, even on exception
+            s_periodicMutex.UnsetInProgress();
         }
     }
 
@@ -859,16 +868,6 @@ internal static class CourierManager
     /// This method is called asynchronously from the simulator thread once per second.
     /// All DAL access is protected with tight lock blocks to minimize critical section duration.
     /// Observer notifications are performed only outside locks to prevent blocking.
-    /// </summary>
-    /// <remarks>
-    /// Implementation details per Stage 7 requirements:
-    /// - Fetches all active couriers and materializes to List to avoid deferred LINQ execution during locks
-    /// - Fetches all open and in-progress deliveries
-    /// - Wraps each DAL operation with an individual, tight lock block
-    /// - Notifications are triggered only after all locks are released
-    /// - Courier availability probability: 15% (adjustable based on courier volume)
-    /// - Order selection probability: 50% (courier "changes mind" sometimes)
-    /// - Delivery completion probability: probabilistic based on distance and random wait time
     /// </remarks>
     internal static async Task SimulateCourierActivityAsync()
     {
@@ -973,8 +972,8 @@ internal static class CourierManager
         {
             // Get available orders for this courier using existing BL method
             // This replicates what would happen if the courier opened the order selection screen
-            var availableOrders = (await OrderManager.GetOpenOrdersForCourierAsync(
-                config.BossId, courier.Id, null, null).ConfigureAwait(false)).ToList();
+            var availableOrders = (await OrderManager.orderInListsAsync(
+                config.BossId, null, courier.Id, null).ConfigureAwait(false)).ToList();
 
             if (availableOrders.Count == 0)
                 return (notificationNeeded, updatedCourierIds, updatedOrderIds);
