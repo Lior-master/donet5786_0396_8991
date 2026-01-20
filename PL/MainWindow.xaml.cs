@@ -431,12 +431,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _orderListWindowInstance.Show();
     }
 
-    private bool _simulatorRunning = false;
 
     // =======================================================
     //          SIMULATOR CONTROL
     // =======================================================
-    
+
+     private bool _simulatorRunning = false;
+   
     private void SimulatorToggle_Click(object sender, RoutedEventArgs e)
     {
         try
