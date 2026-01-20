@@ -212,37 +212,29 @@ internal static class CourierManager
             var allDeliveries = GetDeliveries();
 
             // Process all active couriers to check for inactivity
-            var updatedCouriers = s_dal.Courier.ReadAll()
-                .Where(c => c.IsActive)
-                // Calculate the last arrival time for each courier
-                .Select(c => new
+            var updatedCouriers = new List<DO.Courier>();
+            var updatedCourierIds = new List<int>();
+            bool notificationNeeded = false;
+
+            foreach (var c in s_dal.Courier.ReadAll().Where(c => c.IsActive))
+            {
+                var lastArrival = allDeliveries
+                    .Where(d => d.CourierId == c.Id && d.ArrivalTime != null)
+                    .OrderByDescending(d => d.ArrivalTime)
+                    .Select(d => d.ArrivalTime)
+                    .FirstOrDefault();
+
+                if (lastArrival != null &&
+                    (oldClock - lastArrival.Value) <= inactivityThreshold &&
+                    (newClock - lastArrival.Value) > inactivityThreshold)
                 {
-                    Courier = c,
-                    LastArrival =
-                        allDeliveries
-                            .Where(d => d.CourierId == c.Id && d.ArrivalTime != null)
-                            .OrderByDescending(d => d.ArrivalTime)
-                            .Select(d => d.ArrivalTime)
-                            .FirstOrDefault()
-                })
-                // Filter: only process couriers who have delivered something
-                .Where(x => x.LastArrival != null)
-                // Filter: only process couriers who became inactive between oldClock and newClock
-                .Where(x =>
-                    (oldClock - x.LastArrival!.Value) <= inactivityThreshold &&
-                    (newClock - x.LastArrival!.Value) > inactivityThreshold)
-                // Mark inactive couriers and update them
-                .Select(x =>
-                {
-                    var updated = x.Courier with { IsActive = false };
+                    var updated = c with { IsActive = false };
                     s_dal.Courier.Update(updated);
-
-                    // Notify subscribers that this specific courier has been modified
-                    Observers.NotifyItemUpdated(updated.Id);
-
-                    return updated;
-                })
-                .ToList();
+                    updatedCouriers.Add(updated);
+                    updatedCourierIds.Add(updated.Id);
+                    notificationNeeded = true;
+                }
+            }
 
             // Notify observers OUTSIDE all locks
             if (notificationNeeded)
