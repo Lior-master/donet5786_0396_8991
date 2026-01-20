@@ -8,6 +8,7 @@ using System.Windows.Input;
 
 using BlApi;
 using BO;
+using Helpers; // ObserverMutex
 
 namespace PL.Order;
 
@@ -20,6 +21,9 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
 
     private readonly int? _orderId;
     private readonly Action? _orderObserver;
+
+    // Stage 7: prevents concurrent re-entrant refreshes from background threads
+    private readonly ObserverMutex _orderItemMutex = new(); // stage 7
 
     private BO.Order? _orderCurrent;
     public BO.Order OrderCurrent
@@ -70,69 +74,92 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         _orderId = orderId;
         _orderObserver = RefreshOrderFromBl;
 
-        Loaded += async (_, __) =>
+        Loaded += OrderWindow_Loaded;
+        Closed += OrderWindow_Closed;
+    }
+
+    private async void OrderWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_isCreateMode || _orderId is null || _orderObserver is null)
+            return;
+
+        try
+        {
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            // Register BEFORE fetching so we don't miss updates
+            s_bl.Order.AddObserver(_orderId.Value, _orderObserver);
+
+            // Initial load
+            OrderCurrent = await s_bl.Order.GetOrderDetailsAsync(bossId, _orderId.Value);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Cannot load order", MessageBoxButton.OK, MessageBoxImage.Error);
+            Close();
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
+        }
+    }
+
+    private void OrderWindow_Closed(object? sender, EventArgs e)
+    {
+        if (_isCreateMode || _orderId is null || _orderObserver is null)
+            return;
+
+        try
+        {
+            s_bl.Order.RemoveObserver(_orderId.Value, _orderObserver);
+        }
+        catch
+        {
+            // ignore shutdown issues
+        }
+    }
+
+    /// <summary>
+    /// Stage 7-safe observer callback: can be invoked from background threads.
+    /// Uses Dispatcher + ObserverMutex to prevent overlapping refreshes.
+    /// </summary>
+    private void RefreshOrderFromBl()
+    {
+        // Stage 7: prevent re-entrancy (multiple observer notifications)
+        if (_orderItemMutex.CheckAndSetLoadInProgressOrRestartRequired())
+            return;
+
+        Dispatcher.BeginInvoke(new Action(async () =>
         {
             try
             {
-                Mouse.OverrideCursor = Cursors.Wait;
-                s_bl.Order.AddObserver(orderId, _orderObserver);
-                OrderCurrent = await s_bl.Order.GetOrderDetailsAsync(bossId, orderId);
+                if (_isCreateMode || _orderId is null)
+                    return;
+
+                try
+                {
+                    // Single BL call:
+                    // If order was canceled/deleted -> BLNotFoundException -> close window gracefully
+                    OrderCurrent = await s_bl.Order.GetOrderDetailsAsync(bossId, _orderId.Value);
+                }
+                catch (BO.BLNotFoundException)
+                {
+                    Close();
+                }
             }
-            catch (Exception ex)
+            catch
             {
-                MessageBox.Show(ex.Message, "Cannot load order", MessageBoxButton.OK, MessageBoxImage.Error);
-                Close();
+                // keep observer resilient (avoid crashing UI due to background updates)
             }
             finally
             {
-                Mouse.OverrideCursor = null;
+                if (await _orderItemMutex.UnsetLoadInProgressAndCheckRestartRequested())
+                    RefreshOrderFromBl();
             }
-        };
-
-        Closed += (_, __) =>
-        {
-            if (_orderObserver is not null)
-                s_bl.Order.RemoveObserver(orderId, _orderObserver);
-        };
+        }));
     }
 
-    private void RefreshOrderFromBl()
-    {
-        Dispatcher.BeginInvoke(async () =>
-        {
-            if (_isCreateMode || _orderId is null)
-                return;
-            // Add defensive check to prevent race condition
-            var orderExists = await CheckOrderExistsAsync(_orderId.Value);
-
-            if (!orderExists)
-            {
-                // Order was canceled - close this window gracefully
-                Close();
-                return;
-            }
-
-            OrderCurrent = await s_bl.Order.GetOrderDetailsAsync(bossId, _orderId.Value);
-        });
-    }
-
-    private async Task<bool> CheckOrderExistsAsync(int orderId)
-    {
-        try
-        {
-            await s_bl.Order.GetOrderDetailsAsync(bossId, orderId);
-            return true;
-        }
-        catch (BO.BLNotFoundException)
-        {
-            return false;
-        }
-    }
-
-    private void btnCancel_Click(object sender, RoutedEventArgs e)
-    {
-        Close();
-    }
+    private void btnCancel_Click(object sender, RoutedEventArgs e) => Close();
 
     private async void btnSave_Click(object sender, RoutedEventArgs e)
     {
@@ -177,6 +204,7 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         try
         {
             var orderId = OrderCurrent.Id;
+
             var result = MessageBox.Show(
                 $"Are you sure you want to cancel order #{orderId}?\nCustomer: {OrderCurrent.CustomerName}\nAddress: {OrderCurrent.CustomerAddress}",
                 "Confirm Order Cancellation",
@@ -193,12 +221,13 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
                 "Order Cancelled",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
-            
+
             Close();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error cancelling order: {ex.Message}", "Cancellation Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Error cancelling order: {ex.Message}", "Cancellation Failed",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

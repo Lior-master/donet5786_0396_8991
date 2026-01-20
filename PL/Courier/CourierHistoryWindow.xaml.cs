@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using BlApi;
 using BO;
+using Helpers;
 
 namespace PL.Courier;
 
@@ -18,7 +19,12 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
     private static readonly IBl s_bl = Factory.Get();
 
     private readonly int _courierId;
-    private Action? _orderListObserver;
+    private readonly Action _orderListObserver;
+
+    // Stage 7: prevents concurrent re-entrant refreshes from observer callbacks
+    private readonly ObserverMutex _historyMutex = new(); // stage 7
+
+    private bool _observerRegistered = false;
 
     // =========================
     // Bindable collections
@@ -51,6 +57,8 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
         {
             _selectedOrderTypeFilter = value;
             OnPropertyChanged();
+
+            // UI-triggered refresh
             LoadHistory(value?.OrderType);
         }
     }
@@ -63,7 +71,12 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
     {
         InitializeComponent();
         _courierId = courierId;
+
         _orderListObserver = RefreshFromBl;
+
+        // Prefer explicit hooks (works even if not wired in XAML)
+        Loaded += Window_Loaded;
+        Closed += Window_Closed;
     }
 
     // =========================
@@ -80,12 +93,37 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
 
         SelectedOrderTypeFilter = OrderTypeFilters.First();
 
-        try { s_bl.Order.AddObserver(_orderListObserver!); } catch { }
+        if (_observerRegistered)
+            return;
+
+        try
+        {
+            s_bl.Order.AddObserver(_orderListObserver);
+            _observerRegistered = true;
+        }
+        catch
+        {
+            // ignore if BL doesn't support / throws
+        }
     }
 
     private void Window_Closed(object? sender, EventArgs e)
     {
-        try { if (_orderListObserver != null) s_bl.Order.RemoveObserver(_orderListObserver); } catch { }
+        if (!_observerRegistered)
+            return;
+
+        try
+        {
+            s_bl.Order.RemoveObserver(_orderListObserver);
+        }
+        catch
+        {
+            // ignore shutdown issues
+        }
+        finally
+        {
+            _observerRegistered = false;
+        }
     }
 
     // =========================
@@ -112,12 +150,31 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
         }
     }
 
+    // =========================
+    // Stage 7-safe observer callback
+    // =========================
+
     private void RefreshFromBl()
     {
-        Dispatcher.Invoke(() =>
+        if (_historyMutex.CheckAndSetLoadInProgressOrRestartRequired())
+            return;
+
+        Dispatcher.BeginInvoke(new Action(async () =>
         {
-            LoadHistory(SelectedOrderTypeFilter?.OrderType);
-        });
+            try
+            {
+                LoadHistory(SelectedOrderTypeFilter?.OrderType);
+            }
+            catch
+            {
+                // keep observer resilient
+            }
+            finally
+            {
+                if (await _historyMutex.UnsetLoadInProgressAndCheckRestartRequested())
+                    RefreshFromBl();
+            }
+        }));
     }
 
     // =========================

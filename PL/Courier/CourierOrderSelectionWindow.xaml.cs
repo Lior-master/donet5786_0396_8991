@@ -1,5 +1,6 @@
 ﻿using BlApi;
 using BO;
+using Helpers;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -15,7 +16,6 @@ namespace PL.Courier;
 /// <summary>
 /// Window that lists open orders available to the courier and allows assignment.
 /// Relies on BL observers for refresh (AssignOrderToCourier triggers notifications).
-/// Keeps UI logic minimal: mostly delegates to small helper methods.
 /// </summary>
 public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChanged
 {
@@ -23,8 +23,25 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
 
     private readonly int _courierId;
     private readonly int _bossId;
+
     private readonly Action _ordersObserver;
+
+    // Stage 7: prevents re-entrant refreshes and ensures we rerun if updates arrive mid-refresh
+    private readonly ObserverMutex _openOrdersMutex = new(); // stage 7
+
+    private bool _observerRegistered = false;
+
     private bool _isLoading;
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set
+        {
+            if (_isLoading == value) return;
+            _isLoading = value;
+            OnPropertyChanged();
+        }
+    }
 
     // Property to track the assigned order ID
     public int? AssignedOrderId { get; private set; }
@@ -42,18 +59,6 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-    public bool IsLoading
-    {
-        get => _isLoading;
-        private set
-        {
-            if (_isLoading == value)
-                return;
-            _isLoading = value;
-            OnPropertyChanged();
-        }
-    }
-
     public CourierOrderSelectionWindow(int courierId)
     {
         InitializeComponent();
@@ -64,8 +69,12 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         DataContext = this;
         lstOpenOrders.ItemsSource = OpenOrders;
 
-        // Observer must marshal back to UI thread
-        _ordersObserver = () => Dispatcher.BeginInvoke(async () => await RefreshOpenOrdersAsync());
+        // Observer callback (can come from background threads) -> marshal to UI thread safely
+        _ordersObserver = OrdersObserverCallback;
+
+        // Prefer explicit hooks (works even if not wired in XAML)
+        Loaded += Window_Loaded;
+        Closed += Window_Closed;
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -74,7 +83,6 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         {
             InitializeFilterCombo();
 
-            // Register observer so BL notifications update this window automatically
             TryRegisterObserver();
 
             await RefreshOpenOrdersAsync();
@@ -103,33 +111,95 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
 
     private void TryRegisterObserver()
     {
-        try { s_bl.Order.AddObserver(_ordersObserver); } catch { }
+        if (_observerRegistered)
+            return;
+
+        try
+        {
+            s_bl.Order.AddObserver(_ordersObserver);
+            _observerRegistered = true;
+        }
+        catch
+        {
+            // ignore if BL doesn't support / throws
+        }
     }
 
     private void TryUnregisterObserver()
     {
-        try { s_bl.Order.RemoveObserver(_ordersObserver); } catch { }
+        if (!_observerRegistered)
+            return;
+
+        try
+        {
+            s_bl.Order.RemoveObserver(_ordersObserver);
+        }
+        catch
+        {
+            // ignore shutdown issues
+        }
+        finally
+        {
+            _observerRegistered = false;
+        }
     }
 
-    private BO.OrderType? GetSelectedFilter()
+    private BO.OrderType? GetSelectedFilter() =>
+        cmbFilterOrderType.SelectedItem is BO.OrderType ot ? ot : null;
+
+    // ================================
+    // Stage 7-safe observer callback
+    // ================================
+    private void OrdersObserverCallback()
     {
-        return cmbFilterOrderType.SelectedItem is BO.OrderType ot ? ot : null;
+        if (_openOrdersMutex.CheckAndSetLoadInProgressOrRestartRequired())
+            return;
+
+        Dispatcher.BeginInvoke(new Action(async () =>
+        {
+            try
+            {
+                await RefreshOpenOrdersCoreAsync();
+            }
+            catch
+            {
+                // keep observer resilient
+            }
+            finally
+            {
+                if (await _openOrdersMutex.UnsetLoadInProgressAndCheckRestartRequested())
+                    OrdersObserverCallback();
+            }
+        }));
     }
 
     private async Task RefreshOpenOrdersAsync()
     {
-        if (IsLoading)
-            return;
+        // User-triggered refresh (filter change / loaded) should reuse the same core logic
+        await RefreshOpenOrdersCoreAsync();
+    }
 
+    private async Task RefreshOpenOrdersCoreAsync()
+    {
         IsLoading = true;
         var filter = GetSelectedFilter();
+
         try
         {
             txtStatus.Text = "Loading open orders...";
             OpenOrders.Clear();
+
             var list = (await s_bl.Order.GetOpenOrdersForCourierAsync(_bossId, _courierId, filter, null)).ToList();
+
             UpdateOpenOrdersCollection(list);
             UpdateStatusMessages(filter);
+        }
+        catch (Exception ex)
+        {
+            txtStatus.Text = "❌ Failed to load open orders";
+            FilterStatusMessage = "Failed to refresh";
+            MessageBox.Show($"Failed to refresh open orders:\n{ex.Message}",
+                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -148,10 +218,9 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
 
     private void UpdateStatusMessages(BO.OrderType? filter)
     {
-        if (filter == null)
-            FilterStatusMessage = "Showing all available orders";
-        else
-            FilterStatusMessage = $"Filtered by: {filter}";
+        FilterStatusMessage = filter == null
+            ? "Showing all available orders"
+            : $"Filtered by: {filter}";
     }
 
     private void cmbFilterOrderType_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -191,19 +260,14 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
         {
             BeginBusy("🚚 Assigning order...");
 
-            // Assigner la commande au coursier
             await s_bl.Order.AssignOrderToCourierAsync(_bossId, selected.OrderId, _courierId);
 
-            // IMPORTANT: Stocker l'ID de l'ordre assigné
             AssignedOrderId = selected.OrderId;
 
-            // Set DialogResult to true to indicate successful assignment
+            // Signal to parent that an order was assigned
             DialogResult = true;
 
-            // Montrer le succès
             ShowAssignmentSuccess(selected);
-            
-            // Fermer cette fenêtre - le parent récupérera AssignedOrderId
             Close();
         }
         catch (Exception ex)
