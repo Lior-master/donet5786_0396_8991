@@ -1,7 +1,9 @@
-﻿namespace Dal;
+﻿using System.Runtime.CompilerServices;
 using DalApi;
 using DO;
 using System.Xml.Linq;
+
+namespace Dal;
 
 internal class CourierImplementation : ICourier
 {
@@ -22,6 +24,8 @@ internal class CourierImplementation : ICourier
 
         };
     }
+    
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public void Create(Courier item)
     {
         // Load existing couriers, add the new one and save.
@@ -30,6 +34,7 @@ internal class CourierImplementation : ICourier
         XmlTools.SaveListToXMLSerializer(couriers, Config.s_couriers_xml);
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public void Delete(int id)
     {
         List<Courier> Couriers = XmlTools.LoadListFromXMLSerializer<Courier>(Config.s_couriers_xml);
@@ -45,11 +50,13 @@ internal class CourierImplementation : ICourier
         throw new DalDoesNotExistException($"Object Courier whit ID {id} doesnt exist"); // if not found
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public void DeleteAll()
     {
         XmlTools.SaveListToXMLSerializer(new List<Courier>(), Config.s_couriers_xml);
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public Courier? Read(int id)
     {
         XElement? courierElem = XmlTools.LoadListFromXMLElement(Config.s_couriers_xml).Elements()
@@ -57,6 +64,7 @@ internal class CourierImplementation : ICourier
         return courierElem == null ? null : getCourier(courierElem);
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public IEnumerable<Courier> ReadAll(Func<Courier, bool>? filter = null)
     {
         List<Courier> couriers = XmlTools.LoadListFromXMLSerializer<Courier>(Config.s_couriers_xml);
@@ -69,6 +77,7 @@ internal class CourierImplementation : ICourier
         }
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     public void Update(Courier item)
     {
         List<Courier> Couriers = XmlTools.LoadListFromXMLSerializer<Courier>(Config.s_couriers_xml);
