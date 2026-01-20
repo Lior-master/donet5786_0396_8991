@@ -826,15 +826,21 @@ internal static class CourierManager
 
                 if (courierInProgressDeliveries.Count > 0)
                 {
-                    // Courier has an active delivery - try to complete it
                     HandleDeliveryCompletion(courier, courierInProgressDeliveries.First(), 
                         config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds);
                 }
                 else
                 {
-                    // Courier has no active delivery - maybe assign one
-                    await HandleCourierOrderSelectionAsync(courier, config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds)
+                    var result = await HandleCourierOrderSelectionAsync(courier, config, now, random)
                         .ConfigureAwait(false);
+                    if (result.notificationNeeded)
+                    {
+                        notificationNeeded = true;
+                        foreach (var id in result.updatedCourierIds)
+                            updatedCourierIds.Add(id);
+                        foreach (var id in result.updatedOrderIds)
+                            updatedOrderIds.Add(id);
+                    }
                 }
             }
 
@@ -863,61 +869,54 @@ internal static class CourierManager
     /// Decides probabilistically if the courier "chooses" to view available orders,
     /// then probabilistically selects one to start delivery if available.
     /// </summary>
-    private static async Task HandleCourierOrderSelectionAsync(
+    private static async Task<(bool notificationNeeded, HashSet<int> updatedCourierIds, HashSet<int> updatedOrderIds)> HandleCourierOrderSelectionAsync(
         DO.Courier courier,
         BO.Config config,
         DateTime now,
-        Random random,
-        ref bool notificationNeeded,
-        HashSet<int> updatedCourierIds,
-        HashSet<int> updatedOrderIds)
+            Random random)
     {
         const double AVAILABILITY_PROBABILITY = 0.15; // 15% chance courier chooses to view orders
         const double ORDER_SELECTION_PROBABILITY = 0.50; // 50% chance to actually select an order
 
+        bool notificationNeeded = false;
+        var updatedCourierIds = new HashSet<int>();
+        var updatedOrderIds = new HashSet<int>();
+
         // Probabilistically decide if this courier wants to view available orders
         if (random.NextDouble() > AVAILABILITY_PROBABILITY)
-            return;
+            return (notificationNeeded, updatedCourierIds, updatedOrderIds);
 
         try
         {
-            // Get available orders for this courier using existing BL method
-            // This replicates what would happen if the courier opened the order selection screen
             var availableOrders = (await OrderManager.GetOpenOrdersForCourierAsync(
                 config.BossId, courier.Id, null, null).ConfigureAwait(false)).ToList();
 
             if (availableOrders.Count == 0)
-                return;
+                return (notificationNeeded, updatedCourierIds, updatedOrderIds);
 
-            // Probabilistically decide if the courier actually selects an order
             if (random.NextDouble() > ORDER_SELECTION_PROBABILITY)
-                return;
+                return (notificationNeeded, updatedCourierIds, updatedOrderIds);
 
-            // Randomly select one of the available orders
             var selectedOrder = availableOrders[random.Next(availableOrders.Count)];
 
-            // Simulate the courier choosing this order - call AssignOrderToCourier
             lock (AdminManager.BlMutex)
             {
                 try
                 {
-                    // Verify the order and courier still exist and order is still available
                     var orderToAssign = s_dal.Order.Read(selectedOrder.OrderId);
                     if (orderToAssign == null)
-                        return;
+                        return (notificationNeeded, updatedCourierIds, updatedOrderIds);
 
-                    // Check order is still unassigned
                     var orderDeliveries = s_dal.Delivery.ReadAll()
                         .Where(d => d.OrderId == selectedOrder.OrderId && d.ArrivalTime == null)
                         .ToList();
 
                     if (orderDeliveries.Any(d => d.CourierId != 0))
-                        return; // Already assigned to someone else
+                        return (notificationNeeded, updatedCourierIds, updatedOrderIds);
 
-                    // Create the delivery assignment
                     var delivery = new DO.Delivery
                     {
-                        Id = 0, // Let DAL auto-generate
+                        Id = 0,
                         OrderId = selectedOrder.OrderId,
                         Transport = courier.Transport,
                         CourierId = courier.Id,
@@ -934,7 +933,7 @@ internal static class CourierManager
                 }
                 catch
                 {
-                    // Silently fail - order may have been assigned by another courier
+                    // Silently fail
                 }
             }
         }
@@ -942,6 +941,8 @@ internal static class CourierManager
         {
             System.Diagnostics.Debug.WriteLine($"Error selecting order for courier {courier.Id}: {ex.Message}");
         }
+
+        return (notificationNeeded, updatedCourierIds, updatedOrderIds);
     }
 
     /// <summary>

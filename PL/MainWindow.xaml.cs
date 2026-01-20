@@ -94,7 +94,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 CurrentTime = s_bl.Admin.GetClock();
                 // Refresh order summary when clock updates
-                RefreshOrderSummary();
+                RefreshOrderSummaryAsync().ConfigureAwait(false);
             });
         }
         catch { }

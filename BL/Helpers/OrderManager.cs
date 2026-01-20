@@ -267,9 +267,11 @@ internal static class OrderManager
         if (lastByPickup != null)
             speed = Tools.GetSpeed(lastByPickup.Transport, config);
 
-        DateTime? estArrival = distance > 0
-            ? Tools.CalculateEstimatedArrival(order.OrderDate, distance, speed)
-            : null;
+        DO.DeliveryTransport transport = lastByPickup != null
+            ? lastByPickup.Transport
+            : DO.DeliveryTransport.Car; // Default to Car if no delivery exists
+
+        DateTime? estArrival = Tools.EstimateArrival(now, transport, distance);
 
         DateTime maxArrival = order.OrderDate.Add(config.MaxDeliveryTime);
 
@@ -383,7 +385,8 @@ internal static class OrderManager
             if (ex is BO.BLNotFoundException ||
                 ex is BO.BLInvalidInputException ||
                 ex is BO.BLAlreadyExistsException ||
-                ex is BO.BLInvalidOperationException) throw;
+                ex is BO.BLInvalidOperationException)
+                throw;
 
             if (ex is DO.DalDoesNotExistException) throw new BO.BLNotFoundException(ex.Message, ex);
             if (ex is DO.DalAlreadyExistsException) throw new BO.BLAlreadyExistsException(ex.Message, ex);
@@ -1409,8 +1412,8 @@ internal static class OrderManager
             .ConfigureAwait(false);
 
         TimeSpan? addedTime = now - o.OrderDate;
+        DateTime? estArrival = Tools.EstimateArrival(now, (DO.DeliveryTransport)courier.Transport, distance);
 
-        DateTime? estArrival = Tools.EstimateArrival(now, courier.Transport, distance);
         TimeSpan estSpan = estArrival.HasValue ? (estArrival.Value - now) : TimeSpan.Zero;
 
         DateTime maxDeliveredTime = o.OrderDate + config.MaxDeliveryTime;
@@ -1467,8 +1470,22 @@ internal static class OrderManager
             var orders = s_dal.Order.ReadAll().ToList();
             var deliveriesAll = s_dal.Delivery.ReadAll().ToList();
 
+            var boCourier = new BO.Courier
+            {
+                Id = courier.Id,
+                Name = courier.Name,
+                Phone = courier.Phone,
+                Email = courier.Email,
+                Password = courier.Password,
+                IsActive = courier.IsActive,
+                Transport = (BO.DeliveryTransport)courier.Transport,
+                StartDate = courier.StartDate,
+                Administrator = (BO.Administrator)courier.Administrator,
+                MaxDistance = courier.MaxDistance
+            };
+
             IEnumerable<Task<BO.OpenOrderInList?>> tasks = orders.Select(o =>
-                BuildOpenOrderInListAsync(o, deliveriesAll, courier, config, now, companyLat, companyLon));
+                BuildOpenOrderInListAsync(o, deliveriesAll, boCourier, config, now, companyLat, companyLon));
 
             var result = new List<BO.OpenOrderInList>();
             foreach (var task in tasks)
