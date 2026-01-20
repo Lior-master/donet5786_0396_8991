@@ -36,6 +36,18 @@ internal static class OrderManager
     private static readonly AsyncMutex s_periodicMutex = new();
 
     /// <summary>
+    /// Non-blocking mutex for simulation updates to prevent overlapping simulation runs (Stage 7).
+    /// Ensures that only one instance of the simulation process runs at a time.
+    /// </summary>
+    private static readonly AsyncMutex s_simulationMutex = new();
+
+    /// <summary>
+    /// Random number generator for simulation probabilistic decisions (Stage 7).
+    /// Used to generate orders and make stochastic delivery decisions.
+    /// </summary>
+    private static readonly Random s_rand = new();
+
+    /// <summary>
     /// Periodically updates order and delivery statuses based on elapsed time and configured thresholds.
     /// Handles three main update scenarios:
     /// 1. Starts processing deliveries when their pickup time is reached
@@ -1312,6 +1324,220 @@ internal static class OrderManager
                 throw new BO.BLFailedOperation(ex.Message, ex);
 
             throw new BO.BLFailedOperation(ex.Message, ex);
+        }
+    }
+
+    /// <summary>
+    /// Simulates dynamic order activity by generating new orders and auto-assigning them to available couriers.
+    /// Executes asynchronously once per second from the simulator thread (clockRunner).
+    /// 
+    /// Simulation behavior:
+    /// 1. Probabilistically creates new orders from a pool of sample customer data (~8% per second)
+    /// 2. For each pending order without an active delivery, probabilistically auto-assigns it to an available courier (~30% per second)
+    /// 
+    /// Stage 7: Uses non-blocking AsyncMutex to prevent overlapping simulation runs.
+    /// All DAL access is protected with short lock blocks (lock(AdminManager.BlMutex)).
+    /// Observer notifications are performed only outside locks to prevent blocking.
+    /// </summary>
+    /// <remarks>
+    /// Simulation parameters:
+    /// - NEW_ORDER_PROBABILITY: 8% chance per second that a new order is created (~30 orders per hour average)
+    /// - AUTO_ASSIGN_PROBABILITY: 30% chance per second that a pending order gets auto-assigned to an available courier
+    /// 
+    /// This creates realistic dynamics where orders appear and get distributed to couriers over time.
+    /// All async operations (geocoding, distance calculation) occur outside locks.
+    /// </remarks>
+    internal static async Task SimulateOrderActivityAsync() // stage 7
+    {
+        // Non-blocking mutex: if previous simulation is still in progress, exit immediately
+        if (s_simulationMutex.CheckAndSetInProgress())
+            return;
+
+        try
+        {
+            const double NEW_ORDER_PROBABILITY = 0.08;      // 8% chance per second
+            const double AUTO_ASSIGN_PROBABILITY = 0.30;    // 30% chance to auto-assign
+
+            var config = AdminManager.GetConfig();
+            var now = AdminManager.Now;
+
+            bool orderCreated = false;
+            bool ordersModified = false;
+            var updatedOrderIds = new HashSet<int>();
+            var updatedCourierIds = new HashSet<int>();
+
+            // Step 1: Probabilistically create a new order
+            if (s_rand.NextDouble() < NEW_ORDER_PROBABILITY)
+            {
+                // Sample customer data for generated orders
+                string[] customerNames = 
+                { 
+                    "Alice Johnson", "Bob Smith", "Charlie Brown", "Diana Prince", 
+                    "Eve Davis", "Frank Miller", "Grace Lee", "Henry Wilson" 
+                };
+                string[] addresses = 
+                { 
+                    "123 Main St, Tel Aviv",
+                    "456 King David Ave, Jerusalem",
+                    "789 Dizengoff St, Tel Aviv",
+                    "101 Jaffa Rd, Jerusalem",
+                    "202 Ben Yehuda St, Tel Aviv",
+                    "303 Rothschild Blvd, Tel Aviv",
+                    "404 Herzl St, Jerusalem"
+                };
+                string[] phones = 
+                { 
+                    "050-1234567", "051-2345678", "052-3456789", "053-4567890", 
+                    "054-5678901", "055-6789012", "056-7890123"
+                };
+
+                int nameIdx = s_rand.Next(customerNames.Length);
+                int addrIdx = s_rand.Next(addresses.Length);
+                int phoneIdx = s_rand.Next(phones.Length);
+
+                var newOrder = new BO.Order
+                {
+                    Id = 0, // DAL will generate
+                    Type = (BO.OrderType)(s_rand.Next(0, Enum.GetValues(typeof(BO.OrderType)).Length - 1)),
+                    CustomerName = customerNames[nameIdx],
+                    CustomerAddress = addresses[addrIdx],
+                    CustomerPhone = phones[phoneIdx],
+                    OrderDate = now,
+                    Volume = Math.Round(s_rand.NextDouble() * 50 + 1, 2),
+                    Weight = Math.Round(s_rand.NextDouble() * 100 + 1, 2),
+                    Fragility = (BO.FragilityLevel?)(s_rand.NextDouble() < 0.3 
+                        ? (BO.FragilityLevel)s_rand.Next(0, Enum.GetValues(typeof(BO.FragilityLevel)).Length - 1) 
+                        : null),
+                    OrderDescription = "Simulated order"
+                };
+
+                try
+                {
+                    // Create the order (async geocoding happens outside locks)
+                    await OrderManager.AddOrderAsync(config.BossId, newOrder).ConfigureAwait(false);
+                    orderCreated = true;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Simulation: Failed to create order: {ex.Message}");
+                }
+            }
+
+            // Step 2: Fetch all pending orders and deliveries (materialized under lock)
+            List<DO.Order> pendingOrders;
+            List<DO.Delivery> allDeliveries;
+            lock (AdminManager.BlMutex)
+            {
+                var allOrders = s_dal.Order.ReadAll().ToList();
+                allDeliveries = s_dal.Delivery.ReadAll().ToList();
+
+                // Filter to orders that have no active or completed deliveries
+                pendingOrders = allOrders
+                    .Where(o =>
+                    {
+                        var orderDeliveries = allDeliveries.Where(d => d.OrderId == o.Id).ToList();
+                        
+                        // No deliveries yet = pending
+                        if (orderDeliveries.Count == 0)
+                            return true;
+
+                        // If any delivery is open (no ArrivalTime), it's already being processed
+                        if (orderDeliveries.Any(d => d.ArrivalTime == null))
+                            return false;
+
+                        // If all deliveries are closed and all are successful terminal states, skip
+                        return !orderDeliveries.All(d =>
+                            d.DeliveredStatus == DO.DeliveredStatus.Delivered ||
+                            d.DeliveredStatus == DO.DeliveredStatus.Rejected ||
+                            d.DeliveredStatus == DO.DeliveredStatus.Canceled);
+                    })
+                    .ToList();
+            }
+
+            // Step 3: For each pending order, probabilistically auto-assign to an available courier
+            if (pendingOrders.Count > 0)
+            {
+                // Get active couriers (non-Director) under lock
+                List<DO.Courier> activeCouriers;
+                lock (AdminManager.BlMutex)
+                {
+                    activeCouriers = s_dal.Courier.ReadAll()
+                        .Where(c => c.IsActive && c.Administrator != DO.Administrator.Director)
+                        .ToList();
+                }
+
+                if (activeCouriers.Count > 0)
+                {
+                    foreach (var order in pendingOrders)
+                    {
+                        // Probabilistic decision to attempt assignment
+                        if (s_rand.NextDouble() >= AUTO_ASSIGN_PROBABILITY)
+                            continue;
+
+                        // Check if this order already has an open delivery (under lock)
+                        bool hasOpenDelivery;
+                        lock (AdminManager.BlMutex)
+                        {
+                            hasOpenDelivery = allDeliveries
+                                .Any(d => d.OrderId == order.Id && d.ArrivalTime == null);
+                        }
+
+                        if (hasOpenDelivery)
+                            continue; // Already assigned
+
+                        // Select a random courier
+                        var selectedCourier = activeCouriers[s_rand.Next(activeCouriers.Count)];
+
+                        try
+                        {
+                            // Attempt to assign using the existing BL method (async, outside locks)
+                            await OrderManager.AssignOrderToCourierAsync(
+                                config.BossId,
+                                order.Id,
+                                selectedCourier.Id
+                            ).ConfigureAwait(false);
+
+                            ordersModified = true;
+                            updatedOrderIds.Add(order.Id);
+                            updatedCourierIds.Add(selectedCourier.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine(
+                                $"Simulation: Failed to assign order {order.Id} to courier {selectedCourier.Id}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            // Step 4: Trigger notifications OUTSIDE all locks
+            if (orderCreated)
+            {
+                Observers.NotifyListUpdated();
+            }
+
+            if (ordersModified)
+            {
+                foreach (var orderId in updatedOrderIds)
+                    Observers.NotifyItemUpdated(orderId);
+
+                Observers.NotifyListUpdated();
+
+                foreach (var courierId in updatedCourierIds)
+                    CourierManager.Observers.NotifyItemUpdated(courierId);
+
+                if (updatedCourierIds.Count > 0)
+                    CourierManager.Observers.NotifyListUpdated();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"SimulateOrderActivity failed: {ex.Message}");
+        }
+        finally
+        {
+            // Always release the mutex, even on exception
+            s_simulationMutex.UnsetInProgress();
         }
     }
 }
