@@ -255,7 +255,7 @@ internal static class AdminManager //stage 4
         {
             UpdateClock(Now.AddMinutes(s_interval));
 
-            _ = Task.Run(async () => await CourierManager.SimulateCourierActivityAsync().ConfigureAwait(false));
+            _ = Task.Run(() => CourierManager.SimulateCourierActivityAsync());
 
             try
             {
