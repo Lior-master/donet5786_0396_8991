@@ -801,12 +801,20 @@ internal static class CourierManager
                     assigned = false;
                 else
                 {
-                    var orderDeliveries = s_dal.Delivery.ReadAll()
-                        .Where(d => d.OrderId == selectedOrder.OrderId && d.ArrivalTime == null)
-                        .ToList();
+                    var orderDeliveries = s_dal.Delivery.ReadAll(d => d.OrderId == selectedOrder.OrderId).ToList();
+                    var orderStatus = Tools.CalculateOrderStatus(orderDeliveries);
 
-                    if (orderDeliveries.Any(d => d.CourierId != 0))
+                    if (orderDeliveries.Any(d => d.DeliveredStatus == DO.DeliveredStatus.Delivered) ||
+                        orderStatus == BO.OrderStatus.Delivered ||
+                        orderStatus == BO.OrderStatus.Returned ||
+                        orderStatus == BO.OrderStatus.Canceled)
+                    {
                         assigned = false;
+                    }
+                    else if (orderDeliveries.Any(d => d.ArrivalTime == null && d.DeliveredStatus == null))
+                    {
+                        assigned = false;
+                    }
                     else
                     {
                         var delivery = new DO.Delivery
@@ -853,6 +861,7 @@ internal static class CourierManager
         HashSet<int> updatedOrderIds)
     {
         const double CANCELLATION_PROBABILITY = 0.10;
+        TimeSpan minDeliveryDuration = TimeSpan.FromMinutes(15);
 
         try
         {
@@ -869,11 +878,24 @@ internal static class CourierManager
             if (order.Latitude.HasValue && order.Longitude.HasValue &&
                 (order.Latitude != 0 || order.Longitude != 0))
             {
-                distance = Tools.BirdDistance(
-                    config.CompanyLatitude,
-                    config.CompanyLongitude,
-                    order.Latitude.Value,
-                    order.Longitude.Value);
+                try
+                {
+                    distance = Tools.CalculateRouteDistanceCachedAsync(
+                            config.CompanyLatitude,
+                            config.CompanyLongitude,
+                            order.Latitude.Value,
+                            order.Longitude.Value)
+                        .GetAwaiter()
+                        .GetResult();
+                }
+                catch
+                {
+                    distance = Tools.BirdDistance(
+                        config.CompanyLatitude,
+                        config.CompanyLongitude,
+                        order.Latitude.Value,
+                        order.Longitude.Value);
+                }
             }
 
             double speed = Tools.GetSpeed(delivery.Transport, config);
@@ -884,6 +906,8 @@ internal static class CourierManager
             TimeSpan serviceTime = TimeSpan.FromMinutes(serviceTimeMinutes);
 
             TimeSpan totalExpectedTime = travelTime + serviceTime;
+            if (totalExpectedTime < minDeliveryDuration)
+                totalExpectedTime = minDeliveryDuration;
             TimeSpan elapsedTime = now - delivery.PickupTime;
 
             if (elapsedTime >= totalExpectedTime)
