@@ -106,9 +106,9 @@ public static class Initialization
                 CustomerPhone: $"+200000000{i + 1:D2}",
                 Type: Type,
                 // use DAL clock to keep all dates consistent with BL clock
-                OrderDate: s_dal!.Config.Clock.AddMinutes(-s_rand.Next(0, 48)),
-                Latitude: adress.Latitude,
-                Longitude: adress.Longitude
+                OrderDate: s_dal!.Config.Clock.AddMinutes(-s_rand.Next(0, 21)),
+                Latitude: null, // automatic assignement based on address in BL
+                Longitude: null
             );
             s_dal!.Order.Create(order);
         }
