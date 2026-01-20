@@ -33,7 +33,7 @@ public static class Initialization
             DistanceWalkingFromCompany = distanceWalkingFromCompany;
             DistanceCarFromCompany = distanceCarFromCompany;
         }
-        // methode pour calculer la distance entre deux points geographiques si besoin
+        // to calculate the distance between two coordinates
     }
 
     private static void createCouriers()
@@ -89,13 +89,8 @@ public static class Initialization
     {
         for (int i = 0; i < 60; i++)
         {
-            OrderType Type;
-            if (i < 25)
-                Type = OrderType.FastFood;
-            else if (i < 37)
-                Type = OrderType.Pizza;
-            else
-                Type = (OrderType)s_rand.Next(2, 5);
+            OrderType Type = (OrderType)s_rand.Next(0, 5);
+            
 
             var adress = addresses[s_rand.Next(0,5)];
             Order order = new Order
@@ -119,7 +114,6 @@ public static class Initialization
         // Get all existing orders and couriers
         var orders = s_dal!.Order.ReadAll().ToList();
         var allCouriers = s_dal!.Courier.ReadAll().ToList();
-        var deliveriesSnapshot = s_dal!.Delivery.ReadAll().ToList();
 
         // Filter: active, not Director
         var availableCouriers = allCouriers
@@ -132,78 +126,134 @@ public static class Initialization
             return;
         }
 
-        // Create deliveries with various statuses
-        int attempts = 0;
-        int created = 0;
-        var usedOrders = new HashSet<int>();
-        
-        while (created < Math.Min(45, orders.Count) && attempts < 1000)
-        {
-            attempts++;
+        // Track orders and their delivery attempts for realistic retry scenarios
+        var orderDeliveryAttempts = new Dictionary<int, List<(int courierId, DO.DeliveredStatus status)>>();
+        int totalDeliveriesCreated = 0;
+        int maxDeliveries = Math.Min(60, orders.Count * 2); // Allow up to 2 attempts per order on average
 
-            // Pick a random order that hasn't been used yet
+        // First pass: Create initial deliveries for most orders
+        var usedOrders = new HashSet<int>();
+        int firstPassDeliveries = 0;
+        
+        while (firstPassDeliveries < Math.Min(45, orders.Count) && firstPassDeliveries < 1000)
+        {
             var order = orders[s_rand.Next(orders.Count)];
             if (usedOrders.Contains(order.Id)) continue;
 
-            // Pick a random available courier
             var courier = availableCouriers[s_rand.Next(availableCouriers.Count)];
-
-            // Random pickup time - équilibré
-            DateTime pickup = order.OrderDate.AddMinutes(s_rand.Next(3, 20)); // 3-20 minutes après commande
-
-            // Determine delivery status and timing
+            
+            DateTime pickup = order.OrderDate.AddMinutes(s_rand.Next(5, 26));
             DO.DeliveredStatus? deliveryStatus;
             DateTime? arrivalTime = null;
             
-            // Create different scenarios plus équilibrés:
-            // 60% delivered, 20% processing, 15% pending, 5% canceled
+            // More realistic first-attempt distribution:
+            // 60% successful, 20% in progress, 15% customer issues (can retry), 5% system failures
             int statusRoll = s_rand.Next(1, 101);
             
-            if (statusRoll <= 60) // 60% - Delivered
+            if (statusRoll <= 60) // 60% - Successfully Delivered
             {
                 deliveryStatus = DO.DeliveredStatus.Delivered;
-                
-                // Temps de livraison basés sur le type de transport pour être plus réalistes
-                int deliveryTime = courier.Transport switch
+                int deliveryTimeMinutes = courier.Transport switch
                 {
-                    DeliveryTransport.Foot => s_rand.Next(20, 35),      // 20-35 minutes
-                    DeliveryTransport.Bike => s_rand.Next(15, 25),      // 15-25 minutes  
-                    DeliveryTransport.Motorcycle => s_rand.Next(10, 20), // 10-20 minutes
-                    DeliveryTransport.Car => s_rand.Next(8, 18),        // 8-18 minutes
+                    DeliveryTransport.Foot => s_rand.Next(25, 45),
+                    DeliveryTransport.Bike => s_rand.Next(15, 30),
+                    DeliveryTransport.Motorcycle => s_rand.Next(10, 25),
+                    DeliveryTransport.Car => s_rand.Next(8, 20),
+                    _ => s_rand.Next(15, 30)
+                };
+                arrivalTime = pickup.AddMinutes(deliveryTimeMinutes);
+                int delayMinutes = (int)(Math.Pow(s_rand.NextDouble(), 2) * 10);
+                arrivalTime = arrivalTime.Value.AddMinutes(delayMinutes);
+            }
+            else if (statusRoll <= 80) // 20% - In Progress
+            {
+                deliveryStatus = null;
+                // FIXED: For in-progress orders, pickup should be AFTER order date but BEFORE current time
+                // Calculate a realistic pickup time between order placement and now
+                var timeSinceOrder = s_dal.Config.Clock - order.OrderDate;
+                if (timeSinceOrder.TotalMinutes > 5) // Only if order was placed more than 5 minutes ago
+                {
+                    // Pickup happened sometime after order was placed but before now
+                    var maxPickupDelay = Math.Min((int)timeSinceOrder.TotalMinutes - 2, 60); // Leave 2 minutes buffer
+                    pickup = order.OrderDate.AddMinutes(s_rand.Next(5, Math.Max(6, maxPickupDelay)));
+                }
+                else
+                {
+                    // Recent order - use normal pickup time
+                    pickup = order.OrderDate.AddMinutes(s_rand.Next(5, 26));
+                }
+                arrivalTime = null;
+            }
+            else if (statusRoll <= 95) // 15% - Customer Issues (Absent, Rejected) - CAN BE RETRIED
+            {
+                var retryableStatuses = new[] { DO.DeliveredStatus.Absent, DO.DeliveredStatus.Rejected };
+                deliveryStatus = retryableStatuses[s_rand.Next(retryableStatuses.Length)];
+                
+                int baseTimeMinutes = courier.Transport switch
+                {
+                    DeliveryTransport.Foot => s_rand.Next(25, 45),
+                    DeliveryTransport.Bike => s_rand.Next(15, 30),
+                    DeliveryTransport.Motorcycle => s_rand.Next(10, 25),
+                    DeliveryTransport.Car => s_rand.Next(8, 20),
                     _ => s_rand.Next(15, 30)
                 };
                 
-                arrivalTime = pickup.AddMinutes(deliveryTime);
+                int attemptMinutes = s_rand.Next(5, 16);
+                arrivalTime = pickup.AddMinutes(baseTimeMinutes + attemptMinutes);
+                
+                // Track this as a failed attempt that can be retried
+                if (!orderDeliveryAttempts.ContainsKey(order.Id))
+                    orderDeliveryAttempts[order.Id] = new List<(int, DO.DeliveredStatus)>();
+                orderDeliveryAttempts[order.Id].Add((courier.Id, deliveryStatus.Value));
             }
-            else if (statusRoll <= 80) // 20% - Canceled (picked up but not delivered yet)
+            else // 5% - System Failures (Canceled, Failed) - SOME CAN BE RETRIED
             {
-                deliveryStatus = DO.DeliveredStatus.Canceled;
-                pickup = s_dal.Config.Clock.AddMinutes(s_rand.Next(0, 10)); // picked up in the past
-                arrivalTime = null; // still in transit
-            }
-            else if (statusRoll <= 95) // 15% - Pending (not picked up yet)
-            {
-                deliveryStatus = DO.DeliveredStatus.Absent; // not yet started
-                // Pickup dans le futur proche pour certains pending
-                pickup = s_dal.Config.Clock.AddMinutes(s_rand.Next(2, 15));
-                arrivalTime = null;
-            }
-            else // 5% - Failed
-            {
-                deliveryStatus = DO.DeliveredStatus.Failed;
-                pickup = s_dal.Config.Clock.AddMinutes(s_rand.Next(0, 10));
-                arrivalTime = null;
+                var systemStatuses = new[] { DO.DeliveredStatus.Canceled, DO.DeliveredStatus.Failed };
+                deliveryStatus = systemStatuses[s_rand.Next(systemStatuses.Length)];
+                
+                if (s_rand.NextDouble() < 0.7) // 70% were attempted before failure
+                {
+                    int partialTimeMinutes = s_rand.Next(10, 30);
+                    arrivalTime = pickup.AddMinutes(partialTimeMinutes);
+                    
+                    // Only Failed deliveries can be retried, not Canceled ones
+                    if (deliveryStatus == DO.DeliveredStatus.Failed)
+                    {
+                        if (!orderDeliveryAttempts.ContainsKey(order.Id))
+                            orderDeliveryAttempts[order.Id] = new List<(int, DO.DeliveredStatus)>();
+                        orderDeliveryAttempts[order.Id].Add((courier.Id, deliveryStatus.Value));
+                    }
+                }
             }
 
-            // Calculate distance for completed deliveries
-            double? distance = null;
-            if (arrivalTime.HasValue)
+            // Ensure completed deliveries have valid timestamps
+            if (deliveryStatus.HasValue && pickup > s_dal.Config.Clock)
             {
-                var address = addresses[s_rand.Next(addresses.Length)];
-                distance = s_rand.NextDouble() * address.DistanceFromCompany + 0.8;
+                pickup = s_dal.Config.Clock.AddMinutes(-s_rand.Next(10, 120));
+                if (arrivalTime.HasValue)
+                {
+                    var originalDuration = arrivalTime.Value.Subtract(order.OrderDate);
+                    arrivalTime = pickup.Add(originalDuration);
+                }
             }
 
-            // Create delivery
+            // FINAL VALIDATION: Ensure pickup is NEVER before order date
+            if (pickup < order.OrderDate)
+            {
+                pickup = order.OrderDate.AddMinutes(s_rand.Next(5, 15));
+                
+                // Recalculate arrival time if needed
+                if (arrivalTime.HasValue)
+                {
+                    var deliveryDuration = arrivalTime.Value.Subtract(pickup);
+                    if (deliveryDuration.TotalMinutes < 5) // Minimum delivery time
+                    {
+                        arrivalTime = pickup.AddMinutes(s_rand.Next(8, 25));
+                    }
+                }
+            }
+
+            // Create the delivery
             Delivery delivery = new Delivery
             (
                 Id: 0,
@@ -212,16 +262,115 @@ public static class Initialization
                 PickupTime: pickup,
                 Transport: courier.Transport,
                 ArrivalTime: arrivalTime,
-                Distance: distance,
+                Distance: null,
                 DeliveredStatus: deliveryStatus
             );
 
             s_dal!.Delivery.Create(delivery);
             usedOrders.Add(order.Id);
-            created++;
+            firstPassDeliveries++;
+            totalDeliveriesCreated++;
         }
 
-        Console.WriteLine($"Created {created} deliveries with various statuses.");
+        // Second pass: Create retry attempts for orders that failed/were absent
+        int retryAttempts = 0;
+        var ordersToRetry = orderDeliveryAttempts.Keys.ToList();
+        
+        while (retryAttempts < 15 && totalDeliveriesCreated < maxDeliveries && ordersToRetry.Count > 0)
+        {
+            var orderIdToRetry = ordersToRetry[s_rand.Next(ordersToRetry.Count)];
+            var order = orders.First(o => o.Id == orderIdToRetry);
+            var previousAttempts = orderDeliveryAttempts[orderIdToRetry];
+            
+            // 70% chance to actually retry (some customers/situations may not get retried)
+            if (s_rand.NextDouble() > 0.7)
+            {
+                ordersToRetry.Remove(orderIdToRetry);
+                continue;
+            }
+            
+            // Choose a different courier for retry (if possible)
+            var previousCourierIds = previousAttempts.Select(a => a.courierId).ToHashSet();
+            var availableForRetry = availableCouriers.Where(c => !previousCourierIds.Contains(c.Id)).ToList();
+            
+            if (availableForRetry.Count == 0)
+                availableForRetry = availableCouriers; // Fallback to any courier
+            
+            var retryCourier = availableForRetry[s_rand.Next(availableForRetry.Count)];
+            
+            // Retry happens some time after the first failure (30 minutes to 3 hours later)
+            var lastFailure = s_dal.Delivery.ReadAll()
+                .Where(d => d.OrderId == orderIdToRetry)
+                .OrderByDescending(d => d.ArrivalTime ?? d.PickupTime)
+                .First();
+                
+            DateTime retryPickup = (lastFailure.ArrivalTime ?? lastFailure.PickupTime)
+                .AddMinutes(s_rand.Next(30, 180)); // 30 minutes to 3 hours later
+                
+            // Make sure retry is not in the future
+            if (retryPickup > s_dal.Config.Clock)
+            {
+                retryPickup = s_dal.Config.Clock.AddMinutes(-s_rand.Next(10, 60));
+            }
+            
+            // ENSURE retry pickup is after original order date
+            if (retryPickup < order.OrderDate)
+            {
+                retryPickup = order.OrderDate.AddMinutes(s_rand.Next(60, 120)); // 1-2 hours after original order
+                if (retryPickup > s_dal.Config.Clock)
+                {
+                    retryPickup = s_dal.Config.Clock.AddMinutes(-s_rand.Next(5, 30));
+                }
+            }
+            
+            DO.DeliveredStatus? retryStatus;
+            DateTime? retryArrival = null;
+            
+            // Retry attempts have higher success rate (80% success, 20% fail again)
+            if (s_rand.NextDouble() <= 0.8) // 80% - Successful retry
+            {
+                retryStatus = DO.DeliveredStatus.Delivered;
+                int retryTimeMinutes = retryCourier.Transport switch
+                {
+                    DeliveryTransport.Foot => s_rand.Next(25, 45),
+                    DeliveryTransport.Bike => s_rand.Next(15, 30),
+                    DeliveryTransport.Motorcycle => s_rand.Next(10, 25),
+                    DeliveryTransport.Car => s_rand.Next(8, 20),
+                    _ => s_rand.Next(15, 30)
+                };
+                retryArrival = retryPickup.AddMinutes(retryTimeMinutes);
+            }
+            else // 20% - Still fails (but different reason possibly)
+            {
+                var retryFailureStatuses = new[] { DO.DeliveredStatus.Absent, DO.DeliveredStatus.Rejected, DO.DeliveredStatus.Failed };
+                retryStatus = retryFailureStatuses[s_rand.Next(retryFailureStatuses.Length)];
+                
+                int failTimeMinutes = s_rand.Next(15, 35);
+                retryArrival = retryPickup.AddMinutes(failTimeMinutes);
+            }
+            
+            // Create the retry delivery
+            Delivery retryDelivery = new Delivery
+            (
+                Id: 0,
+                OrderId: orderIdToRetry,
+                CourierId: retryCourier.Id,
+                PickupTime: retryPickup,
+                Transport: retryCourier.Transport,
+                ArrivalTime: retryArrival,
+                Distance: null,
+                DeliveredStatus: retryStatus
+            );
+            
+            s_dal!.Delivery.Create(retryDelivery);
+            ordersToRetry.Remove(orderIdToRetry); // Don't retry the same order multiple times
+            retryAttempts++;
+            totalDeliveriesCreated++;
+        }
+
+        Console.WriteLine($"Created {totalDeliveriesCreated} deliveries with realistic retry scenarios:");
+        Console.WriteLine($"  - {firstPassDeliveries} initial delivery attempts");
+        Console.WriteLine($"  - {retryAttempts} retry attempts for failed/absent orders");
     }
 
     public static Adresses[] addresses = new Adresses[]
@@ -257,7 +406,7 @@ public static class Initialization
             if (s_dal.Config.MaxTimeDelivery == TimeSpan.Zero)
                 s_dal.Config.MaxTimeDelivery = TimeSpan.FromMinutes(45); // 45 minutes
             if (s_dal.Config.RiskRange == TimeSpan.Zero)
-                s_dal.Config.RiskRange = TimeSpan.FromMinutes(8); // 8 minutes avant la limite
+                s_dal.Config.RiskRange = TimeSpan.FromMinutes(8); // 8 minutes before limit
         }
         catch
         {

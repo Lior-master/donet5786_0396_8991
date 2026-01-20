@@ -143,8 +143,8 @@ internal static class Tools
             DO.DeliveredStatus.Delivered => BO.OrderStatus.Delivered,
             DO.DeliveredStatus.Rejected => BO.OrderStatus.Returned,
             DO.DeliveredStatus.Canceled => BO.OrderStatus.Canceled,
-            DO.DeliveredStatus.Absent => BO.OrderStatus.Pending,
-            DO.DeliveredStatus.Failed => BO.OrderStatus.Canceled,
+            DO.DeliveredStatus.Failed => BO.OrderStatus.Pending,    // FIXED: Failed attempts make order available for retry
+            DO.DeliveredStatus.Absent => BO.OrderStatus.Pending,    // FIXED: Absent attempts make order available for retry
             _ => BO.OrderStatus.Pending
         };
     }
