@@ -72,7 +72,10 @@ internal class OrderImplementation : IOrder
     /// and initial status of <see cref="OrderStatus.Pending"/>. All registered observers will be notified of this change.
     /// </remarks>
     public Task AddOrderAsync(int requesterId, Order order)
-        => OrderManager.AddOrderAsync(requesterId, order);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        return OrderManager.AddOrderAsync(requesterId, order);
+    }
 
     /// <summary>
     /// Assigns an open order to a specific courier for delivery.
@@ -85,7 +88,10 @@ internal class OrderImplementation : IOrder
     /// to <see cref="OrderStatus.Processing"/> upon successful assignment. All registered observers will be notified.
     /// </remarks>
     public Task AssignOrderToCourierAsync(int requesterId, int orderId, int courierId)
-        => OrderManager.AssignOrderToCourierAsync(requesterId, orderId, courierId);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        return OrderManager.AssignOrderToCourierAsync(requesterId, orderId, courierId);
+    }
 
     public Task<OrderInProgress> GetOrderInProgressSnapshotAsync(int requesterId, int courierId, int orderId)
         => OrderManager.GetOrderInProgressSnapshotAsync(requesterId, courierId, orderId);
@@ -101,7 +107,10 @@ internal class OrderImplementation : IOrder
     /// yet been delivered. All registered observers will be notified.
     /// </remarks>
     public void CancelOrder(int requesterId, int orderId)
-        => OrderManager.CancelOrder(requesterId, orderId);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        OrderManager.CancelOrder(requesterId, orderId);
+    }
 
     /// <summary>
     /// Marks a delivery as complete when a courier has successfully delivered an order.
@@ -113,8 +122,11 @@ internal class OrderImplementation : IOrder
     /// Authorization is validated by the <see cref="OrderManager"/>. The delivery status is updated to reflect
     /// the completion state (e.g., <see cref="DeliveredStatus.Delivered"/>). All registered observers will be notified.
     /// </remarks>
-    public Task FinishOrderAsync(int requesterId, int courierId, int deliveryId,BO.DeliveredStatus deliveredStatus)
-        => OrderManager.FinishOrderAsync(requesterId, courierId, deliveryId,deliveredStatus);
+    public Task FinishOrderAsync(int requesterId, int courierId, int deliveryId, BO.DeliveredStatus deliveredStatus)
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        return OrderManager.FinishOrderAsync(requesterId, courierId, deliveryId, deliveredStatus);
+    }
 
     /// <summary>
     /// Retrieves a filtered and sorted list of closed (completed) deliveries for a specific courier.
@@ -176,7 +188,7 @@ internal class OrderImplementation : IOrder
         => OrderManager.orderInListsAsync(requesterId, filter, Object, sorter);
 
     public Task<IEnumerable<BO.OrderInList>> orderInListsDoubleFilterAsync(int requesterId, Enum? filter1, Enum? filter2)
-        => OrderManager.orderInListsDoubleFilterAsync(requesterId,filter1,filter2);
+        => OrderManager.orderInListsDoubleFilterAsync(requesterId, filter1, filter2);
 
     /// <summary>
     /// Removes (deletes) an order from the system completely.
@@ -188,7 +200,10 @@ internal class OrderImplementation : IOrder
     /// This operation typically deletes the order record and associated delivery data. All registered observers will be notified.
     /// </remarks>
     public void RemoveOrder(int requesterId, int orderId)
-        => OrderManager.RemoveOrder(requesterId, orderId);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        OrderManager.RemoveOrder(requesterId, orderId);
+    }
 
     /// <summary>
     /// Updates the details of an existing order.
@@ -200,5 +215,8 @@ internal class OrderImplementation : IOrder
     /// to modify the order. Updates typically allowed only for certain fields or statuses. All registered observers will be notified.
     /// </remarks>
     public Task UpdateOrderDetailsAsync(int requesterId, Order order)
-        => OrderManager.UpdateOrderDetailsAsync(requesterId, order);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        return OrderManager.UpdateOrderDetailsAsync(requesterId, order);
+    }
 }

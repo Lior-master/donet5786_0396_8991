@@ -19,13 +19,19 @@ internal class AdminImplementation : IAdmin
     /// Resets the database to its initial state, removing all data.
     /// </summary>
     public Task ResetDBAsync()
-        => AdminManager.ResetDBAsync();
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); //stage 7
+        return AdminManager.ResetDBAsync();
+    }
 
     /// <summary>
     /// Initializes the database with default configuration and sample data.
     /// </summary>
     public Task InitializeDBAsync()
-        => AdminManager.InitializeDBAsync();
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); //stage 7
+        return AdminManager.InitializeDBAsync();
+    }
 
     /// <summary>
     /// Retrieves the current system clock value (which may be simulated time).
@@ -44,6 +50,8 @@ internal class AdminImplementation : IAdmin
     /// </remarks>
     public void ForwardClock(TimeUnit unit)
     {
+        AdminManager.ThrowOnSimulatorIsRunning(); //stage 7
+        
         // Calculate the new time based on the specified time unit
         DateTime newTime = unit switch
         {
@@ -72,7 +80,10 @@ internal class AdminImplementation : IAdmin
     /// </summary>
     /// <param name="configuration">The new configuration settings to apply.</param>
     public Task SetConfigAsync(Config configuration)
-        => AdminManager.SetConfigAsync(configuration);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); //stage 7
+        return AdminManager.SetConfigAsync(configuration);
+    }
 
     /// <summary>
     /// Registers an observer to be notified whenever the system clock is updated.
@@ -114,16 +125,28 @@ internal class AdminImplementation : IAdmin
     public void RemoveConfigObserver(Action configObserver)
         => AdminManager.ConfigUpdatedObservers -= configObserver;
 
+    
+   
+
     /// <summary>
     /// Starts the simulator with the specified interval (in minutes per second).
     /// </summary>
     /// <param name="interval">The interval in minutes by which to advance the clock per second.</param>
-    public void Start(double interval)
-        => AdminManager.Start(interval);
+    /// <remarks>
+    /// If the simulator is already running, throws <see cref="BO.BLTemporaryNotAvailableException"/>.
+    /// </remarks>
+    public void StartSimulator(int interval)  // stage 7
+    {
+        AdminManager.ThrowOnSimulatorIsRunning();  // stage 7
+        AdminManager.Start(interval);              // stage 7
+    }
 
     /// <summary>
     /// Stops the running simulator.
     /// </summary>
-    public void Stop()
-        => AdminManager.Stop();
+    /// <remarks>
+    /// Has no effect if the simulator is already stopped.
+    /// </remarks>
+    public void StopSimulator()                    // stage 7
+        => AdminManager.Stop();                    // stage 7
 }

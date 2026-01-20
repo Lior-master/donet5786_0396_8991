@@ -73,7 +73,10 @@ internal class CourierImplementation : ICourier
     /// sufficient privileges to add new couriers. All registered observers will be notified of this change.
     /// </remarks>
     public void addCourier(int requesterId, Courier newCourier)
-        => CourierManager.addCourier(requesterId, newCourier);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        CourierManager.addCourier(requesterId, newCourier);
+    }
 
     /// <summary>
     /// Retrieves detailed information about a specific courier.
@@ -125,7 +128,10 @@ internal class CourierImplementation : ICourier
     /// sufficient privileges to remove couriers. All registered observers will be notified of this change.
     /// </remarks>
     public void removeCourier(int requesterId, int courierId)
-        => CourierManager.removeCourier(requesterId, courierId);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        CourierManager.removeCourier(requesterId, courierId);
+    }
 
     /// <summary>
     /// Updates the details of an existing courier.
@@ -137,7 +143,10 @@ internal class CourierImplementation : ICourier
     /// permissions to modify courier information. All registered observers will be notified of this change.
     /// </remarks>
     public void UpdateCourier(int requesterId, Courier updatedCourier)
-        => CourierManager.UpdateCourier(requesterId, updatedCourier);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        CourierManager.UpdateCourier(requesterId, updatedCourier);
+    }
 
     /// <summary>
     /// Promotes a courier to director status, granting them elevated privileges and responsibilities.
@@ -150,5 +159,8 @@ internal class CourierImplementation : ICourier
     /// All registered observers will be notified of this change.
     /// </remarks>
     public void PromoteToDirector(int requesterId, int courierId)
-        => CourierManager.PromoteCourierToDirector(requesterId, courierId);
+    {
+        AdminManager.ThrowOnSimulatorIsRunning(); // stage 7
+        CourierManager.PromoteCourierToDirector(requesterId, courierId);
+    }
 }
