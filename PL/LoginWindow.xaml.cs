@@ -66,7 +66,7 @@ public partial class LoginWindow : Window
     /// <summary>
     /// Prevents multiple director logins simultaneously.
     /// </summary>
-    private bool _directorLoggedIn = false;
+    public bool _directorLoggedIn = false;
 
     /// <summary>
     /// Initializes a new instance of the LoginWindow.
@@ -188,7 +188,7 @@ public partial class LoginWindow : Window
             // STEP 6: HANDLE COURIER ROLE(FUTURE IMPLEMENTATION)
             // ============================================================
             if (role == BO.Administrator.Courier)
-            {
+            {                
                 new CourierPersonalWindow(id).Show();
                 ResetLoginForm();
                 return;

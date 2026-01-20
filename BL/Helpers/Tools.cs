@@ -110,17 +110,18 @@ internal static class Tools
     }
 
     /// <summary>
-    /// Determines the overall order status based on the most recent delivery record.
-    /// Converts from data object status (<see cref="DO.OrderStatus"/>) to business object status (<see cref="BO.OrderStatus"/>).
+    /// Determines the overall order status based on delivery records, prioritizing successful deliveries.
     /// </summary>
     /// <param name="deliveries">A list of delivery records associated with the order. Can be null or empty.</param>
     /// <returns>
-    /// The status of the order based on the most recent delivery (ordered by PickupTime).
+    /// The status of the order based on delivery outcomes, with successful deliveries taking priority.
     /// If the list is null or empty, returns <see cref="BO.OrderStatus.Pending"/>.
     /// </returns>
     /// <remarks>
-    /// The method selects the delivery with the latest PickupTime and uses its status as the order status.
-    /// Unknown or unmapped statuses default to <see cref="BO.OrderStatus.Pending"/>.
+    /// Priority logic:
+    /// 1. If any delivery is in progress (DeliveredStatus == null), return Processing
+    /// 2. If any delivery was successful (DeliveredStatus == Delivered), return Delivered
+    /// 3. Otherwise, use the status of the most recent completed delivery
     /// </remarks>
     public static BO.OrderStatus CalculateOrderStatus(List<DO.Delivery> deliveries)
     {
@@ -133,19 +134,30 @@ internal static class Tools
         if (deliveries.Any(d => d.DeliveredStatus == null))
             return BO.OrderStatus.Processing;
 
-        // All deliveries are finished -> determine status by the last finished delivery
+        // FIXED: Check if ANY delivery was successful - successful delivery trumps failed ones
+        var successfulDelivery = deliveries
+            .FirstOrDefault(d => d.DeliveredStatus == DO.DeliveredStatus.Delivered);
+
+        // If we have a successful delivery, the order is delivered regardless of other failed attempts
+        if (successfulDelivery != null)
+            return BO.OrderStatus.Delivered;
+
+        // No successful deliveries - check the most recent finished delivery
         var lastFinished = deliveries
             .Where(d => d.DeliveredStatus != null)
             .OrderByDescending(d => d.ArrivalTime)
-            .First();
+            .FirstOrDefault();
+
+        if (lastFinished == null)
+            return BO.OrderStatus.Pending;
 
         return lastFinished.DeliveredStatus switch
         {
-            DO.DeliveredStatus.Delivered => BO.OrderStatus.Delivered,
+            DO.DeliveredStatus.Delivered => BO.OrderStatus.Delivered, // Backup case
             DO.DeliveredStatus.Rejected => BO.OrderStatus.Returned,
             DO.DeliveredStatus.Canceled => BO.OrderStatus.Canceled,
-            DO.DeliveredStatus.Failed => BO.OrderStatus.Pending,    // FIXED: Failed attempts make order available for retry
-            DO.DeliveredStatus.Absent => BO.OrderStatus.Pending,    // FIXED: Absent attempts make order available for retry
+            DO.DeliveredStatus.Failed => BO.OrderStatus.Pending,    // Failed attempts make order available for retry
+            DO.DeliveredStatus.Absent => BO.OrderStatus.Pending,    // Absent attempts make order available for retry
             _ => BO.OrderStatus.Pending
         };
     }

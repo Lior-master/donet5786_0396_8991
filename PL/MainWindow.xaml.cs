@@ -220,6 +220,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             s_bl.Admin.RemoveClockObserver(ClockObserver);
             s_bl.Admin.RemoveConfigObserver(ConfigObserver);
             s_bl.Order.RemoveObserver(OrderSummaryObserver);
+            var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+            if (loginWindow != null)
+            {
+                loginWindow._directorLoggedIn = false;
+            }
         }
         catch
         {
