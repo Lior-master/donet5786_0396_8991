@@ -480,7 +480,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     return;
                 }
 
-                s_bl.Admin.StartSimulator((int)interval);
+                s_bl.Admin.StartSimulator(interval);
                 _simulatorRunning = true;
                 
                 // Update UI

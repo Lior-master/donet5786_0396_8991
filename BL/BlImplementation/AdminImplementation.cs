@@ -135,7 +135,7 @@ internal class AdminImplementation : IAdmin
     /// <remarks>
     /// If the simulator is already running, throws <see cref="BO.BLTemporaryNotAvailableException"/>.
     /// </remarks>
-    public void StartSimulator(int interval)  // stage 7
+    public void StartSimulator(double interval)  // stage 7
     {
         AdminManager.ThrowOnSimulatorIsRunning();  // stage 7
         AdminManager.Start(interval);              // stage 7
