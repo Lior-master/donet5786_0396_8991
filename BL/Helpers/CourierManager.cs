@@ -5,6 +5,7 @@ using System.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Helpers;
 
@@ -412,7 +413,7 @@ internal static class CourierManager
     /// <returns>A Courier object containing full details, performance metrics, and current order information.</returns>
     /// <exception cref="BO.BLNotFoundException">Thrown if the requester or courier ID does not exist.</exception>
     /// <exception cref="BO.BLFailedOperation">Thrown for unexpected data access layer failures.</exception>
-    internal static BO.Courier GetCourierDetails(int requesterId, int courierId)
+    internal static async Task<BO.Courier> GetCourierDetailsAsync(int requesterId, int courierId)
     {
         try
         {
@@ -443,9 +444,10 @@ internal static class CourierManager
                     continue;
 
                 // Centralized ETA computation (no approximation here)
-                DateTime expected = Tools.EstimateArrival(d.PickupTime, d.Transport, d.Distance.Value);
+                DateTime expected = await Tools.EstimateArrivalAsync(d.PickupTime, d.Transport, d.Distance.Value)
+                    .ConfigureAwait(false);
 
-                if (Tools.IsDeliveryOnTime(d, expected))
+                if (await Tools.IsDeliveryOnTimeAsync(d, expected).ConfigureAwait(false))
                     onTime++;
                 else
                     late++;
@@ -468,7 +470,7 @@ internal static class CourierManager
 
                     // Compute order status based on all deliveries of this order (cached data)
                     var deliveriesForOrder = GetDeliveries().Where(d => d.OrderId == orderDO.Id).ToList();
-                    var ordStatus = Tools.CalculateOrderStatus(deliveriesForOrder);
+                    var ordStatus = await Tools.CalculateOrderStatusAsync(deliveriesForOrder).ConfigureAwait(false);
 
                     // Try to use the known distance from the current delivery; if missing, attempt to compute it
                     double? distance = currentDelivery.Distance;
@@ -476,14 +478,14 @@ internal static class CourierManager
                     {
                         try
                         {
-                            // Geocode customer address and compute route distance from company to customer
-                            (double Lat, double Lon) coord = Tools.GetCoordinatesFromAddressAsync(orderDO.CustomerAddress)
-                                .GetAwaiter().GetResult();
-
-                            distance = Tools.CalculateRouteDistanceAsync(
-                                config.CompanyLatitude, config.CompanyLongitude,
-                                coord.Lat, coord.Lon
-                            ).GetAwaiter().GetResult();
+                            var coord = await Tools.TryGetCoordinatesFromAddressAsync(orderDO.CustomerAddress).ConfigureAwait(false);
+                            if (coord.HasValue)
+                            {
+                                distance = await Tools.CalculateRouteDistanceCachedAsync(
+                                    config.CompanyLatitude, config.CompanyLongitude,
+                                    coord.Value.Latitude, coord.Value.Longitude
+                                ).ConfigureAwait(false);
+                            }
                         }
                         catch
                         {
@@ -495,22 +497,25 @@ internal static class CourierManager
                     // - If distance is known, uses distance/speed
                     // - If distance is not known, returns a safe default (pickupTime + 30 minutes)
                     DateTime estimatedArrival = distance.HasValue
-                        ? Tools.EstimateArrival(currentDelivery.PickupTime, currentDelivery.Transport, distance.Value)
-                        : Tools.EstimateArrivalFallback(currentDelivery.PickupTime);
+                        ? await Tools.EstimateArrivalAsync(
+                            currentDelivery.PickupTime,
+                            currentDelivery.Transport,
+                            distance.Value).ConfigureAwait(false)
+                        : await Tools.EstimateArrivalFallbackAsync(currentDelivery.PickupTime).ConfigureAwait(false);
 
                     // Schedule status calculation keeps your existing logic
-                    var scheduleStatus = Tools.CalculateScheduleStatus(
+                    var scheduleStatus = await Tools.CalculateScheduleStatusAsync(
                         ordStatus,
                         orderDO.OrderDate,
                         distance.HasValue
-                            ? Tools.CalculateEstimatedArrival(
+                            ? await Tools.CalculateEstimatedArrivalAsync(
                                 orderDO.OrderDate,
                                 distance.Value,
-                                GetSpeed(currentDelivery.Transport, config)
-                              )
+                                await Tools.GetSpeedAsync(currentDelivery.Transport, config).ConfigureAwait(false)
+                              ).ConfigureAwait(false)
                             : null,
                         orderDO.OrderDate.Add(config.MaxDeliveryTime),
-                        currentDelivery.ArrivalTime);
+                        currentDelivery.ArrivalTime).ConfigureAwait(false);
 
                     currentOrder = new BO.OrderInProgress
                     {
@@ -785,7 +790,7 @@ internal static class CourierManager
     /// - Order selection probability: 50% (courier "changes mind" sometimes)
     /// - Delivery completion probability: probabilistic based on distance and random wait time
     /// </remarks>
-    internal static void SimulateCourierActivity()
+    internal static async Task SimulateCourierActivityAsync()
     {
         try
         {
@@ -832,8 +837,9 @@ internal static class CourierManager
                 else
                 {
                     // Courier has no active delivery - maybe assign one
-                    HandleCourierOrderSelection(courier, config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds);
-            }
+                    await HandleCourierOrderSelectionAsync(courier, config, now, random, ref notificationNeeded, updatedCourierIds, updatedOrderIds)
+                        .ConfigureAwait(false);
+                }
             }
 
             // Step 4: Trigger notifications outside of locks
@@ -861,7 +867,7 @@ internal static class CourierManager
     /// Decides probabilistically if the courier "chooses" to view available orders,
     /// then probabilistically selects one to start delivery if available.
     /// </summary>
-    private static void HandleCourierOrderSelection(
+    private static async Task HandleCourierOrderSelectionAsync(
         DO.Courier courier,
         BO.Config config,
         DateTime now,
@@ -881,8 +887,8 @@ internal static class CourierManager
         {
             // Get available orders for this courier using existing BL method
             // This replicates what would happen if the courier opened the order selection screen
-            var availableOrders = OrderManager.GetOpenOrdersForCourier(
-                config.BossId, courier.Id, null, null).ToList();
+            var availableOrders = (await OrderManager.GetOpenOrdersForCourierAsync(
+                config.BossId, courier.Id, null, null).ConfigureAwait(false)).ToList();
 
             if (availableOrders.Count == 0)
                 return;

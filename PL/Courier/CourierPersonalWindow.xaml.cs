@@ -171,14 +171,14 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
     #region Event Handlers
 
-    private void Window_Loaded(object sender, RoutedEventArgs e)
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         try
         {
             Mouse.OverrideCursor = Cursors.Wait;
             StatusMessage = "Loading courier data...";
 
-            LoadCourierData();
+            await LoadCourierDataAsync();
         }
         catch (Exception ex)
         {
@@ -206,7 +206,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private void BtnUpdate_Click(object sender, RoutedEventArgs e)
+    private async void BtnUpdate_Click(object sender, RoutedEventArgs e)
     {
         try
         {
@@ -228,7 +228,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             MessageBox.Show("Your profile has been updated successfully.",
                 "Success", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            LoadCourierData();
+            await LoadCourierDataAsync();
         }
         catch (Exception ex)
         {
@@ -353,7 +353,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
                 return;
             }
 
-            s_bl.Order.FinishOrder(_courierId, _courierId, deliveryId, SelectedFinishType);
+            await s_bl.Order.FinishOrderAsync(_courierId, _courierId, deliveryId, SelectedFinishType);
 
             StatusMessage = $"✅ Delivery marked as {SelectedFinishType}";
             MessageBox.Show($"Delivery has been completed successfully.\n\nStatus: {SelectedFinishType}",
@@ -369,6 +369,11 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(IsNoOrderInProgress));
             
             StatusMessage = "✅ Delivery completed - Ready to choose a new order";
+        }
+        catch (BO.BLBadAddressException ex)
+        {
+            StatusMessage = ex.Message;
+            MessageBox.Show(ex.Message, "Address Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
@@ -386,11 +391,11 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
     #region Private Methods
 
-    private void LoadCourierData()
+    private async Task LoadCourierDataAsync()
     {
         try
         {
-            var courierData = s_bl.Courier.GetCourierDetails(_bossId, _courierId);
+            var courierData = await s_bl.Courier.GetCourierDetailsAsync(_bossId, _courierId);
             Courier = courierData;
             OrderInProgress = courierData.CurrentOrder;
             StatusMessage = $"Data loaded - {courierData.Name}";
@@ -410,9 +415,9 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.BeginInvoke(async () =>
             {
-                LoadCourierData();
+                await LoadCourierDataAsync();
                 StatusMessage = "Data refreshed";
             });
         }
@@ -428,11 +433,11 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     /// </summary>
     public Task RefreshDataFromChildAsync()
     {
-        return Dispatcher.InvokeAsync(() =>
+        return Dispatcher.InvokeAsync(async () =>
         {
             try
             {
-                LoadCourierData();
+                await LoadCourierDataAsync();
                 StatusMessage = OrderInProgress != null
                     ? $"✅ Order #{OrderInProgress.OrderId} assigned successfully!"
                     : "Ready to choose a new order";
@@ -492,8 +497,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            OrderInProgress = await Task.Run(() =>
-                s_bl.Order.GetOrderInProgressSnapshot(_courierId, _courierId, orderId));
+            OrderInProgress = await s_bl.Order.GetOrderInProgressSnapshotAsync(_courierId, _courierId, orderId);
             StatusMessage = $"Order #{orderId} assigned (manual fallback).";
         }
         catch (Exception ex)

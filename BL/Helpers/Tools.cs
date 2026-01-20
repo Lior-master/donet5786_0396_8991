@@ -15,6 +15,7 @@ namespace Helpers;
 internal static class Tools
 {
     private static readonly IDal s_dal = Factory.Get;
+    internal const string InvalidAddressMarker = "INVALID_ADDRESS";
 
     /// <summary>
     /// Converts an object to a formatted string representation of its public properties.
@@ -51,6 +52,9 @@ internal static class Tools
         return sb.ToString();
     }
 
+    public static Task<string> ToStringPropertyAsync<T>(this T t)
+        => Task.FromResult(ToStringProperty(t));
+
     /// <summary>
     /// Central ETA computation when distance is already known.
     /// Uses a consistent speed source (configuration) and a single formula: ETA = pickupTime + distance/speed.
@@ -68,12 +72,18 @@ internal static class Tools
         return pickupTime.AddHours(distanceKm / speed);
     }
 
+    public static Task<DateTime> EstimateArrivalAsync(DateTime pickupTime, DO.DeliveryTransport transport, double distanceKm)
+        => Task.FromResult(EstimateArrival(pickupTime, transport, distanceKm));
+
     /// <summary>
     /// Safe fallback ETA used when distance is unknown or cannot be computed.
     /// Keeps behavior explicit and centralized (instead of scattered "AddMinutes(30)" in multiple places).
     /// </summary>
     public static DateTime EstimateArrivalFallback(DateTime pickupTime)
         => pickupTime.AddMinutes(30);
+
+    public static Task<DateTime> EstimateArrivalFallbackAsync(DateTime pickupTime)
+        => Task.FromResult(EstimateArrivalFallback(pickupTime));
 
     /// <summary>
     /// Calculates the great-circle distance between two geographic points using the Haversine formula.
@@ -107,6 +117,9 @@ internal static class Tools
         // Distance = R * 2 * atan2(√a, √(1−a))
         return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
+
+    public static Task<double> BirdDistanceAsync(double lat1, double lon1, double lat2, double lon2)
+        => Task.FromResult(BirdDistance(lat1, lon1, lat2, lon2));
 
     /// <summary>
     /// Determines the overall order status based on the most recent delivery record.
@@ -148,6 +161,9 @@ internal static class Tools
             _ => BO.OrderStatus.Pending
         };
     }
+
+    public static Task<BO.OrderStatus> CalculateOrderStatusAsync(List<DO.Delivery> deliveries)
+        => Task.FromResult(CalculateOrderStatus(deliveries));
 
     /// <summary>
     /// Calculates the actual road distance between two geographic points using the LocationIQ routing API.
@@ -263,6 +279,9 @@ internal static class Tools
         };
     }
 
+    public static Task<double> GetSpeedAsync(DO.DeliveryTransport transport, BO.Config config)
+        => Task.FromResult(GetSpeed(transport, config));
+
     /// <summary>
     /// Updates a courier's active status based on inactivity duration.
     /// Deactivates the courier if they have been inactive longer than the specified threshold.
@@ -292,6 +311,9 @@ internal static class Tools
         return courier;
     }
 
+    public static Task<DO.Courier> UpdateCourierActivityAsync(DO.Courier courier, TimeSpan inactivityThreshold)
+        => Task.FromResult(UpdateCourierActivity(courier, inactivityThreshold));
+
     /// <summary>
     /// Determines whether a delivery was completed on time.
     /// </summary>
@@ -312,6 +334,9 @@ internal static class Tools
 
         return d.ArrivalTime <= expectedTime;
     }
+
+    public static Task<bool> IsDeliveryOnTimeAsync(DO.Delivery d, DateTime expectedTime)
+        => Task.FromResult(IsDeliveryOnTime(d, expectedTime));
 
     // =========================
     // LocationIQ Geocoding
@@ -358,6 +383,11 @@ internal static class Tools
     /// Value: tuple containing latitude and longitude.
     /// </summary>
     private static readonly ConcurrentDictionary<string, (double lat, double lon)> s_geoCache = new();
+
+    /// <summary>
+    /// Thread-safe cache for route distance calculations to avoid duplicate concurrent requests.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, Task<double>> s_routeDistanceCache = new();
 
     /// <summary>
     /// Static constructor: initializes TLS 1.2 and default HTTP headers for geocoding client.
@@ -521,6 +551,54 @@ internal static class Tools
     }
 
     /// <summary>
+    /// Attempts to resolve coordinates for an address and returns null when the address is invalid.
+    /// Network or service failures still throw so callers can decide whether to cancel the operation.
+    /// </summary>
+    public static async Task<(double Latitude, double Longitude)?> TryGetCoordinatesFromAddressAsync(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            return null;
+
+        if (string.Equals(address.Trim(), InvalidAddressMarker, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        try
+        {
+            var coords = await GetCoordinatesFromAddressAsync(address).ConfigureAwait(false);
+            return coords;
+        }
+        catch (BLNotFoundException)
+        {
+            return null;
+        }
+        catch (BLInvalidInputException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Cached wrapper around <see cref="CalculateRouteDistanceAsync"/> to prevent duplicate concurrent requests.
+    /// </summary>
+    public static async Task<double> CalculateRouteDistanceCachedAsync(
+        double lat1, double lon1,
+        double lat2, double lon2)
+    {
+        string key = string.Format(CultureInfo.InvariantCulture, "Driving:{0:F6},{1:F6}:{2:F6},{3:F6}", lat1, lon1, lat2, lon2);
+        var task = s_routeDistanceCache.GetOrAdd(key, _ => CalculateRouteDistanceAsync(lat1, lon1, lat2, lon2));
+
+        try
+        {
+            return await task.ConfigureAwait(false);
+        }
+        catch
+        {
+            s_routeDistanceCache.TryRemove(key, out _);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Enforces the rate limit for geocoding API requests by introducing a minimum delay between consecutive requests.
     /// Uses a semaphore to ensure thread-safe execution.
     /// </summary>
@@ -592,6 +670,9 @@ internal static class Tools
         // Add travel time to the order date
         return orderDate.AddHours(hours);
     }
+
+    public static Task<DateTime> CalculateEstimatedArrivalAsync(DateTime orderDate, double distanceKm, double speedKmH)
+        => Task.FromResult(CalculateEstimatedArrival(orderDate, distanceKm, speedKmH));
 
     /// <summary>
     /// Determines the schedule status of a delivery (OnTime, InRisk, or Late)
@@ -671,4 +752,12 @@ internal static class Tools
 
         return BO.ScheduleStatus.OnTime;
     }
+
+    public static Task<BO.ScheduleStatus> CalculateScheduleStatusAsync(
+        BO.OrderStatus status,
+        DateTime orderDate,
+        DateTime? estimatedArrival,
+        DateTime? maxArrival,
+        DateTime? realArrival)
+        => Task.FromResult(CalculateScheduleStatus(status, orderDate, estimatedArrival, maxArrival, realArrival));
 }

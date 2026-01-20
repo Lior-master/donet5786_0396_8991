@@ -85,6 +85,15 @@ public partial class OrderListWindow : Window
     /// </value>
     public PL.FilterTypeOrder FilterTypeOrder { get; set; } = PL.FilterTypeOrder.All;
 
+    public bool IsLoading
+    {
+        get { return (bool)GetValue(IsLoadingProperty); }
+        set { SetValue(IsLoadingProperty, value); }
+    }
+
+    public static readonly DependencyProperty IsLoadingProperty =
+        DependencyProperty.Register("IsLoading", typeof(bool), typeof(OrderListWindow), new PropertyMetadata(false));
+
     /// <summary>
     /// Gets or sets the order status filter value.
     /// Used when <see cref="FilterTypeOrder"/> is set to <see cref="PL.FilterTypeOrder.ByOrderStatus"/>.
@@ -146,78 +155,57 @@ public partial class OrderListWindow : Window
     /// If a filter property is set to "All", it bypasses filtering for that category.
     /// On exception, displays error message and sets OrderList to empty collection.
     /// </remarks>
-    private void queryOrderList()
+    private async Task<List<BO.OrderInList>> FetchOrderListAsync()
+    {
+        // Retrieve the boss (administrator) ID from system configuration
+        var bossId = s_bl.Admin.GetConfig().BossId;
+
+        return FilterTypeOrder switch
+        {
+            PL.FilterTypeOrder.All =>
+                (await s_bl.Order.orderInListsAsync(bossId, null, null, null)).ToList(),
+
+            PL.FilterTypeOrder.ByOrderStatus => (OrderStatus == BO.OrderStatus.All)
+                ? (await s_bl.Order.orderInListsAsync(bossId, null, null, null)).ToList()
+                : (await s_bl.Order.orderInListsAsync(bossId, PL.FilterTypeOrder.ByOrderStatus, OrderStatus, null)).ToList(),
+
+            PL.FilterTypeOrder.ByOrderType => (OrderType == BO.OrderType.All)
+                ? (await s_bl.Order.orderInListsAsync(bossId, null, null, null)).ToList()
+                : (await s_bl.Order.orderInListsAsync(bossId, PL.FilterTypeOrder.ByOrderType, OrderType, null)).ToList(),
+
+            PL.FilterTypeOrder.BySheduleStatus => (ScheduleStatus == BO.ScheduleStatus.All)
+                ? (await s_bl.Order.orderInListsAsync(bossId, null, null, null)).ToList()
+                : (await s_bl.Order.orderInListsAsync(bossId, PL.FilterTypeOrder.BySheduleStatus, ScheduleStatus, null)).ToList(),
+
+            PL.FilterTypeOrder.ByOrderAndSchedulStatus => (ScheduleStatus == BO.ScheduleStatus.All && OrderStatus == BO.OrderStatus.All)
+                ? (await s_bl.Order.orderInListsAsync(bossId, null, null, null)).ToList()
+                : (ScheduleStatus == BO.ScheduleStatus.All)
+                    ? (await s_bl.Order.orderInListsAsync(bossId, PL.FilterTypeOrder.ByOrderStatus, OrderStatus, null)).ToList()
+                    : (OrderStatus == BO.OrderStatus.All)
+                        ? (await s_bl.Order.orderInListsAsync(bossId, PL.FilterTypeOrder.BySheduleStatus, ScheduleStatus, null)).ToList()
+                        : (await s_bl.Order.orderInListsDoubleFilterAsync(bossId, ScheduleStatus, OrderStatus)).ToList(),
+
+            _ => (await s_bl.Order.orderInListsAsync(bossId, null, null, null)).ToList()
+        };
+    }
+
+    private async Task RefreshOrderListAsync()
     {
         try
         {
-            // Retrieve the boss (administrator) ID from system configuration
-            var bossId = s_bl.Admin.GetConfig().BossId;
-
-            // Apply filters based on the selected filter type
-            switch (FilterTypeOrder)
-            {
-                case PL.FilterTypeOrder.All:
-                    // No filtering: retrieve all orders
-                    OrderList = s_bl.Order.orderInLists(bossId, null, null, null);
-                    break;
-
-                case PL.FilterTypeOrder.ByOrderStatus:
-                    // Filter by order status, or retrieve all if "All" is selected
-                    OrderList = (OrderStatus == BO.OrderStatus.All)
-                        ? s_bl.Order.orderInLists(bossId, null, null, null)
-                        : s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.ByOrderStatus, OrderStatus, null);
-                    break;
-
-                case PL.FilterTypeOrder.ByOrderType:
-                    // Filter by order type, or retrieve all if "All" is selected
-                    OrderList = (OrderType == BO.OrderType.All)
-                        ? s_bl.Order.orderInLists(bossId, null, null, null)
-                        : s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.ByOrderType, OrderType, null);
-                    break;
-
-                case PL.FilterTypeOrder.BySheduleStatus:
-                    // Filter by schedule status, or retrieve all if "All" is selected
-                    OrderList = (ScheduleStatus == BO.ScheduleStatus.All)
-                        ? s_bl.Order.orderInLists(bossId, null, null, null)
-                        : s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.BySheduleStatus, ScheduleStatus, null);
-                    break;
-
-                case PL.FilterTypeOrder.ByOrderAndSchedulStatus:
-                    // Filter by schedule status and by Order status
-                    if (ScheduleStatus == BO.ScheduleStatus.All && OrderStatus == BO.OrderStatus.All)
-                    {
-                        OrderList = s_bl.Order.orderInLists(bossId, null, null, null);
-                        break;
-                    }
-                    else if(ScheduleStatus == BO.ScheduleStatus.All)
-                    {
-                        OrderList = s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.ByOrderStatus, OrderStatus, null);
-                        break;
-                    }                    
-                    else if(OrderStatus == BO.OrderStatus.All)
-                    {
-                        OrderList = s_bl.Order.orderInLists(bossId, PL.FilterTypeOrder.BySheduleStatus, ScheduleStatus, null);
-                        break;
-                    }
-                    else
-                    {
-                        OrderList = s_bl.Order.orderInListsDoubleFilter(bossId, ScheduleStatus, OrderStatus);
-                        break;
-                    }
-                default:
-                    // Fallback: retrieve all orders for unknown filter types
-                    OrderList = s_bl.Order.orderInLists(bossId, null, null, null);
-                    break;
-            }
+            IsLoading = true;
+            OrderList = null;
+            OrderList = await FetchOrderListAsync();
         }
         catch (Exception ex)
         {
-            // Display error message to the user
             MessageBox.Show($"Error loading orders: {ex.Message}",
                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-
-            // Set order list to empty collection on failure
             OrderList = new List<BO.OrderInList>();
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
@@ -236,12 +224,12 @@ public partial class OrderListWindow : Window
         if (Dispatcher.CheckAccess())
         {
             // Already on UI thread, safe to call directly
-            queryOrderList();
+            _ = RefreshOrderListAsync();
         }
         else
         {
             // Called from background thread, marshal to UI thread
-            Dispatcher.BeginInvoke(new Action(queryOrderList));
+            Dispatcher.BeginInvoke(async () => await RefreshOrderListAsync());
         }
     }
 
@@ -263,13 +251,13 @@ public partial class OrderListWindow : Window
     /// The _isOpen flag is always set to true in the finally block to ensure the window
     /// is marked as initialized even if observer registration fails.
     /// </remarks>
-    private void Window_Loaded(object sender, RoutedEventArgs e)
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         // Check if window is already initialized to prevent duplicate loading
         if (_isOpen) return;
         
         // Load the initial order list with current filter settings
-        queryOrderList();
+        await RefreshOrderListAsync();
         try
         {
             // Register the observer to receive notifications of order data changes
@@ -428,7 +416,7 @@ public partial class OrderListWindow : Window
             }
             
             // Refresh the order list when the filter type changes
-            queryOrderList();
+            _ = RefreshOrderListAsync();
         }
     }
 
@@ -449,7 +437,7 @@ public partial class OrderListWindow : Window
         {
             OrderStatus = selectedStatus;
             // Reload the order list based on the new filter selection
-            queryOrderList();
+            _ = RefreshOrderListAsync();
         }
     }
 
@@ -470,7 +458,7 @@ public partial class OrderListWindow : Window
         {
             OrderType = selectedType;
             // Reload the order list based on the new filter selection
-            queryOrderList();
+            _ = RefreshOrderListAsync();
         }
     }
 
@@ -492,7 +480,7 @@ public partial class OrderListWindow : Window
         {
             FragilityLevel = selectedFragility;
             // Reload the order list based on the new filter selection
-            queryOrderList();
+            _ = RefreshOrderListAsync();
         }
     }
 
@@ -513,7 +501,7 @@ public partial class OrderListWindow : Window
         {
             ScheduleStatus = selectedSchedule;
             // Reload the order list based on the new filter selection
-            queryOrderList();
+            _ = RefreshOrderListAsync();
         }
     }
 

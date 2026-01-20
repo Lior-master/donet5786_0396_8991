@@ -4,6 +4,7 @@ using BlApi;
 using BO;
 using Helpers;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Implementation of the <see cref="ICourier"/> interface that provides business logic operations
@@ -84,8 +85,8 @@ internal class CourierImplementation : ICourier
     /// Authorization is validated by the <see cref="CourierManager"/>. The requester must have appropriate
     /// permissions to view courier details.
     /// </remarks>
-    public Courier GetCourierDetails(int requesterId, int courierId)
-        => CourierManager.GetCourierDetails(requesterId, courierId);
+    public Task<Courier> GetCourierDetailsAsync(int requesterId, int courierId)
+        => CourierManager.GetCourierDetailsAsync(requesterId, courierId);
 
     /// <summary>
     /// Retrieves a filtered list of couriers.

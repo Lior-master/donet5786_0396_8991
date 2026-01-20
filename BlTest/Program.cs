@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using BlApi;
 using BO;
 
@@ -14,7 +15,7 @@ internal class Program
     // For tests we use a mutable requester id (e.g. admin / boss)
     private static int TestRequesterId = 347657991;
 
-    static void Main()
+    static async Task Main()
     {
         while (true)
         {
@@ -39,25 +40,25 @@ internal class Program
                 switch (mainChoice)
                 {
                     case 1:
-                        TestOrders();
+                        await TestOrders();
                         break;
                     case 2:
-                        TestCouriers();
+                        await TestCouriers();
                         break;
                     case 3:
-                        TestDeliveries();
+                        await TestDeliveries();
                         break;
                     case 4:
-                        TestAdmin();
+                        await TestAdmin();
                         break;
                     case 5:
-                        TestHelpers();
+                        await TestHelpers();
                         break;
                     case 6:
-                        SetDirectorId();
+                        await SetDirectorIdAsync();
                         break;
                     case 7:
-                        QuickInitializeData();
+                        await QuickInitializeData();
                         break;
                     case 0:
                         return;
@@ -76,7 +77,7 @@ internal class Program
        ORDERS
        ============================================ */
 
-    private static void TestOrders()
+    private static async Task TestOrders()
     {
         Console.Clear();
         Console.WriteLine("=== TEST ORDERS ===");
@@ -99,16 +100,16 @@ internal class Program
             switch (choice)
             {
                 case 1:
-                    GetOrderDetails();
+                    await GetOrderDetailsAsync();
                     break;
                 case 2:
-                    ListOrders();
+                    await ListOrdersAsync();
                     break;
                 case 3:
-                    AddOrder();
+                    await AddOrderAsync();
                     break;
                 case 4:
-                    UpdateOrder();
+                    await UpdateOrderAsync();
                     break;
                 case 5:
                     CancelOrder();
@@ -117,10 +118,10 @@ internal class Program
                     RemoveOrder();
                     break;
                 case 7:
-                    GetOrdersBySummary();
+                    await GetOrdersBySummaryAsync();
                     break;
                 case 8:
-                    ListOrders(); // same as orderInLists sample
+                    await ListOrdersAsync(); // same as orderInLists sample
                     break;
                 case 0:
                     return;
@@ -136,23 +137,23 @@ internal class Program
         }
     }
 
-    private static void GetOrderDetails()
+    private static async Task GetOrderDetailsAsync()
     {
         Console.Write("Order ID: ");
         if (!int.TryParse(Console.ReadLine(), out int id))
             return;
 
-        var order = s_bl.Order.GetOrderDetails(TestRequesterId, id);
+        var order = await s_bl.Order.GetOrderDetailsAsync(TestRequesterId, id);
         Console.WriteLine("\n--- ORDER DETAILS ---");
         Console.WriteLine(order);
         Console.WriteLine("Press Enter...");
         Console.ReadLine();
     }
 
-    private static void ListOrders()
+    private static async Task ListOrdersAsync()
     {
         // Use the BL interface method that returns order list view models
-        var orders = s_bl.Order.orderInLists(TestRequesterId, null, null, null);
+        var orders = await s_bl.Order.orderInListsAsync(TestRequesterId, null, null, null);
 
         Console.WriteLine("\n--- ORDERS LIST ---");
         foreach (var o in orders)
@@ -162,7 +163,7 @@ internal class Program
         Console.ReadLine();
     }
 
-    private static void AddOrder()
+    private static async Task AddOrderAsync()
     {
         Console.WriteLine("Enter minimal order fields (press Enter to accept default):");
         var order = new BO.Order();
@@ -176,17 +177,17 @@ internal class Program
         var phone = Console.ReadLine();
         if (!string.IsNullOrWhiteSpace(phone)) order.CustomerPhone = phone;
 
-        s_bl.Order.AddOrder(TestRequesterId, order);
+        await s_bl.Order.AddOrderAsync(TestRequesterId, order);
         Console.WriteLine("Order added. Press Enter...");
         Console.ReadLine();
     }
 
-    private static void UpdateOrder()
+    private static async Task UpdateOrderAsync()
     {
         Console.Write("Order ID to update: ");
         if (!int.TryParse(Console.ReadLine(), out int id)) return;
 
-        var current = s_bl.Order.GetOrderDetails(TestRequesterId, id);
+        var current = await s_bl.Order.GetOrderDetailsAsync(TestRequesterId, id);
         Console.WriteLine("Current: " + current);
         Console.Write("New Customer CourierName (blank = keep): ");
         var name = Console.ReadLine();
@@ -195,7 +196,7 @@ internal class Program
         var addr = Console.ReadLine();
         if (!string.IsNullOrWhiteSpace(addr)) current.CustomerAddress = addr;
 
-        s_bl.Order.UpdateOrderDetails(TestRequesterId, current);
+        await s_bl.Order.UpdateOrderDetailsAsync(TestRequesterId, current);
         Console.WriteLine("Order updated. Press Enter...");
         Console.ReadLine();
     }
@@ -218,9 +219,9 @@ internal class Program
         Console.ReadLine();
     }
 
-    private static void GetOrdersBySummary()
+    private static async Task GetOrdersBySummaryAsync()
     {
-        var summary = s_bl.Order.GetOrdersBySummary(TestRequesterId);
+        var summary = await s_bl.Order.GetOrdersBySummaryAsync(TestRequesterId);
         Console.WriteLine("\n--- ORDERS BY SUMMARY ---");
         
         // Get the number of statuses and schedule statuses for proper interpretation
@@ -275,7 +276,7 @@ internal class Program
        COURIERS
        ============================================ */
 
-    private static void TestCouriers()
+    private static async Task TestCouriers()
     {
         Console.Clear();
         Console.WriteLine("=== TEST COURIERS ===");
@@ -297,7 +298,7 @@ internal class Program
             switch (choice)
             {
                 case 1:
-                    GetCourierDetails();
+                    await GetCourierDetailsAsync();
                     break;
                 case 2:
                     ListCouriers();
@@ -306,7 +307,7 @@ internal class Program
                     AddCourier();
                     break;
                 case 4:
-                    UpdateCourier();
+                    await UpdateCourierAsync();
                     break;
                 case 5:
                     RemoveCourier();
@@ -329,13 +330,13 @@ internal class Program
         }
     }
 
-    private static void GetCourierDetails()
+    private static async Task GetCourierDetailsAsync()
     {
         Console.Write("Courier ID: ");
         if (!int.TryParse(Console.ReadLine(), out int id))
             return;
 
-        var courier = s_bl.Courier.GetCourierDetails(TestRequesterId, id);
+        var courier = await s_bl.Courier.GetCourierDetailsAsync(TestRequesterId, id);
         Console.WriteLine("\n--- COURIER DETAILS ---");
         Console.WriteLine(courier);
         Console.WriteLine("Press Enter...");
@@ -430,11 +431,11 @@ internal class Program
         Console.ReadLine();
     }
 
-    private static void UpdateCourier()
+    private static async Task UpdateCourierAsync()
     {
         Console.Write("Courier ID to update: ");
         if (!int.TryParse(Console.ReadLine(), out int id)) return;
-        var cur = s_bl.Courier.GetCourierDetails(TestRequesterId, id);
+        var cur = await s_bl.Courier.GetCourierDetailsAsync(TestRequesterId, id);
         Console.WriteLine("Current: " + cur);
         Console.Write("New CourierName (blank = keep): ");
         var name = Console.ReadLine();
@@ -482,7 +483,7 @@ internal class Program
        DELIVERIES (simple test)
        ============================================ */
 
-    private static void TestDeliveries()
+    private static async Task TestDeliveries()
     {
         Console.Clear();
         Console.WriteLine("=== TEST DELIVERIES ===");
@@ -501,13 +502,13 @@ internal class Program
             switch (choice)
             {
                 case 1:
-                    AssignOrderToCourier();
+                    await AssignOrderToCourierAsync();
                     break;
                 case 2:
-                    FinishDelivery();
+                    await FinishDeliveryAsync();
                     break;
                 case 3:
-                    GetOpenOrdersForCourier();
+                    await GetOpenOrdersForCourierAsync();
                     break;
                 case 4:
                     GetClosedDeliveriesForCourier();
@@ -524,7 +525,7 @@ internal class Program
         }
     }
 
-    private static void AssignOrderToCourier()
+    private static async Task AssignOrderToCourierAsync()
     {
         Console.Write("Order ID: ");
         if (!int.TryParse(Console.ReadLine(), out int orderId))
@@ -534,13 +535,13 @@ internal class Program
         if (!int.TryParse(Console.ReadLine(), out int courierId))
             return;
 
-        s_bl.Order.AssignOrderToCourier(TestRequesterId, orderId, courierId);
+        await s_bl.Order.AssignOrderToCourierAsync(TestRequesterId, orderId, courierId);
         Console.WriteLine("Order assigned to courier.");
         Console.WriteLine("Press Enter...");
         Console.ReadLine();
     }
 
-    private static void FinishDelivery()
+    private static async Task FinishDeliveryAsync()
     {
         Console.Write("Courier ID: ");
         if (!int.TryParse(Console.ReadLine(), out int courierId))
@@ -550,17 +551,17 @@ internal class Program
         if (!int.TryParse(Console.ReadLine(), out int deliveryId))
             return;
 
-        s_bl.Order.FinishOrder(TestRequesterId, courierId, deliveryId, DeliveredStatus.Delivered);
+        await s_bl.Order.FinishOrderAsync(TestRequesterId, courierId, deliveryId, DeliveredStatus.Delivered);
         Console.WriteLine("Delivery finished.");
         Console.WriteLine("Press Enter...");
         Console.ReadLine();
     }
 
-    private static void GetOpenOrdersForCourier()
+    private static async Task GetOpenOrdersForCourierAsync()
     {
         Console.Write("Courier ID: ");
         if (!int.TryParse(Console.ReadLine(), out int courierId)) return;
-        var open = s_bl.Order.GetOpenOrdersForCourier(TestRequesterId, courierId, null, null);
+        var open = await s_bl.Order.GetOpenOrdersForCourierAsync(TestRequesterId, courierId, null, null);
         foreach (var o in open) Console.WriteLine(o);
         Console.WriteLine("Press Enter...");
         Console.ReadLine();
@@ -580,7 +581,7 @@ internal class Program
        ADMIN / CONFIG
        ============================================ */
 
-    private static void TestAdmin()
+    private static async Task TestAdmin()
     {
         Console.Clear();
         Console.WriteLine("=== TEST ADMIN / CONFIG ===");
@@ -604,15 +605,15 @@ internal class Program
                     ShowConfig();
                     break;
                 case 2:
-                    SetConfig();
+                    await SetConfigAsync();
                     break;
                 case 3:
-                    s_bl.Admin.InitializeDB();
+                    await s_bl.Admin.InitializeDBAsync();
                     Console.WriteLine("DB Initialized. Press Enter...");
                     Console.ReadLine();
                     break;
                 case 4:
-                    s_bl.Admin.ResetDB();
+                    await s_bl.Admin.ResetDBAsync();
                     Console.WriteLine("DB Reset. Press Enter...");
                     Console.ReadLine();
                     break;
@@ -644,7 +645,7 @@ internal class Program
         Console.ReadLine();
     }
 
-    private static void SetConfig()
+    private static async Task SetConfigAsync()
     {
         var cfg = s_bl.Admin.GetConfig() ?? new BO.Config();
         Console.WriteLine("Current config: " + cfg);
@@ -673,8 +674,16 @@ internal class Program
         s = Console.ReadLine();
         if (double.TryParse(s, out double md)) cfg.MaxDistance = md;
 
-        s_bl.Admin.SetConfig(cfg);
-        Console.WriteLine("Config set. Press Enter...");
+        try
+        {
+            await s_bl.Admin.SetConfigAsync(cfg);
+            Console.WriteLine("Config set. Press Enter...");
+        }
+        catch (BO.BLBadAddressException ex)
+        {
+            Console.WriteLine("Warning: " + ex.Message);
+            Console.WriteLine("Config set with invalid address. Press Enter...");
+        }
         Console.ReadLine();
     }
 
@@ -737,7 +746,7 @@ internal class Program
        OTHER HELPERS / TESTS
        ============================================ */
 
-    private static void TestHelpers()
+    private static async Task TestHelpers()
     {
         Console.Clear();
         Console.WriteLine("=== HELPERS ===");
@@ -755,10 +764,10 @@ internal class Program
             switch (choice)
             {
                 case 1:
-                    SetDirectorId();
+                    await SetDirectorIdAsync();
                     break;
                 case 2:
-                    GetOpenOrdersForCourier();
+                    await GetOpenOrdersForCourierAsync();
                     break;
                 case 3:
                     GetClosedDeliveriesForCourier();
@@ -775,7 +784,7 @@ internal class Program
         }
     }
 
-    private static void SetDirectorId()
+    private static async Task SetDirectorIdAsync()
     {
         Console.Write("Enter Director ID: ");
         if (!int.TryParse(Console.ReadLine(), out int id))
@@ -793,7 +802,7 @@ internal class Program
             // Persist boss id in config so XML is updated
             var cfg = s_bl.Admin.GetConfig() ?? new BO.Config();
             cfg.BossId = id;
-            s_bl.Admin.SetConfig(cfg);
+            await s_bl.Admin.SetConfigAsync(cfg);
 
             TestRequesterId = id;
             Console.WriteLine($"Director ID set to {id} and persisted. Press Enter...");
@@ -810,7 +819,7 @@ internal class Program
     /// Quick helper to reinitialize the DB from the main menu (asks for confirmation).
     /// Uses the BL Admin InitializeDB method (same as TestAdmin option).
     /// </summary>
-    private static void QuickInitializeData()
+    private static async Task QuickInitializeData()
     {
         Console.Write("Are you sure you want to reinitialize all data? This will overwrite existing data (y/n): ");
         var ans = Console.ReadLine();
@@ -823,8 +832,8 @@ internal class Program
 
         try
         {
-            s_bl.Admin.ResetDB();
-            s_bl.Admin.InitializeDB();
+            await s_bl.Admin.ResetDBAsync();
+            await s_bl.Admin.InitializeDBAsync();
             Console.WriteLine("Data reinitialized successfully. Press Enter...");
         }
         catch (Exception ex)
