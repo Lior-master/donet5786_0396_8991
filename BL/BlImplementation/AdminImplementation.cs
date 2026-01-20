@@ -117,7 +117,7 @@ internal class AdminImplementation : IAdmin
     /// Starts the simulator with the specified interval (in minutes per second).
     /// </summary>
     /// <param name="interval">The interval in minutes by which to advance the clock per second.</param>
-    public void Start(int interval)
+    public void Start(double interval)
         => AdminManager.Start(interval);
 
     /// <summary>

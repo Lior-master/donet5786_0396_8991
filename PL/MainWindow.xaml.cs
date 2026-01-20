@@ -459,8 +459,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             else
             {
+                string SimulatorIntervalInputText = SimulatorIntervalInput.Text;
+                SimulatorIntervalInputText = SimulatorIntervalInputText.Replace('.', ',');
                 // Start simulator
-                if (!int.TryParse(SimulatorIntervalInput.Text, out int interval) || interval <= 0)
+                if (!double.TryParse(SimulatorIntervalInputText, out double interval) || interval < 0)
                 {
                     MessageBox.Show("Please enter a valid positive number for clock speed.",
                                     "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
