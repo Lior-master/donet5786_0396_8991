@@ -140,4 +140,144 @@
     <Fragility xsi:nil="true" />
     <Description>Simulated order</Description>
   </Order>
+  <Order>
+    <Id>1010</Id>
+    <Type>Pizza</Type>
+    <CustomerName>Grace Lee</CustomerName>
+    <CustomerAddress>123 Main St, Tel Aviv</CustomerAddress>
+    <CustomerPhone>050-1234567</CustomerPhone>
+    <OrderDate>2026-01-24T09:12:00</OrderDate>
+    <size>12.45</size>
+    <weight>24.10</weight>
+    <Latitude>32.066455</Latitude>
+    <Longitude>34.783553</Longitude>
+    <Fragility xsi:nil="true" />
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1011</Id>
+    <Type>Suchi</Type>
+    <CustomerName>Henry Wilson</CustomerName>
+    <CustomerAddress>456 King David Ave, Jerusalem</CustomerAddress>
+    <CustomerPhone>051-2345678</CustomerPhone>
+    <OrderDate>2026-01-24T10:03:30</OrderDate>
+    <size>4.20</size>
+    <weight>6.50</weight>
+    <Latitude>31.759595</Latitude>
+    <Longitude>35.215315</Longitude>
+    <Fragility>Medium</Fragility>
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1012</Id>
+    <Type>Shawarma</Type>
+    <CustomerName>Alice Johnson</CustomerName>
+    <CustomerAddress>789 Dizengoff St, Tel Aviv</CustomerAddress>
+    <CustomerPhone>052-3456789</CustomerPhone>
+    <OrderDate>2026-01-24T11:25:10</OrderDate>
+    <size>7.80</size>
+    <weight>18.34</weight>
+    <Latitude>32.084319</Latitude>
+    <Longitude>34.781364</Longitude>
+    <Fragility xsi:nil="true" />
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1013</Id>
+    <Type>FastFood</Type>
+    <CustomerName>Bob Smith</CustomerName>
+    <CustomerAddress>202 Ben Yehuda St, Tel Aviv</CustomerAddress>
+    <CustomerPhone>053-4567890</CustomerPhone>
+    <OrderDate>2026-01-24T12:40:55</OrderDate>
+    <size>2.50</size>
+    <weight>3.75</weight>
+    <Latitude>32.087066</Latitude>
+    <Longitude>34.773227</Longitude>
+    <Fragility>Low</Fragility>
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1014</Id>
+    <Type>Pizza</Type>
+    <CustomerName>Diana Prince</CustomerName>
+    <CustomerAddress>101 Jaffa Rd, Jerusalem</CustomerAddress>
+    <CustomerPhone>054-5678901</CustomerPhone>
+    <OrderDate>2026-01-24T13:05:05</OrderDate>
+    <size>15.60</size>
+    <weight>8.20</weight>
+    <Latitude>31.759595</Latitude>
+    <Longitude>35.215315</Longitude>
+    <Fragility xsi:nil="true" />
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1015</Id>
+    <Type>Suchi</Type>
+    <CustomerName>Frank Miller</CustomerName>
+    <CustomerAddress>303 Rothschild Blvd, Tel Aviv</CustomerAddress>
+    <CustomerPhone>055-6789012</CustomerPhone>
+    <OrderDate>2026-01-24T14:18:20</OrderDate>
+    <size>9.99</size>
+    <weight>20.00</weight>
+    <Latitude>32.084319</Latitude>
+    <Longitude>34.781364</Longitude>
+    <Fragility>High</Fragility>
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1016</Id>
+    <Type>Shawarma</Type>
+    <CustomerName>Eve Davis</CustomerName>
+    <CustomerAddress>456 King David Ave, Jerusalem</CustomerAddress>
+    <CustomerPhone>056-7890123</CustomerPhone>
+    <OrderDate>2026-01-24T15:30:00</OrderDate>
+    <size>18.75</size>
+    <weight>12.40</weight>
+    <Latitude>31.759595</Latitude>
+    <Longitude>35.215315</Longitude>
+    <Fragility xsi:nil="true" />
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1017</Id>
+    <Type>FastFood</Type>
+    <CustomerName>Charlie Brown</CustomerName>
+    <CustomerAddress>123 Main St, Tel Aviv</CustomerAddress>
+    <CustomerPhone>054-5678901</CustomerPhone>
+    <OrderDate>2026-01-24T16:45:10</OrderDate>
+    <size>5.40</size>
+    <weight>10.10</weight>
+    <Latitude>32.066455</Latitude>
+    <Longitude>34.783553</Longitude>
+    <Fragility>Medium</Fragility>
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1018</Id>
+    <Type>Pizza</Type>
+    <CustomerName>Grace Lee</CustomerName>
+    <CustomerAddress>789 Dizengoff St, Tel Aviv</CustomerAddress>
+    <CustomerPhone>055-6789012</CustomerPhone>
+    <OrderDate>2026-01-25T08:00:00</OrderDate>
+    <size>25.00</size>
+    <weight>35.50</weight>
+    <Latitude>32.084319</Latitude>
+    <Longitude>34.781364</Longitude>
+    <Fragility xsi:nil="true" />
+    <Description>Simulated order</Description>
+  </Order>
+  <Order>
+    <Id>1019</Id>
+    <Type>Suchi</Type>
+    <CustomerName>Henry Wilson</CustomerName>
+    <CustomerAddress>202 Ben Yehuda St, Tel Aviv</CustomerAddress>
+    <CustomerPhone>050-1234567</CustomerPhone>
+    <OrderDate>2026-01-25T09:30:30</OrderDate>
+    <size>3.33</size>
+    <weight>2.22</weight>
+    <Latitude>32.087066</Latitude>
+    <Longitude>34.773227</Longitude>
+    <Fragility>Low</Fragility>
+    <Description>Simulated order</Description>
+  </Order>
 </ArrayOfOrder>
