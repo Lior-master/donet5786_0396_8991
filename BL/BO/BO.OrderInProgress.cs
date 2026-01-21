@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Represents the live state of an order that is currently being delivered.
+/// Represents the order in progress component in this layer.
 /// Provides both timeline and contact details needed while the delivery is in progress.
 /// </summary>
 public class OrderInProgress
@@ -19,7 +22,7 @@ public class OrderInProgress
     public int OrderId { get; init; }
 
     /// <summary>
-    /// Numeric representation of the order status.
+    /// Required.
     /// This value can be used when a numeric code is required (for example when interacting with lower-level DAL).
     /// </summary>
     public OrderType OrderType { get; init; } 
@@ -59,6 +62,9 @@ public class OrderInProgress
     /// Customer full name.
     /// </summary>
     // Default to empty to avoid null strings in live order snapshots.
+    /// <summary>
+    /// Gets or sets the customer name value.
+    /// </summary>
     public string CustomerName { get; init; } = string.Empty;
 
     /// <summary>

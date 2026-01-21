@@ -6,6 +6,9 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 
+/// <summary>
+/// Represents the xml tools component in this layer.
+/// </summary>
 static class XmlTools
 {
     const string s_xmlDir = @"..\xml\";

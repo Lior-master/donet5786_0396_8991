@@ -2,14 +2,20 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
+/// <summary>
+/// Provides cross-cutting helper utilities for synchronization and tooling.
+/// </summary>
 namespace Helpers;
 
 /// <summary>
-/// Internal BL manager for all Application's Configuration Variables and Clock logic policies
+/// Represents the admin manager component in this layer.
 /// </summary>
 internal static class AdminManager //stage 4
 {
     #region Stage 4-7
+    /// <summary>
+    /// Stores the s dal value.
+    /// </summary>
     private static readonly DalApi.IDal s_dal = DalApi.Factory.Get; //stage 4
 
     /// <summary>
@@ -20,10 +26,13 @@ internal static class AdminManager //stage 4
     internal static event Action? ConfigUpdatedObservers; //stage 5 - for config update observers
     internal static event Action? ClockUpdatedObservers; //stage 5 - for clock update observers
 
+    /// <summary>
+    /// Stores the periodic task value.
+    /// </summary>
     private static Task? _periodicTask = null; //stage 7
 
     /// <summary>
-    /// Method to update application's clock from any BL class as may be required
+    /// Updates the clock.
     /// </summary>
     /// <param name="newClock">updated clock value</param>
     internal static void UpdateClock(DateTime newClock) //stage 4-7
@@ -39,7 +48,7 @@ internal static class AdminManager //stage 4
     }
 
     /// <summary>
-    /// Method for providing current configuration variables values for any BL class that may need it
+    /// Initializes a new instance of the [MethodImpl class.
     /// </summary>
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     internal static BO.Config GetConfig() //stage 4
@@ -65,7 +74,7 @@ internal static class AdminManager //stage 4
     };
 
     /// <summary>
-    /// Method for setting current configuration variables values for any BL class that may need it
+    /// Asynchronously sets the config value.
     /// </summary>
     internal static async Task SetConfigAsync(BO.Config configuration) //stage 4
     {
@@ -199,7 +208,7 @@ internal static class AdminManager //stage 4
     #region Stage 7 base
 
     /// <summary>    
-    /// Mutex to use from BL methods to get mutual exclusion while the simulator is running
+    /// Performs the operation.
     /// </summary>
     internal static readonly object BlMutex = new(); // BlMutex = s_dal; // This field is actually the same as s_dal - it is defined for readability of locks
     /// <summary>
@@ -207,7 +216,7 @@ internal static class AdminManager //stage 4
     /// </summary>
     private static volatile Thread? s_thread;
     /// <summary>
-    /// The Interval for clock updating
+    /// Second.
     /// in minutes by second (default value is 1, will be set on Start())    
     /// </summary>
     private static double s_interval = 1;
@@ -247,6 +256,9 @@ internal static class AdminManager //stage 4
         }
     }
 
+    /// <summary>
+    /// Stores the simulate task value.
+    /// </summary>
     private static Task? _simulateTask = null;
 
     private static void clockRunner()

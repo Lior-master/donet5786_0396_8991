@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Represents a courier who performs deliveries.
+/// Represents the courier component in this layer.
 /// </summary>
 public class Courier
 {
@@ -16,6 +19,9 @@ public class Courier
     /// Full name of the courier.
     /// </summary>
     // Default to empty to satisfy nullable analysis for DTO-style initialization.
+    /// <summary>
+    /// Gets or sets the name value.
+    /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>

@@ -1,9 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace Dal;
 
 /// <summary>
-/// Global configuration settings used by the DAL.
+/// Thread Safety.
 /// All members are static and the class is initialized once via the static constructor.
 /// All property access is synchronized for thread-safety (Stage 7).
 /// </summary>
@@ -190,7 +193,7 @@ internal static class Config
     } = null;
 
     /// <summary>
-    /// Static constructor: initializes default values for the configuration.
+    /// Initializes a new instance of the Config class.
     /// Executes once before the first use of the class.
     /// </summary>
     static Config()
@@ -204,7 +207,7 @@ internal static class Config
     }
 
     /// <summary>
-    /// Thread-safe reset of configuration to initial values.
+    /// Initializes a new instance of the [MethodImpl class.
     /// </summary>
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
     internal static void Reset()

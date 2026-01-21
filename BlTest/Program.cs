@@ -5,14 +5,23 @@ using System.Threading.Tasks;
 using BlApi;
 using BO;
 
+/// <summary>
+/// Provides BL test harness and initialization helpers.
+/// </summary>
 namespace BlTest;
 
+/// <summary>
+/// Represents the program component in this layer.
+/// </summary>
 internal class Program
 {
     // Single BL instance
     static readonly IBl s_bl = BlApi.Factory.Get();
 
     // For tests we use a mutable requester id (e.g. admin / boss)
+    /// <summary>
+    /// Stores the test requester id value.
+    /// </summary>
     private static int TestRequesterId = 347657991;
 
     static async Task Main()
@@ -816,7 +825,7 @@ internal class Program
     }
 
     /// <summary>
-    /// Quick helper to reinitialize the DB from the main menu (asks for confirmation).
+    /// Quick Initialize Data.
     /// Uses the BL Admin InitializeDB method (same as TestAdmin option).
     /// </summary>
     private static async Task QuickInitializeData()

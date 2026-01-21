@@ -13,8 +13,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL;
 
+/// <summary>
+/// Represents the main window component in this layer.
+/// </summary>
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
     // ================================
@@ -25,7 +31,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //   SINGLETON WINDOW INSTANCES
     // ================================
+    /// <summary>
+    /// Stores the order list window instance value.
+    /// </summary>
     private static OrderListWindow? _orderListWindowInstance;
+    /// <summary>
+    /// Stores the courier list window instance value.
+    /// </summary>
     private static CourierListWindow? _courierListWindowInstance;
 
     // ================================
@@ -38,36 +50,54 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //   DEPENDENCY PROPERTY: CLOCK
     // ================================
+    /// <summary>
+    /// Gets or sets the current time value.
+    /// </summary>
     public DateTime CurrentTime
     {
         get => (DateTime)GetValue(CurrentTimeProperty);
         set => SetValue(CurrentTimeProperty, value);
     }
 
+    /// <summary>
+    /// Stores the current time property value.
+    /// </summary>
     public static readonly DependencyProperty CurrentTimeProperty =
         DependencyProperty.Register(nameof(CurrentTime), typeof(DateTime), typeof(MainWindow));
 
     // ================================
     //   DEPENDENCY PROPERTY: CONFIG
     // ================================
+    /// <summary>
+    /// Gets or sets the configuration value.
+    /// </summary>
     public Config Configuration
     {
         get => (Config)GetValue(ConfigurationProperty);
         set => SetValue(ConfigurationProperty, value);
     }
 
+    /// <summary>
+    /// Stores the configuration property value.
+    /// </summary>
     public static readonly DependencyProperty ConfigurationProperty =
         DependencyProperty.Register(nameof(Configuration), typeof(Config), typeof(MainWindow));
 
     // ================================
     //   DEPENDENCY PROPERTY: SIMULATOR INTERVAL
     // ================================
+    /// <summary>
+    /// Gets or sets the interval value.
+    /// </summary>
     public double Interval
     {
         get => (double)GetValue(IntervalProperty);
         set => SetValue(IntervalProperty, value);
     }
 
+    /// <summary>
+    /// Stores the interval property value.
+    /// </summary>
     public static readonly DependencyProperty IntervalProperty =
         DependencyProperty.Register(nameof(Interval), typeof(double), typeof(MainWindow),
             new PropertyMetadata(1.0));
@@ -75,7 +105,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //   ORDER SUMMARY DATA BINDING
     // ================================
+    /// <summary>
+    /// Stores the order summary data value.
+    /// </summary>
     private int[] _orderSummaryData = new int[15]; // 3 ScheduleStatus × 5 OrderStatus
+    /// <summary>
+    /// Gets or sets the order summary data value.
+    /// </summary>
     public int[] OrderSummaryData
     {
         get => _orderSummaryData;
@@ -94,6 +130,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //           CONSTRUCTOR
     // ================================
+    /// <summary>
+    /// Initializes a new instance of the MainWindow class.
+    /// </summary>
     public MainWindow()
     {
         InitializeComponent();
@@ -104,6 +143,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //      OBSERVER: CLOCK
     // ================================
+    /// <summary>
+    /// Responds to clock observer notifications from the business layer.
+    /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to marshal updates to the UI thread (STA), because observers
+    /// may execute on background threads. The <see cref="ObserverMutex"/> prevents overlapping
+    /// refreshes and triggers a restart if another notification arrives during an active refresh
+    /// (stage 7 observer pattern).
+    /// </remarks>
     private void ClockObserver()
     {
         if (_clockMutex.CheckAndSetLoadInProgressOrRestartRequired())
@@ -131,6 +179,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //      OBSERVER: CONFIG
     // ================================
+    /// <summary>
+    /// Responds to configuration observer notifications from the business layer.
+    /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to update dependency properties on the UI thread, and
+    /// <see cref="ObserverMutex"/> to skip overlapping runs while still replaying the latest
+    /// notification after completion (stage 7 observer pattern).
+    /// </remarks>
     private void ConfigObserver()
     {
         if (_configMutex.CheckAndSetLoadInProgressOrRestartRequired())
@@ -157,6 +213,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // ================================
     //   OBSERVER: ORDERS SUMMARY
     // ================================
+    /// <summary>
+    /// Responds to order summary observer notifications from the business layer.
+    /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to keep UI updates on the STA thread and
+    /// <see cref="ObserverMutex"/> to prevent concurrent refreshes. If a notification arrives
+    /// mid-refresh, the mutex requests a restart to ensure the latest summary is displayed.
+    /// </remarks>
     private void OrderSummaryObserver()
     {
         if (_orderSummaryMutex.CheckAndSetLoadInProgressOrRestartRequired())
@@ -436,6 +500,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     // =======================================================
     //          SIMULATOR CONTROL
     // =======================================================
+    /// <summary>
+    /// Stores the simulator running value.
+    /// </summary>
     private bool _simulatorRunning = false;
 
     private void SimulatorToggle_Click(object sender, RoutedEventArgs e)

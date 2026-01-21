@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Represents a customer order with its delivery and scheduling information.
+/// Represents the order component in this layer.
 /// </summary>
 public class Order
 {
@@ -26,6 +29,9 @@ public class Order
     /// Delivery address provided by the customer.
     /// </summary>
     // Default to empty to satisfy nullable analysis for DTOs.
+    /// <summary>
+    /// Gets or sets the customer address value.
+    /// </summary>
     public string CustomerAddress { get; set; } = string.Empty;
 
     /// <summary>

@@ -1,7 +1,10 @@
+/// <summary>
+/// Provides cross-cutting helper utilities for synchronization and tooling.
+/// </summary>
 namespace Helpers;
 
 /// <summary>
-/// A helper class that synchronizes observer load operations in WPF Stage 7.
+/// No.
 /// It ensures that only one load runs at a time,
 /// and tracks whether a restart is required if another request arrives during the load.
 /// 
@@ -35,7 +38,7 @@ public class ObserverMutex
     private bool _isRestartRequested = false;
 
     /// <summary>
-    /// Checks whether a load is already in progress.
+    /// Checks the and set load in progress or restart required.
     /// If not in progress: marks load as started and returns false (proceed with load).
     /// If in progress: marks restart as requested and returns true (skip; will restart later).
     /// 
@@ -64,7 +67,7 @@ public class ObserverMutex
     }
 
     /// <summary>
-    /// Marks the current load as finished and checks whether a restart was requested.
+    /// Unsets the load in progress and check restart requested.
     /// 
     /// This method should be called inside the async Dispatcher block, after refresh logic completes.
     /// It includes a built-in 100ms delay to throttle rapid consecutive requests.

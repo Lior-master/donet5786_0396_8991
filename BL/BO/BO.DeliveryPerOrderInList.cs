@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Lightweight view model representing a delivery entry associated with an order,
+/// Represents the delivery per order in list component in this layer.
 /// used for listing deliveries per order.
 /// </summary>
 public class DeliveryPerOrderInList
@@ -22,6 +25,9 @@ public class DeliveryPerOrderInList
     /// Display name of the courier assigned to the delivery.
     /// </summary>
     // Default to empty to prevent nulls in delivery history lists.
+    /// <summary>
+    /// Gets or sets the courier name value.
+    /// </summary>
     public string CourierName { get; init; } = string.Empty;
 
     /// <summary>

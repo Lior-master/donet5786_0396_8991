@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Lightweight view model for displaying couriers in lists.
+/// Represents the courier in list component in this layer.
 /// </summary>
 public class CourierInList
 {
@@ -16,6 +19,9 @@ public class CourierInList
     /// Display name of the courier.
     /// </summary>
     // Default to empty to avoid nulls in list projections.
+    /// <summary>
+    /// Gets or sets the name value.
+    /// </summary>
     public string Name { get; init; } = string.Empty;
 
     /// <summary>

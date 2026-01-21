@@ -1,6 +1,9 @@
 ﻿namespace DalApi;
 using System.Xml.Linq;
  
+/// <summary>
+/// Represents the dal config component in this layer.
+/// </summary>
 static class DalConfig
 {
     /// <summary>
@@ -13,6 +16,9 @@ static class DalConfig
         string Class   // DAL implementation class name
     );
 
+    /// <summary>
+    /// Stores the s dal name value.
+    /// </summary>
     internal static string s_dalName;
     internal static Dictionary<string, DalImplementation> s_dalPackages;
 
@@ -33,6 +39,9 @@ static class DalConfig
 }
  
 [Serializable]
+/// <summary>
+/// Represents the dal config exception component in this layer.
+/// </summary>
 public class DalConfigException : Exception
 {
 	public DalConfigException(string msg) : base(msg) { }

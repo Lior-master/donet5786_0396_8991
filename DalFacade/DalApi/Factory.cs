@@ -1,6 +1,12 @@
 ﻿namespace DalApi;
+/// <summary>
+/// Represents the factory component in this layer.
+/// </summary>
 public static class Factory
 {
+    /// <summary>
+    /// Stores the get value.
+    /// </summary>
     public static IDal Get
     {
         get

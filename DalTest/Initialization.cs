@@ -5,9 +5,15 @@ using DalApi;
 using DO;
 using System.Diagnostics.Metrics;
 
+/// <summary>
+/// Represents the initialization component in this layer.
+/// </summary>
 public static class Initialization
 {
    
+    /// <summary>
+    /// Stores the s dal value.
+    /// </summary>
     private static IDal? s_dal;
 
     private static readonly Random s_rand = new();
@@ -15,15 +21,45 @@ public static class Initialization
     private const int MAX_ID = 400000000;
 
 
+    /// <summary>
+    /// Represents the adresses component in this layer.
+    /// </summary>
     public class Adresses
     {
+        /// <summary>
+        /// Gets or sets the street value.
+        /// </summary>
         public string Street { get; set; }
+        /// <summary>
+        /// Gets or sets the latitude value.
+        /// </summary>
         public double Latitude { get; set; }
+        /// <summary>
+        /// Gets or sets the longitude value.
+        /// </summary>
         public double Longitude { get; set; }
+        /// <summary>
+        /// Gets or sets the distance from company value.
+        /// </summary>
         public double DistanceFromCompany { get; set; }
+        /// <summary>
+        /// Gets or sets the distance walking from company value.
+        /// </summary>
         public double DistanceWalkingFromCompany { get; set; }
+        /// <summary>
+        /// Gets or sets the distance car from company value.
+        /// </summary>
         public double DistanceCarFromCompany { get; set; } 
 
+        /// <summary>
+        /// Initializes a new instance of the Adresses class.
+        /// </summary>
+        /// <param name="street">The street value.</param>
+        /// <param name="latitude">The latitude value.</param>
+        /// <param name="longitude">The longitude value.</param>
+        /// <param name="distanceFromCompany">The distance from company value.</param>
+        /// <param name="distanceWalkingFromCompany">The distance walking from company value.</param>
+        /// <param name="distanceCarFromCompany">The distance car from company value.</param>
         public Adresses(string street, double latitude, double longitude, double distanceFromCompany, double distanceWalkingFromCompany, double distanceCarFromCompany)
         {
             Street = street;

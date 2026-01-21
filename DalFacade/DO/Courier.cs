@@ -1,7 +1,7 @@
 ﻿namespace DO;
 
 /// <summary>
-/// Represents a courier who performs deliveries.
+/// Distance.
 /// This is an immutable positional record: use the primary constructor or
 /// the generated `with` expression to create modified copies.
 /// </summary>
@@ -41,7 +41,7 @@ public record Courier
 )
 {
     /// <summary>
-    /// Initializes a new instance of <see cref="Courier"/> with default values.
+    /// Initializes a new instance of the Courier class.
     /// </summary>
     /// <remarks>
     /// Defaults:

@@ -4,6 +4,9 @@ using DO;
 using System.Xml.Linq;
 using System.Runtime.CompilerServices;
 
+/// <summary>
+/// Represents the delivery implementation component in this layer.
+/// </summary>
 internal class DeliveryImplementation : IDelivery
 {
     static Delivery getDelivery(XElement d)
@@ -22,6 +25,10 @@ internal class DeliveryImplementation : IDelivery
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Creates the item.
+    /// </summary>
+    /// <param name="item">The item value.</param>
     public void Create(Delivery item)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
@@ -32,6 +39,10 @@ internal class DeliveryImplementation : IDelivery
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Deletes the item.
+    /// </summary>
+    /// <param name="id">The id value.</param>
     public void Delete(int id)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
@@ -48,6 +59,9 @@ internal class DeliveryImplementation : IDelivery
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Deletes the all.
+    /// </summary>
     public void DeleteAll()
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
@@ -56,6 +70,11 @@ internal class DeliveryImplementation : IDelivery
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Read.
+    /// </summary>
+    /// <param name="id">The id value.</param>
+    /// <returns>The operation result.</returns>
     public Delivery? Read(int id)
     {
         XElement? deliveryElem = XmlTools.LoadListFromXMLElement(Config.s_deliveries_xml).Elements()
@@ -64,6 +83,12 @@ internal class DeliveryImplementation : IDelivery
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Read All.
+    /// </summary>
+    /// <param name="Func<Delivery">The func delivery value.</param>
+    /// <param name="null">The null value.</param>
+    /// <returns>The operation result.</returns>
     public IEnumerable<Delivery> ReadAll(Func<Delivery, bool>? filter = null)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);
@@ -75,6 +100,10 @@ internal class DeliveryImplementation : IDelivery
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Updates the item.
+    /// </summary>
+    /// <param name="item">The item value.</param>
     public void Update(Delivery item)
     {
         List<Delivery> deliveries = XmlTools.LoadListFromXMLSerializer<Delivery>(Config.s_deliveries_xml);

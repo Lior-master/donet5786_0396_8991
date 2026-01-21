@@ -3,8 +3,14 @@ using DalApi;
 using DO;
 using System.Xml.Linq;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace Dal;
 
+/// <summary>
+/// Represents the courier implementation component in this layer.
+/// </summary>
 internal class CourierImplementation : ICourier
 {
     static Courier getCourier(XElement c)
@@ -26,6 +32,10 @@ internal class CourierImplementation : ICourier
     }
     
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Creates the item.
+    /// </summary>
+    /// <param name="item">The item value.</param>
     public void Create(Courier item)
     {
         // Load existing couriers, add the new one and save.
@@ -35,6 +45,10 @@ internal class CourierImplementation : ICourier
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Deletes the item.
+    /// </summary>
+    /// <param name="id">The id value.</param>
     public void Delete(int id)
     {
         List<Courier> Couriers = XmlTools.LoadListFromXMLSerializer<Courier>(Config.s_couriers_xml);
@@ -51,12 +65,20 @@ internal class CourierImplementation : ICourier
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Deletes the all.
+    /// </summary>
     public void DeleteAll()
     {
         XmlTools.SaveListToXMLSerializer(new List<Courier>(), Config.s_couriers_xml);
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Read.
+    /// </summary>
+    /// <param name="id">The id value.</param>
+    /// <returns>The operation result.</returns>
     public Courier? Read(int id)
     {
         XElement? courierElem = XmlTools.LoadListFromXMLElement(Config.s_couriers_xml).Elements()
@@ -65,6 +87,12 @@ internal class CourierImplementation : ICourier
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Read All.
+    /// </summary>
+    /// <param name="Func<Courier">The func courier value.</param>
+    /// <param name="null">The null value.</param>
+    /// <returns>The operation result.</returns>
     public IEnumerable<Courier> ReadAll(Func<Courier, bool>? filter = null)
     {
         List<Courier> couriers = XmlTools.LoadListFromXMLSerializer<Courier>(Config.s_couriers_xml);
@@ -78,6 +106,10 @@ internal class CourierImplementation : ICourier
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Updates the item.
+    /// </summary>
+    /// <param name="item">The item value.</param>
     public void Update(Courier item)
     {
         List<Courier> Couriers = XmlTools.LoadListFromXMLSerializer<Courier>(Config.s_couriers_xml);

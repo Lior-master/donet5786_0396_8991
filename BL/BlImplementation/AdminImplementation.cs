@@ -6,7 +6,7 @@ using Helpers;
 using System.Threading.Tasks;
 
 /// <summary>
-/// Implementation of the <see cref="IAdmin"/> interface that provides administrative operations
+/// Represents the admin implementation component in this layer.
 /// for managing the database, system clock, and configuration settings.
 /// </summary>
 /// <remarks>
@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 internal class AdminImplementation : IAdmin
 {
     /// <summary>
-    /// Resets the database to its initial state, removing all data.
+    /// Asynchronously resets the database.
     /// </summary>
     public Task ResetDBAsync()
     {
@@ -25,7 +25,7 @@ internal class AdminImplementation : IAdmin
     }
 
     /// <summary>
-    /// Initializes the database with default configuration and sample data.
+    /// Asynchronously initializes the database.
     /// </summary>
     public Task InitializeDBAsync()
     {
@@ -34,14 +34,14 @@ internal class AdminImplementation : IAdmin
     }
 
     /// <summary>
-    /// Retrieves the current system clock value (which may be simulated time).
+    /// Gets the clock value.
     /// </summary>
     /// <returns>The current date and time from the system clock.</returns>
     public DateTime GetClock()
         => AdminManager.Now;
 
     /// <summary>
-    /// Advances the system clock by the specified time unit amount.
+    /// Advances the clock.
     /// </summary>
     /// <param name="unit">The time unit by which to advance the clock (Second, Minute, Hour, Day, Month, or Year).</param>
     /// <remarks>
@@ -69,14 +69,14 @@ internal class AdminImplementation : IAdmin
     }
 
     /// <summary>
-    /// Retrieves the current system configuration settings.
+    /// Gets the config value.
     /// </summary>
     /// <returns>A <see cref="Config"/> object containing all current configuration values.</returns>
     public Config GetConfig()
         => AdminManager.GetConfig();
 
     /// <summary>
-    /// Updates the system configuration settings and notifies all registered observers.
+    /// Asynchronously sets the config value.
     /// </summary>
     /// <param name="configuration">The new configuration settings to apply.</param>
     public Task SetConfigAsync(Config configuration)
@@ -86,7 +86,7 @@ internal class AdminImplementation : IAdmin
     }
 
     /// <summary>
-    /// Registers an observer to be notified whenever the system clock is updated.
+    /// Adds the clock observer.
     /// </summary>
     /// <param name="clockObserver">An action to invoke when the clock is advanced.</param>
     /// <remarks>
@@ -96,7 +96,7 @@ internal class AdminImplementation : IAdmin
         => AdminManager.ClockUpdatedObservers += clockObserver;
 
     /// <summary>
-    /// Removes a previously registered clock observer.
+    /// Removes the clock observer.
     /// </summary>
     /// <param name="clockObserver">The observer action to remove.</param>
     /// <remarks>
@@ -106,7 +106,7 @@ internal class AdminImplementation : IAdmin
         => AdminManager.ClockUpdatedObservers -= clockObserver;
 
     /// <summary>
-    /// Registers an observer to be notified whenever the system configuration is updated.
+    /// Adds the config observer.
     /// </summary>
     /// <param name="configObserver">An action to invoke when the configuration changes.</param>
     /// <remarks>
@@ -116,7 +116,7 @@ internal class AdminImplementation : IAdmin
         => AdminManager.ConfigUpdatedObservers += configObserver;
 
     /// <summary>
-    /// Removes a previously registered configuration observer.
+    /// Removes the config observer.
     /// </summary>
     /// <param name="configObserver">The observer action to remove.</param>
     /// <remarks>
@@ -129,7 +129,7 @@ internal class AdminImplementation : IAdmin
    
 
     /// <summary>
-    /// Starts the simulator with the specified interval (in minutes per second).
+    /// Starts the simulator.
     /// </summary>
     /// <param name="interval">The interval in minutes by which to advance the clock per second.</param>
     /// <remarks>
@@ -142,7 +142,7 @@ internal class AdminImplementation : IAdmin
     }
 
     /// <summary>
-    /// Stops the running simulator.
+    /// Stops the simulator.
     /// </summary>
     /// <remarks>
     /// Has no effect if the simulator is already stopped.

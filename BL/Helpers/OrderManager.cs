@@ -6,10 +6,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+/// <summary>
+/// Provides cross-cutting helper utilities for synchronization and tooling.
+/// </summary>
 namespace Helpers;
 
 /// <summary>
-/// Order business logic (BL).
+/// Notifications.
 /// Stage 7 focus:
 /// - Protect every DAL access with lock(AdminManager.BlMutex)
 /// - Keep locks short; never hold a lock across await
@@ -18,6 +21,9 @@ namespace Helpers;
 /// </summary>
 internal static class OrderManager
 {
+    /// <summary>
+    /// Stores the s dal value.
+    /// </summary>
     private static readonly IDal s_dal = Factory.Get;
 
     internal static ObserverManager Observers = new();
@@ -32,7 +38,7 @@ internal static class OrderManager
     private static readonly Random s_rand = new();
 
     /// <summary>
-    /// Periodically closes expired deliveries (no changes to DO.Order by design).
+    /// Periodic Orders Updates.
     /// Stage 7: snapshot DAL under lock; perform updates under lock; notify outside lock.
     /// </summary>
     internal static void PeriodicOrdersUpdates(DateTime oldClock, DateTime newClock)
@@ -137,7 +143,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Returns a flattened (OrderStatus x ScheduleStatus) count array.
+    /// Asynchronously gets the order summary value.
     /// Uses orderInListsAsync which already snapshots DAL under lock.
     /// </summary>
     internal static async Task<IEnumerable<int>> GetOrderSummaryAsync(int requesterId)
@@ -205,7 +211,7 @@ internal static class OrderManager
     // ---------------------------
 
     /// <summary>
-    /// Builds one BO.OrderInList from DO order + snapshot deliveries.
+    /// Asynchronously build Order In List.
     /// No DAL access here; safe for parallel/async.
     /// </summary>
     private static async Task<BO.OrderInList> BuildOrderInListAsync(
@@ -306,7 +312,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Returns orders list (filter/sort) based on DAL snapshots.
+    /// Asynchronously order In Lists.
     /// Stage 7: snapshot orders+deliveries under lock, then compute outside lock.
     /// </summary>
     internal static async Task<IEnumerable<BO.OrderInList>> orderInListsAsync(int requesterId, Enum? filter, object? Object, Enum? sorter)
@@ -401,7 +407,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Double-filter variant (filter1 + filter2), computed on snapshots.
+    /// Asynchronously order In Lists Double Filter.
     /// </summary>
     internal static async Task<IEnumerable<BO.OrderInList>> orderInListsDoubleFilterAsync(int requesterId, Enum? filter1, Enum? filter2)
     {
@@ -461,7 +467,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Returns full order details.
+    /// Asynchronously gets the order details value.
     /// Stage 7: all DAL reads are locked; async work (geocode/distance/status) is outside locks.
     /// </summary>
     internal static async Task<BO.Order> GetOrderDetailsAsync(int requesterId, int orderId)
@@ -605,7 +611,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Updates DO.Order fields. Geocoding is done outside locks.
+    /// Asynchronously updates the order details.
     /// Stage 7: the final DAL update is locked; notifications are outside locks.
     /// </summary>
     internal static async Task UpdateOrderDetailsAsync(int requesterId, BO.Order order)
@@ -713,7 +719,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Cancels an order by closing/adding a delivery with Canceled status.
+    /// Cancel Order.
     /// Stage 7: make status decision + DAL writes atomic (single lock), then notify outside lock.
     /// </summary>
     internal static void CancelOrder(int requesterId, int orderId)
@@ -804,7 +810,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Removes an order and all its deliveries.
+    /// Removes the order.
     /// Stage 7: cascade delete must be atomic.
     /// </summary>
     internal static void RemoveOrder(int requesterId, int orderId)
@@ -865,7 +871,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Adds a new order (geocode outside locks).
+    /// Asynchronously adds the order.
     /// Stage 7: DAL create is locked; notifications are outside lock.
     /// </summary>
     internal static async Task AddOrderAsync(int requesterId, BO.Order order)
@@ -960,7 +966,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Closes a delivery (finish order) for a courier.
+    /// Asynchronously finish Order.
     /// Stage 7: DAL update is locked; async distance work is outside locks.
     /// </summary>
     internal static async Task FinishOrderAsync(int requesterId, int courierId, int deliveryId, BO.DeliveredStatus deliveredStatus)
@@ -1062,7 +1068,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Assigns an order by creating a new open delivery.
+    /// Asynchronously assign Order To Courier.
     /// Stage 7: decision (availability) + create must be atomic.
     /// Any async distance precompute is best-effort and done outside locks.
     /// </summary>
@@ -1179,7 +1185,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Builds a live OrderInProgress snapshot for a courier/order.
+    /// Asynchronously gets the order in progress snapshot value.
     /// Stage 7: DAL reads are locked; async ETA work is outside locks.
     /// </summary>
     internal static async Task<BO.OrderInProgress> GetOrderInProgressSnapshotAsync(int requesterId, int courierId, int orderId)
@@ -1289,7 +1295,7 @@ internal static class OrderManager
     }
 
     /// <summary>
-    /// Simulation: create random orders and auto-assign to available couriers.
+    /// Asynchronously simulate Order Activity.
     /// Stage 7: AsyncMutex prevents overlap; DAL snapshots are locked; notifications outside locks.
     /// </summary>
     internal static async Task SimulateOrderActivityAsync() // stage 7

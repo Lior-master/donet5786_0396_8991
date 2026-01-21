@@ -1,7 +1,10 @@
+/// <summary>
+/// Provides cross-cutting helper utilities for synchronization and tooling.
+/// </summary>
 namespace Helpers;
 
 /// <summary>
-/// This class is a helper class allowing to manage observers for different logical entities
+/// Logic.
 /// in the Business Logic (BL) layer.
 /// It offers infrastructure to support observers as follows:
 /// <list type="bullet">
@@ -18,7 +21,7 @@ class ObserverManager //stage 5
     /// </summary>
     private event Action? _listObservers;
     /// <summary>
-    /// Hash table (Dictionary) of individual entity delegates.<br/>
+    /// Performs the operation.
     /// The index (key) is the ID of an entity.<br/>
     /// If there are no observers for a specific entity instance - there will not be entry in the hash
     /// table for it, thus providing memory effective storage for these observers
@@ -26,18 +29,18 @@ class ObserverManager //stage 5
     private readonly Dictionary<int, Action?> _specificObservers = new();
 
     /// <summary>
-    /// Add an observer on change in list of entities that may effect the list presentation
+    /// Adds the list observer.
     /// </summary>
     /// <param name="observer">Observer method (usually from Presentation Layer) to be added</param>
     internal void AddListObserver(Action observer) => _listObservers += observer;
     /// <summary>
-    /// Remove an observer on change in list of entities that may effect the list presentation
+    /// Removes the list observer.
     /// </summary>
     /// <param name="observer">Observer method (usually from Presentation Layer) to be removed</param>
     internal void RemoveListObserver(Action observer) => _listObservers -= observer;
 
     /// <summary>
-    /// Add an observer on change in an instance of entity that may effect the entity instance presentation
+    /// Adds the observer.
     /// </summary>
     /// <param name="id">the ID value for the entity instance to be observed</param>
     /// <param name="observer">Observer method (usually from Presentation Layer) to be added</param>
@@ -50,7 +53,7 @@ class ObserverManager //stage 5
     }
 
     /// <summary>
-    /// Remove an observer on change in an instance of entity that may effect the entity instance presentation
+    /// Removes the observer.
     /// </summary>
     /// <param name="id">the ID value for the observed entity instance</param>
     /// <param name="observer">Observer method (usually from Presentation Layer) to be removed</param>
@@ -67,13 +70,13 @@ class ObserverManager //stage 5
     }
 
     /// <summary>
-    /// Notify all the observers that there is a change for one or more entities in the list
+    /// Notify List Updated.
     /// that may affect the whole list presentation
     /// </summary>
     internal void NotifyListUpdated() => _listObservers?.Invoke();
 
     /// <summary>
-    /// Notify observers of an e specific entity  that there was some change in the entity
+    /// Notify Item Updated.
     /// </summary>
     /// <param name="id">a specific entity ID</param>
     internal void NotifyItemUpdated(int id)

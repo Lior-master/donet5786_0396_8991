@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Lightweight view model representing an open order shown in lists and selection views.
+/// Represents the open order in list component in this layer.
 /// </summary>
 public class OpenOrderInList
 {
@@ -31,6 +34,9 @@ public class OpenOrderInList
     /// Customer delivery address.
     /// </summary>
     // Default to empty to keep nullable analysis clean for list items.
+    /// <summary>
+    /// Gets or sets the customer address value.
+    /// </summary>
     public string CustomerAddress { get; init; } = string.Empty;
 
     /// <summary>

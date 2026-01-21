@@ -3,8 +3,14 @@ using DalApi;
 using DO;
 using System.Xml.Linq;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace Dal;
 
+/// <summary>
+/// Represents the order implementation component in this layer.
+/// </summary>
 internal class OrderImplementation : IOrder
 {
     static Order getOrder(XElement o)
@@ -27,6 +33,10 @@ internal class OrderImplementation : IOrder
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Creates the item.
+    /// </summary>
+    /// <param name="item">The item value.</param>
     public void Create(Order item)
     {
         List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
@@ -36,6 +46,10 @@ internal class OrderImplementation : IOrder
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Deletes the item.
+    /// </summary>
+    /// <param name="id">The id value.</param>
     public void Delete(int id)
     {
         List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
@@ -52,6 +66,9 @@ internal class OrderImplementation : IOrder
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Deletes the all.
+    /// </summary>
     public void DeleteAll()
     {
         List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
@@ -60,6 +77,11 @@ internal class OrderImplementation : IOrder
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Read.
+    /// </summary>
+    /// <param name="id">The id value.</param>
+    /// <returns>The operation result.</returns>
     public Order? Read(int id)
     {
         XElement? orderElem = XmlTools.LoadListFromXMLElement(Config.s_orders_xml).Elements()
@@ -68,6 +90,12 @@ internal class OrderImplementation : IOrder
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Read All.
+    /// </summary>
+    /// <param name="Func<Order">The func order value.</param>
+    /// <param name="null">The null value.</param>
+    /// <returns>The operation result.</returns>
     public IEnumerable<Order> ReadAll(Func<Order, bool>? filter = null)
     {
         List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);
@@ -79,6 +107,10 @@ internal class OrderImplementation : IOrder
     }
 
     [MethodImpl(MethodImplOptions.Synchronized)] //stage 7
+    /// <summary>
+    /// Updates the item.
+    /// </summary>
+    /// <param name="item">The item value.</param>
     public void Update(Order item)
     {
         List<Order> orders = XmlTools.LoadListFromXMLSerializer<Order>(Config.s_orders_xml);

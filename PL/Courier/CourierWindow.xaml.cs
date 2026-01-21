@@ -9,10 +9,13 @@ using BlApi;
 using BO;
 using Helpers;
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL.Courier;
 
 /// <summary>
-/// Interaction logic for CourierWindow.xaml - handles courier creation and editing
+/// Mode.
 /// Supports both create mode (new courier) and update mode (existing courier)
 /// Implements INotifyPropertyChanged for two-way data binding with XAML
 /// </summary>
@@ -21,7 +24,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     #region Private Fields
 
     /// <summary>
-    /// Business logic layer interface for data operations
+    /// Factory Get.
     /// </summary>
     private static readonly IBl s_bl = Factory.Get();
 
@@ -46,7 +49,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     private readonly Action? _courierObserver;
 
     /// <summary>
-    /// Stage 7: prevents concurrent re-entrant refreshes from background threads
+    /// Performs the operation.
     /// </summary>
     private readonly ObserverMutex _courierItemMutex = new(); // stage 7
 
@@ -54,7 +57,13 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
 
     #region Properties for Data Binding
 
+    /// <summary>
+    /// Stores the have assigned order value.
+    /// </summary>
     private bool _haveAssignedOrder;
+    /// <summary>
+    /// Gets or sets the have assigned order value.
+    /// </summary>
     public bool HaveAssignedOrder
     {
         get => _haveAssignedOrder;
@@ -66,9 +75,18 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Stores the have assigned order inverted value.
+    /// </summary>
     public bool HaveAssignedOrderInverted => !_haveAssignedOrder;
 
+    /// <summary>
+    /// Stores the is read only value.
+    /// </summary>
     private bool _isReadOnly;
+    /// <summary>
+    /// Gets or sets the is read only value.
+    /// </summary>
     public bool IsReadOnly
     {
         get => _isReadOnly;
@@ -80,9 +98,18 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Stores the is read only inverted value.
+    /// </summary>
     public bool IsReadOnlyInverted => !IsReadOnly;
 
+    /// <summary>
+    /// Stores the courier current value.
+    /// </summary>
     private BO.Courier? _courierCurrent;
+    /// <summary>
+    /// Gets or sets the courier current value.
+    /// </summary>
     public BO.Courier CourierCurrent
     {
         get => _courierCurrent!;
@@ -95,6 +122,9 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Gets or sets the current order display value.
+    /// </summary>
     public string CurrentOrderDisplay
     {
         get
@@ -113,8 +143,14 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Stores the save button text value.
+    /// </summary>
     public string SaveButtonText => _isCreateMode ? "➕ Add" : "💾 Save";
 
+    /// <summary>
+    /// Gets or sets the can remove courier value.
+    /// </summary>
     public bool CanRemoveCourier
     {
         get
@@ -142,7 +178,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     #region Constructors
 
     /// <summary>
-    /// Create mode constructor (new courier).
+    /// Initializes a new instance of the CourierWindow class.
     /// Initializes window for adding a new courier with default values
     /// </summary>
     public CourierWindow()
@@ -171,7 +207,7 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Update mode constructor (existing courier).
+    /// Initializes a new instance of the CourierWindow class.
     /// Loads existing courier data and sets up real-time updates via observer pattern
     /// </summary>
     public CourierWindow(int courierId)
@@ -240,9 +276,14 @@ public partial class CourierWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Refreshes courier data from business layer when notified of changes.
-    /// Stage 7-safe: observer can be invoked from background threads.
+    /// Refreshes the courier from the business layer.
     /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to marshal updates to the UI thread and
+    /// <see cref="ObserverMutex"/> to prevent overlapping refreshes. If a notification arrives
+    /// during an active refresh, the mutex requests a restart to ensure the UI reflects the
+    /// latest courier state (stage 7 observer pattern).
+    /// </remarks>
     private void RefreshCourierFromBl()
     {
         if (_courierItemMutex.CheckAndSetLoadInProgressOrRestartRequired())

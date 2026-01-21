@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Configuration settings exposed to the presentation layer.
+/// Represents the config component in this layer.
 /// </summary>
 public class Config
 {

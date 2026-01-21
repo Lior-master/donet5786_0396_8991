@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Lightweight view model for displaying orders in lists with scheduling and processing summary information.
+/// Represents the order in list component in this layer.
 /// </summary>
 public class OrderInList
 {

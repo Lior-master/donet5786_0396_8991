@@ -3,10 +3,13 @@ using System.Windows;
 using System.Windows.Input;
 using BlApi;
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL;
 
 /// <summary>
-/// LoginWindow - User authentication interface for the Delivery Management System.
+/// Feedback.
 /// 
 /// This window provides a secure login interface that validates user credentials
 /// (ID and password) and determines user role (Administrator/Director or Courier)
@@ -44,7 +47,7 @@ namespace PL;
 public partial class LoginWindow : Window
 {
     /// <summary>
-    /// Business Logic singleton instance for user authentication.
+    /// Factory Get.
     /// Obtained via Factory.Get() to ensure single instance throughout application lifecycle.
     /// 
     /// Primary use: Call BL.Courier.Login(id, password) to authenticate user
@@ -53,7 +56,7 @@ public partial class LoginWindow : Window
     private static readonly IBl s_bl = Factory.Get();
 
     /// <summary>
-    /// Tracks whether password is currently displayed as visible text or hidden.
+    /// Pb Password.
     /// 
     /// true  → tbPasswordVisible (TextBox) is visible, pbPassword (PasswordBox) is hidden
     /// false → pbPassword (PasswordBox) is visible, tbPasswordVisible (TextBox) is hidden
@@ -69,7 +72,7 @@ public partial class LoginWindow : Window
     public bool _directorLoggedIn = false;
 
     /// <summary>
-    /// Initializes a new instance of the LoginWindow.
+    /// Initializes a new instance of the LoginWindow class.
     /// 
     /// Calls InitializeComponent() to initialize XAML resources and event handlers.
     /// Sets initial focus to tbId (ID input field) so user can begin typing immediately.
@@ -81,7 +84,7 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
-    /// Handles Login button click and Enter key press events.
+    /// Btn Login Click.
     /// This is the main authentication entry point.
     /// 
     /// Execution Flow:
@@ -220,7 +223,7 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
-    /// Handles password visibility toggle button click.
+    /// Btn Toggle Password Click.
     /// Switches between hidden (PasswordBox) and visible (TextBox) password input modes.
     /// 
     /// Toggle Logic:
@@ -275,7 +278,7 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
-    /// Clears all password data and resets UI to default hidden password state.
+    /// Resets the password ui.
     /// This is a security-critical method called after every login attempt.
     /// 
     /// Cleanup Actions:
@@ -310,7 +313,7 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
-    /// Clears all login form fields and resets to initial state.
+    /// Resets the login form.
     /// </summary>
     private void ResetLoginForm()
     {
@@ -319,7 +322,7 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
-    /// Handles Enter key press in ID field to advance to password field.
+    /// Tb Id Key Down.
     /// </summary>
     private void TbId_KeyDown(object sender, KeyEventArgs e)
     {
@@ -328,7 +331,7 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
-    /// Handles Enter key press in the password input field (pbPassword or tbPasswordVisible).
+    /// Pb Password Key Down.
     /// Triggers login process same as clicking the Login button.
     /// 
     /// Keyboard Navigation Flow:
@@ -349,7 +352,7 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
-    /// Handles close button click to terminate the application.
+    /// Btn Close Click.
     /// </summary>
     private void BtnClose_Click(object sender, RoutedEventArgs e)
     {
