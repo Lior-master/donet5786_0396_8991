@@ -1,7 +1,7 @@
 ﻿namespace DO;
 
 /// <summary>
-/// Represents a customer order and its delivery-related metadata.
+/// Longitude.
 /// This immutable positional record contains the information required to process and route a delivery.
 /// Use the primary constructor to create instances or the generated `with` expression to create modified copies.
 /// </summary>
@@ -31,7 +31,7 @@ public record Order
 )
 {
     /// <summary>
-    /// Initializes a new instance of <see cref="Order"/> with default values.
+    /// Initializes a new instance of the Order class.
     /// </summary>
     /// <remarks>
     /// Defaults:

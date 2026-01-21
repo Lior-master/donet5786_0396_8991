@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 /// <summary>
-/// Implementation of the <see cref="IOrder"/> interface that provides business logic operations
+/// Changes.
 /// for managing orders, including CRUD operations, courier assignment, delivery tracking, and observer notifications.
 /// </summary>
 /// <remarks>
@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 internal class OrderImplementation : IOrder
 {
     /// <summary>
-    /// Registers an observer to be notified whenever the order list changes (orders added, removed, or modified).
+    /// Adds the observer.
     /// </summary>
     /// <param name="listObserver">An action to invoke when the order list is modified.</param>
     /// <remarks>
@@ -30,7 +30,7 @@ internal class OrderImplementation : IOrder
         OrderManager.Observers.AddListObserver(listObserver);
 
     /// <summary>
-    /// Registers an observer to be notified whenever a specific order is modified.
+    /// Adds the observer.
     /// </summary>
     /// <param name="id">The unique identifier of the order to observe.</param>
     /// <param name="observer">An action to invoke when the specified order is updated.</param>
@@ -42,7 +42,7 @@ internal class OrderImplementation : IOrder
         OrderManager.Observers.AddObserver(id, observer);
 
     /// <summary>
-    /// Unregisters an observer that was previously registered for order list changes.
+    /// Removes the observer.
     /// </summary>
     /// <param name="listObserver">The observer action to remove.</param>
     /// <remarks>
@@ -52,7 +52,7 @@ internal class OrderImplementation : IOrder
         OrderManager.Observers.RemoveListObserver(listObserver);
 
     /// <summary>
-    /// Unregisters an observer that was previously registered for a specific order.
+    /// Removes the observer.
     /// </summary>
     /// <param name="id">The unique identifier of the order being observed.</param>
     /// <param name="observer">The observer action to remove.</param>
@@ -63,7 +63,7 @@ internal class OrderImplementation : IOrder
         OrderManager.Observers.RemoveObserver(id, observer);
 
     /// <summary>
-    /// Creates and adds a new order to the system.
+    /// Asynchronously adds the order.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation (typically a customer or manager).</param>
     /// <param name="order">The <see cref="Order"/> object containing the order details to be added.</param>
@@ -78,7 +78,7 @@ internal class OrderImplementation : IOrder
     }
 
     /// <summary>
-    /// Assigns an open order to a specific courier for delivery.
+    /// Asynchronously assign Order To Courier.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation (typically a dispatcher or manager).</param>
     /// <param name="orderId">The unique identifier of the order to assign.</param>
@@ -97,7 +97,7 @@ internal class OrderImplementation : IOrder
         => OrderManager.GetOrderInProgressSnapshotAsync(requesterId, courierId, orderId);
 
     /// <summary>
-    /// Cancels an open order, preventing it from being processed or delivered.
+    /// Cancel Order.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation.</param>
     /// <param name="orderId">The unique identifier of the order to cancel.</param>
@@ -113,7 +113,7 @@ internal class OrderImplementation : IOrder
     }
 
     /// <summary>
-    /// Marks a delivery as complete when a courier has successfully delivered an order.
+    /// Asynchronously finish Order.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation (typically the courier or supervisor).</param>
     /// <param name="courierId">The unique identifier of the courier who completed the delivery.</param>
@@ -129,7 +129,7 @@ internal class OrderImplementation : IOrder
     }
 
     /// <summary>
-    /// Retrieves a filtered and sorted list of closed (completed) deliveries for a specific courier.
+    /// Gets the closed deliveries for courier value.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation.</param>
     /// <param name="courierId">The unique identifier of the courier whose deliveries to retrieve.</param>
@@ -147,7 +147,7 @@ internal class OrderImplementation : IOrder
         => throw new NotImplementedException("OrderManager.GetOpenOrdersForCourierAsync is not implemented.");
 
     /// <summary>
-    /// Retrieves detailed information about a specific order.
+    /// Asynchronously gets the order details value.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation.</param>
     /// <param name="orderId">The unique identifier of the order to retrieve.</param>
@@ -161,7 +161,7 @@ internal class OrderImplementation : IOrder
         => OrderManager.GetOrderDetailsAsync(requesterId, orderId);
 
     /// <summary>
-    /// Retrieves a summary of order IDs for a specific requester (typically counts or aggregate statistics).
+    /// Asynchronously gets the orders by summary value.
     /// </summary>
     /// <param name="requesterId">The ID of the user for whom to retrieve order summary information.</param>
     /// <returns>An enumerable collection of order IDs related to the requester (e.g., orders they created or are associated with).</returns>
@@ -173,7 +173,7 @@ internal class OrderImplementation : IOrder
         => OrderManager.GetOrderSummaryAsync(requesterId);
 
     /// <summary>
-    /// Retrieves a filtered, optionally grouped, and sorted list of orders for a specific requester.
+    /// Asynchronously order In Lists.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation.</param>
     /// <param name="filter">Optional filter criteria (e.g., by <see cref="OrderType"/>, status, etc.). Pass <c>null</c> to include all orders.</param>
@@ -191,7 +191,7 @@ internal class OrderImplementation : IOrder
         => OrderManager.orderInListsDoubleFilterAsync(requesterId, filter1, filter2);
 
     /// <summary>
-    /// Removes (deletes) an order from the system completely.
+    /// Removes the order.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation (typically a manager or director).</param>
     /// <param name="orderId">The unique identifier of the order to remove.</param>
@@ -206,7 +206,7 @@ internal class OrderImplementation : IOrder
     }
 
     /// <summary>
-    /// Updates the details of an existing order.
+    /// Asynchronously updates the order details.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation.</param>
     /// <param name="order">The <see cref="Order"/> object with updated information. Must include a valid order ID.</param>

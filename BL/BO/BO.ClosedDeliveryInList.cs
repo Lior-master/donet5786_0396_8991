@@ -1,9 +1,12 @@
 ﻿using Helpers;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace BO;
 
 /// <summary>
-/// Represents a summary entry for a completed delivery shown in lists.
+/// Represents the closed delivery in list component in this layer.
 /// </summary>
 public class ClosedDeliveryInList
 {
@@ -26,6 +29,9 @@ public class ClosedDeliveryInList
     /// Delivery address provided by the customer.
     /// </summary>
     // Default to empty to avoid null strings in history views.
+    /// <summary>
+    /// Gets or sets the customer adress value.
+    /// </summary>
     public string CustomerAdress { get; init; } = string.Empty;
 
     /// <summary>

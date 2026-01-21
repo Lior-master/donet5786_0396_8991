@@ -1,7 +1,7 @@
 ﻿namespace DO;
 
 /// <summary>
-/// Outcome of a delivery attempt as reported by the courier or delivery subsystem.
+/// Defines supported delivered status values.
 /// </summary>
 public enum DeliveredStatus
 {
@@ -22,7 +22,7 @@ public enum DeliveredStatus
 }
 
 /// <summary>
-/// Transport method used for delivery.
+/// Defines supported delivery transport values.
 /// </summary>
 public enum DeliveryTransport
 {
@@ -40,7 +40,7 @@ public enum DeliveryTransport
 }
 
 /// <summary>
-/// Type of order or delivery service.
+/// Defines supported order type values.
 /// </summary>
 public enum OrderType
 {
@@ -52,7 +52,7 @@ public enum OrderType
 }
 
 /// <summary>
-/// Priority level for order handling.
+/// Defines supported priority level values.
 /// </summary>
 public enum PriorityLevel
 {
@@ -70,7 +70,7 @@ public enum PriorityLevel
 }
 
 /// <summary>
-/// Fragility level of the package content.
+/// Defines supported fragility level values.
 /// </summary>
 public enum FragilityLevel
 {
@@ -89,7 +89,7 @@ public enum FragilityLevel
 
 
 /// <summary>
-/// say type of administrator
+/// Defines supported administrator values.
 /// </summary>
 public enum Administrator
 {

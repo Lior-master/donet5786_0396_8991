@@ -2,12 +2,21 @@
 using DalApi;
 using DO;
 
+/// <summary>
+/// Provides DAL test harness and initialization helpers.
+/// </summary>
 namespace DalTest;
 
+/// <summary>
+/// Represents the program component in this layer.
+/// </summary>
 internal class Program
 {
     static readonly IDal s_dal = Factory.Get;
 
+    /// <summary>
+    /// Defines supported menu values.
+    /// </summary>
     private enum Menu
     {
         Exit = 0,

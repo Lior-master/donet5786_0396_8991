@@ -11,10 +11,13 @@ using BO;
 using Helpers;
 using PL.Courier;
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL;
 
 /// <summary>
-/// Interaction logic for CourierPersonalWindow.xaml
+/// Represents the courier personal window component in this layer.
 /// This window displays a courier's personal dashboard when they log in
 /// Shows their profile information, current delivery status, and allows them to manage their orders
 /// Implements INotifyPropertyChanged for two-way data binding
@@ -24,22 +27,43 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     #region Private Fields
 
     private static readonly IBl s_bl = Factory.Get();
+    /// <summary>
+    /// Stores the courier id value.
+    /// </summary>
     private readonly int _courierId;
+    /// <summary>
+    /// Stores the boss id value.
+    /// </summary>
     private readonly int _bossId;
+    /// <summary>
+    /// Stores the courier observer value.
+    /// </summary>
     private readonly Action _courierObserver;
 
     // Stage 7: prevents concurrent re-entrant refreshes from observer callbacks
     private readonly ObserverMutex _courierItemMutex = new(); // stage 7
 
+    /// <summary>
+    /// Stores the observer registered value.
+    /// </summary>
     private bool _observerRegistered = false;
 
+    /// <summary>
+    /// Gets or sets the selected finish type value.
+    /// </summary>
     public BO.DeliveredStatus SelectedFinishType { get; set; } = BO.DeliveredStatus.Delivered;
 
     #endregion
 
     #region Properties for Data Binding
 
+    /// <summary>
+    /// Stores the is an order in progress value.
+    /// </summary>
     private Visibility _isAnOrderInProgress;
+    /// <summary>
+    /// Gets or sets the is an order in progress value.
+    /// </summary>
     public Visibility IsAnOrderInProgress
     {
         get => _isAnOrderInProgress;
@@ -51,12 +75,24 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Gets the is no order in progress value.
+    /// </summary>
     public Visibility IsNoOrderInProgress =>
         IsAnOrderInProgress == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
 
+    /// <summary>
+    /// Stores the courier id value.
+    /// </summary>
     public int CourierId => _courierId;
 
+    /// <summary>
+    /// Stores the courier value.
+    /// </summary>
     private BO.Courier? _courier;
+    /// <summary>
+    /// Gets or sets the courier value.
+    /// </summary>
     public BO.Courier? Courier
     {
         get => _courier;
@@ -69,7 +105,13 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Stores the order in progress value.
+    /// </summary>
     private OrderInProgress? _orderInProgress;
+    /// <summary>
+    /// Gets or sets the order in progress value.
+    /// </summary>
     public OrderInProgress? OrderInProgress
     {
         get => _orderInProgress;
@@ -86,7 +128,13 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Stores the status message value.
+    /// </summary>
     private string _statusMessage = "Ready";
+    /// <summary>
+    /// Gets or sets the status message value.
+    /// </summary>
     public string StatusMessage
     {
         get => _statusMessage;
@@ -101,8 +149,14 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
     #region Computed / Helper Properties
 
+    /// <summary>
+    /// Stores the can choose order value.
+    /// </summary>
     public bool CanChooseOrder => Courier != null && Courier.IsActive && OrderInProgress == null;
 
+    /// <summary>
+    /// Gets or sets the display distance text value.
+    /// </summary>
     public string DisplayDistanceText
     {
         get
@@ -131,6 +185,9 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Gets or sets the delivery status text value.
+    /// </summary>
     public string DeliveryStatusText
     {
         get
@@ -142,6 +199,9 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Gets the is delivery end type visible value.
+    /// </summary>
     public Visibility IsDeliveryEndTypeVisible =>
         OrderInProgress != null && OrderInProgress.ArrivalTime.HasValue
             ? Visibility.Visible
@@ -160,6 +220,10 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
 
     #region Constructors
 
+    /// <summary>
+    /// Initializes a new instance of the CourierPersonalWindow class.
+    /// </summary>
+    /// <param name="courierId">The courier id value.</param>
     public CourierPersonalWindow(int courierId)
     {
         InitializeComponent();
@@ -427,10 +491,14 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Called by the observer pattern when courier data changes.
-    /// Stage 7-safe: observer can be invoked from background threads.
-    /// Uses Dispatcher + ObserverMutex to prevent overlapping refreshes.
+    /// Refreshes the courier data from the business layer.
     /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to marshal updates to the UI thread and
+    /// <see cref="ObserverMutex"/> to prevent overlapping refreshes. If a notification arrives
+    /// during an active refresh, the mutex requests a restart to keep the UI current
+    /// (stage 7 observer pattern).
+    /// </remarks>
     private void RefreshCourierData()
     {
         if (_courierItemMutex.CheckAndSetLoadInProgressOrRestartRequired())
@@ -456,7 +524,7 @@ public partial class CourierPersonalWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Called by observer / child windows to refresh data on the courier screen asynchronously.
+    /// Asynchronously refreshes the data from child.
     /// Returns a Task that completes when the refresh is done.
     /// </summary>
     public Task RefreshDataFromChildAsync()

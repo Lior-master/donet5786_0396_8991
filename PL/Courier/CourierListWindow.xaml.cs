@@ -9,10 +9,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL.Courier;
 
 /// <summary>
-/// Interaction logic for CourierListWindow.xaml
+/// Represents the courier list window component in this layer.
 /// </summary>
 public partial class CourierListWindow : Window
 {
@@ -21,19 +24,31 @@ public partial class CourierListWindow : Window
     // Stage 7: Mutex for courier list observer
     private readonly ObserverMutex _courierListMutex = new(); // stage 7
 
+    /// <summary>
+    /// Stores the observer registered value.
+    /// </summary>
     private bool _observerRegistered = false;
 
+    /// <summary>
+    /// Initializes a new instance of the CourierListWindow class.
+    /// </summary>
     public CourierListWindow()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Gets or sets the courier list value.
+    /// </summary>
     public IEnumerable<BO.CourierInList> CourierList
     {
         get => (IEnumerable<BO.CourierInList>)GetValue(CourierListProperty);
         set => SetValue(CourierListProperty, value);
     }
 
+    /// <summary>
+    /// Stores the courier list property value.
+    /// </summary>
     public static readonly DependencyProperty CourierListProperty =
         DependencyProperty.Register(
             nameof(CourierList),
@@ -41,12 +56,24 @@ public partial class CourierListWindow : Window
             typeof(CourierListWindow),
             new PropertyMetadata(null));
 
+    /// <summary>
+    /// Gets or sets the filter type courier value.
+    /// </summary>
     public PL.FilterTypeCourier FilterTypeCourier { get; set; } = PL.FilterTypeCourier.All;
 
+    /// <summary>
+    /// Gets or sets the courier delivery value.
+    /// </summary>
     public BO.DeliveryTransport CourierDelivery { get; set; } = DeliveryTransport.All;
 
+    /// <summary>
+    /// Gets or sets the administrator filter value.
+    /// </summary>
     public BO.Administrator AdministratorFilter { get; set; } = Administrator.All;
 
+    /// <summary>
+    /// Gets or sets the is filter active status value.
+    /// </summary>
     public bool IsFilterActiveStatus { get; set; }
 
     private void queryCourierList()
@@ -85,6 +112,14 @@ public partial class CourierListWindow : Window
         }
     }
 
+    /// <summary>
+    /// Handles courier list observer notifications from the business layer.
+    /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to marshal updates to the UI thread and
+    /// <see cref="ObserverMutex"/> to avoid overlapping refresh runs. If a notification arrives
+    /// during an active refresh, the mutex requests a restart to keep the list current (stage 7).
+    /// </remarks>
     private void courierListObserver()
     {
         // Stage 7 (for multithreading)

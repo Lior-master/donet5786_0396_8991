@@ -7,10 +7,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+/// <summary>
+/// Provides cross-cutting helper utilities for synchronization and tooling.
+/// </summary>
 namespace Helpers;
 
 /// <summary>
-/// Manages courier-related operations in the Business Logic layer.
+/// Represents the courier manager component in this layer.
 /// Handles courier creation, updates, deletion, login, and retrieval with authorization checks.
 /// Provides observer notifications for UI synchronization when courier data changes.
 /// </summary>
@@ -22,29 +25,29 @@ internal static class CourierManager
     private static readonly IDal s_dal = Factory.Get;
 
     /// <summary>
-    /// Observer manager for notifying subscribers of courier list and item changes.
+    /// Performs the operation.
     /// Enables real-time UI updates when courier data is modified.
     /// </summary>
     internal static ObserverManager Observers = new();
 
     /// <summary>
-    /// Cache for delivery data to prevent concurrent file access issues.
+    /// Concurrent Dictionary String.
     /// Thread-safe collection that stores deliveries with timestamp for cache invalidation.
     /// </summary>
     private static readonly ConcurrentDictionary<string, (DateTime timestamp, IEnumerable<Delivery> data)> _deliveryCache = new();
 
     /// <summary>
-    /// Cache expiration time in minutes. Deliveries are cached for 5 minutes to balance performance and data freshness.
+    /// Time Span From Minutes.
     /// </summary>
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
 
     /// <summary>
-    /// Non-blocking mutex for periodic updates to prevent overlapping runs (Stage 7).
+    /// Performs the operation.
     /// </summary>
     private static readonly AsyncMutex s_periodicMutex = new();
 
     /// <summary>
-    /// Thread-safe method to get delivery data, using cache when available and valid.
+    /// Gets the deliveries value.
     /// Falls back to database access when cache is expired or missing.
     /// </summary>
     private static IEnumerable<Delivery> GetDeliveries()
@@ -87,13 +90,13 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Invalidates the delivery cache to ensure fresh data is loaded on next access.
+    /// Invalidate Delivery Cache.
     /// Call this method whenever delivery data is modified.
     /// </summary>
     internal static void InvalidateDeliveryCache() => _deliveryCache.Clear();
 
     /// <summary>
-    /// Adds a new courier to the system after validating the requester's existence.
+    /// Add Courier.
     /// Automatically generates a unique courier ID if not provided, and sets a valid start date.
     /// Notifies observers of the list update upon successful creation.
     /// </summary>
@@ -163,7 +166,7 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Periodically updates courier activity status by marking inactive couriers as inactive if they exceed the inactivity threshold.
+    /// Periodic Couriers Updates.
     /// Stage 7: Uses non-blocking mutex to prevent overlapping runs. All DAL operations are wrapped with lock(AdminManager.BlMutex),
     /// while observer notifications are performed outside locks.
     /// </summary>
@@ -246,7 +249,7 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Authenticates a courier by verifying their ID and password.
+    /// Login.
     /// Returns the courier's administrator role upon successful authentication.
     /// </summary>
     internal static BO.Administrator Login(int Id, string password)
@@ -285,7 +288,7 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Retrieves a filtered list of couriers with performance metrics (on-time vs. late deliveries).
+    /// Gets the couriers list value.
     /// </summary>
     internal static IEnumerable<CourierInList> GetCouriersList(int requesterId, bool? isActive, Enum? Filter)
     {
@@ -379,7 +382,7 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Retrieves detailed information about a specific courier, including their delivery performance statistics
+    /// Asynchronously gets the courier details value.
     /// and current order assignment if any.
     /// </summary>
     internal static async Task<BO.Courier> GetCourierDetailsAsync(int requesterId, int courierId)
@@ -533,7 +536,7 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Updates an existing courier's information with new values.
+    /// Updates the courier.
     /// </summary>
     internal static void UpdateCourier(int requesterId, BO.Courier updatedCourier)
     {
@@ -588,7 +591,7 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Promotes a courier to the Director administrator role.
+    /// Promote Courier To Director.
     /// </summary>
     internal static void PromoteCourierToDirector(int requesterId, int courierId)
     {
@@ -633,7 +636,7 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Removes a courier from the system with validation checks.
+    /// Remove Courier.
     /// Stage 7: the decision (no deliveries) + delete must be atomic, so they are performed in one lock.
     /// </summary>
     internal static void removeCourier(int requesterId, int courierId)
@@ -683,7 +686,7 @@ internal static class CourierManager
     }
 
     /// <summary>
-    /// Simulates courier activity (Stage 7).
+    /// Asynchronously simulate Courier Activity.
     /// Called asynchronously from the simulator thread once per second.
     /// All DAL access is protected with lock blocks. Observer notifications are outside locks.
     /// </summary>

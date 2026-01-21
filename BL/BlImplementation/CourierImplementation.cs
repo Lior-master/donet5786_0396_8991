@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 /// <summary>
-/// Implementation of the <see cref="ICourier"/> interface that provides business logic operations
+/// Represents the courier implementation component in this layer.
 /// for managing couriers, including CRUD operations, authentication, and observer notifications.
 /// </summary>
 /// <remarks>
@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 internal class CourierImplementation : ICourier
 {
     /// <summary>
-    /// Registers an observer to be notified whenever the courier list changes.
+    /// Adds the observer.
     /// </summary>
     /// <param name="listObserver">An action to invoke when the courier list is modified.</param>
     /// <remarks>
@@ -29,7 +29,7 @@ internal class CourierImplementation : ICourier
         CourierManager.Observers.AddListObserver(listObserver); //stage 5
 
     /// <summary>
-    /// Registers an observer to be notified whenever a specific courier is modified.
+    /// Adds the observer.
     /// </summary>
     /// <param name="id">The unique identifier of the courier to observe.</param>
     /// <param name="observer">An action to invoke when the specified courier is updated.</param>
@@ -41,7 +41,7 @@ internal class CourierImplementation : ICourier
         CourierManager.Observers.AddObserver(id, observer); //stage 5
 
     /// <summary>
-    /// Unregisters an observer that was previously registered for courier list changes.
+    /// Removes the observer.
     /// </summary>
     /// <param name="listObserver">The observer action to remove.</param>
     /// <remarks>
@@ -52,7 +52,7 @@ internal class CourierImplementation : ICourier
         CourierManager.Observers.RemoveListObserver(listObserver); //stage 5
 
     /// <summary>
-    /// Unregisters an observer that was previously registered for a specific courier.
+    /// Removes the observer.
     /// </summary>
     /// <param name="id">The unique identifier of the courier being observed.</param>
     /// <param name="observer">The observer action to remove.</param>
@@ -64,7 +64,7 @@ internal class CourierImplementation : ICourier
         CourierManager.Observers.RemoveObserver(id, observer); //stage 5
 
     /// <summary>
-    /// Adds a new courier to the system.
+    /// Add Courier.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation (typically a manager or director).</param>
     /// <param name="newCourier">The courier object containing the details to be added.</param>
@@ -79,7 +79,7 @@ internal class CourierImplementation : ICourier
     }
 
     /// <summary>
-    /// Retrieves detailed information about a specific courier.
+    /// Asynchronously gets the courier details value.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation.</param>
     /// <param name="courierId">The unique identifier of the courier to retrieve.</param>
@@ -92,7 +92,7 @@ internal class CourierImplementation : ICourier
         => CourierManager.GetCourierDetailsAsync(requesterId, courierId);
 
     /// <summary>
-    /// Retrieves a filtered list of couriers.
+    /// Gets the couriers list value.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation.</param>
     /// <param name="isActive">Optional filter by active status. Pass <c>null</c> to include both active and inactive couriers.</param>
@@ -106,7 +106,7 @@ internal class CourierImplementation : ICourier
         => CourierManager.GetCouriersList(requesterId, isActive, status);
 
     /// <summary>
-    /// Authenticates a user (director or courier) with their credentials.
+    /// Login.
     /// </summary>
     /// <param name="Id">The unique identifier of the user attempting to log in.</param>
     /// <param name="password">The password provided by the user for authentication.</param>
@@ -119,7 +119,7 @@ internal class CourierImplementation : ICourier
         => CourierManager.Login(Id, password);
 
     /// <summary>
-    /// Removes a courier from the system by deactivating or deleting the record.
+    /// Remove Courier.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation (typically a manager or director).</param>
     /// <param name="courierId">The unique identifier of the courier to remove.</param>
@@ -134,7 +134,7 @@ internal class CourierImplementation : ICourier
     }
 
     /// <summary>
-    /// Updates the details of an existing courier.
+    /// Updates the courier.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this operation.</param>
     /// <param name="updatedCourier">The courier object with updated information.</param>
@@ -149,7 +149,7 @@ internal class CourierImplementation : ICourier
     }
 
     /// <summary>
-    /// Promotes a courier to director status, granting them elevated privileges and responsibilities.
+    /// Promote To Director.
     /// </summary>
     /// <param name="requesterId">The ID of the user requesting this promotion (typically an existing director).</param>
     /// <param name="courierId">The unique identifier of the courier to promote.</param>

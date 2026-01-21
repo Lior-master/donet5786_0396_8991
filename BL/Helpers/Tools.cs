@@ -6,19 +6,25 @@ using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 
+/// <summary>
+/// Provides cross-cutting helper utilities for synchronization and tooling.
+/// </summary>
 namespace Helpers;
 
 /// <summary>
-/// Provides utility helper methods for the Business Logic layer.
+/// Represents the tools component in this layer.
 /// Includes distance calculations, status transformations, geocoding operations, and scheduling utilities.
 /// </summary>
 internal static class Tools
 {
+    /// <summary>
+    /// Stores the s dal value.
+    /// </summary>
     private static readonly IDal s_dal = Factory.Get;
     internal const string InvalidAddressMarker = "INVALID_ADDRESS";
 
     /// <summary>
-    /// Converts an object to a formatted string representation of its public properties.
+    /// To String Property.
     /// </summary>
     /// <typeparam name="T">The type of the object to convert.</typeparam>
     /// <param name="t">The object instance to convert. If null, returns an empty string.</param>
@@ -56,7 +62,7 @@ internal static class Tools
         => Task.FromResult(ToStringProperty(t));
 
     /// <summary>
-    /// Central ETA computation when distance is already known.
+    /// Estimate Arrival.
     /// Uses a consistent speed source (configuration) and a single formula: ETA = pickupTime + distance/speed.
     /// Falls back to a conservative default if inputs are invalid.
     /// </summary>
@@ -76,7 +82,7 @@ internal static class Tools
         => Task.FromResult(EstimateArrival(pickupTime, transport, distanceKm));
 
     /// <summary>
-    /// Safe fallback ETA used when distance is unknown or cannot be computed.
+    /// Estimate Arrival Fallback.
     /// Keeps behavior explicit and centralized (instead of scattered "AddMinutes(30)" in multiple places).
     /// </summary>
     public static DateTime EstimateArrivalFallback(DateTime pickupTime)
@@ -86,7 +92,7 @@ internal static class Tools
         => Task.FromResult(EstimateArrivalFallback(pickupTime));
 
     /// <summary>
-    /// Calculates the great-circle distance between two geographic points using the Haversine formula.
+    /// Bird Distance.
     /// This is the shortest distance over the earth's surface (ignoring elevation and roads).
     /// </summary>
     /// <param name="lat1">Latitude of the first point in degrees (-90 to 90).</param>
@@ -122,7 +128,7 @@ internal static class Tools
         => Task.FromResult(BirdDistance(lat1, lon1, lat2, lon2));
 
     /// <summary>
-    /// Determines the overall order status based on delivery records, prioritizing successful deliveries.
+    /// Calculate Order Status.
     /// </summary>
     /// <param name="deliveries">A list of delivery records associated with the order. Can be null or empty.</param>
     /// <returns>
@@ -178,7 +184,7 @@ internal static class Tools
         => Task.FromResult(CalculateOrderStatus(deliveries));
 
     /// <summary>
-    /// Calculates the actual road distance between two geographic points using the LocationIQ routing API.
+    /// Asynchronously calculate Route Distance.
     /// Provides more accurate distance estimates than the Haversine formula by following roads.
     /// </summary>
     /// <param name="lat1">Latitude of the starting point in degrees.</param>
@@ -270,7 +276,7 @@ internal static class Tools
     }
 
     /// <summary>
-    /// Determines the delivery speed based on the transport method.
+    /// Gets the speed value.
     /// </summary>
     /// <param name="transport">The delivery transport method (Car, Motorcycle, Bike, Foot).</param>
     /// <param name="config">The configuration object containing speed settings for each transport type.</param>
@@ -295,7 +301,7 @@ internal static class Tools
         => Task.FromResult(GetSpeed(transport, config));
 
     /// <summary>
-    /// Updates a courier's active status based on inactivity duration.
+    /// Updates the courier activity.
     /// Deactivates the courier if they have been inactive longer than the specified threshold.
     /// </summary>
     /// <param name="courier">The courier record to evaluate.</param>
@@ -331,7 +337,7 @@ internal static class Tools
         => Task.FromResult(UpdateCourierActivity(courier, inactivityThreshold));
 
     /// <summary>
-    /// Determines whether a delivery was completed on time.
+    /// Is Delivery On Time.
     /// </summary>
     /// <param name="d">The delivery record to check.</param>
     /// <param name="expectedTime">The expected or maximum allowed arrival time.</param>
@@ -377,7 +383,7 @@ internal static class Tools
     };
 
     /// <summary>
-    /// Semaphore to enforce rate limiting on geocoding API requests (one at a time).
+    /// Semaphore Slim.
     /// </summary>
     private static readonly SemaphoreSlim s_geoRateGate = new SemaphoreSlim(1, 1);
     
@@ -388,25 +394,25 @@ internal static class Tools
     private static DateTime s_lastGeoRequestUtc = DateTime.MinValue;
     
     /// <summary>
-    /// Minimum interval (in milliseconds) required between consecutive geocoding API requests.
+    /// Time Span From Milliseconds.
     /// Set to 550ms to comply with LocationIQ rate limits.
     /// </summary>
     private static readonly TimeSpan s_minGeoInterval = TimeSpan.FromMilliseconds(400);
 
     /// <summary>
-    /// Thread-safe cache mapping normalized addresses to their geographic coordinates.
+    /// Concurrent Dictionary String.
     /// Key: normalized address string (lowercase, trimmed, single spaces).
     /// Value: tuple containing latitude and longitude.
     /// </summary>
     private static readonly ConcurrentDictionary<string, (double lat, double lon)> s_geoCache = new();
 
     /// <summary>
-    /// Thread-safe cache for route distance calculations to avoid duplicate concurrent requests.
+    /// Performs the operation.
     /// </summary>
     private static readonly ConcurrentDictionary<string, Task<double>> s_routeDistanceCache = new();
 
     /// <summary>
-    /// Static constructor: initializes TLS 1.2 and default HTTP headers for geocoding client.
+    /// Initializes a new instance of the Tools class.
     /// </summary>
     /// <remarks>
     /// Enforces TLS 1.2 for compatibility with WPF and .NET Framework environments.
@@ -423,7 +429,7 @@ internal static class Tools
     }
 
     /// <summary>
-    /// Converts a textual address into geographic coordinates (Latitude, Longitude)
+    /// Initializes a new instance of the Task< class.
     /// using LocationIQ Forward Geocoding API.
     /// Results are cached to reduce API calls.
     /// </summary>
@@ -567,7 +573,7 @@ internal static class Tools
     }
 
     /// <summary>
-    /// Attempts to resolve coordinates for an address and returns null when the address is invalid.
+    /// Initializes a new instance of the Task< class.
     /// Network or service failures still throw so callers can decide whether to cancel the operation.
     /// </summary>
     public static async Task<(double Latitude, double Longitude)?> TryGetCoordinatesFromAddressAsync(string address)
@@ -594,7 +600,7 @@ internal static class Tools
     }
 
     /// <summary>
-    /// Cached wrapper around <see cref="CalculateRouteDistanceAsync"/> to prevent duplicate concurrent requests.
+    /// Asynchronously calculate Route Distance Cached.
     /// </summary>
     public static async Task<double> CalculateRouteDistanceCachedAsync(
         double lat1, double lon1,
@@ -615,7 +621,7 @@ internal static class Tools
     }
 
     /// <summary>
-    /// Enforces the rate limit for geocoding API requests by introducing a minimum delay between consecutive requests.
+    /// Asynchronously enforce Geo Rate Limit.
     /// Uses a semaphore to ensure thread-safe execution.
     /// </summary>
     /// <remarks>
@@ -650,7 +656,7 @@ internal static class Tools
     }
 
     /// <summary>
-    /// Normalizes an address string for consistent caching by converting to lowercase,
+    /// Normalize Address.
     /// trimming whitespace, and ensuring single spaces between words.
     /// </summary>
     /// <param name="a">The address string to normalize.</param>
@@ -662,7 +668,7 @@ internal static class Tools
         string.Join(' ', a.Trim().ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
     /// <summary>
-    /// Calculates the estimated arrival time for a delivery based on distance and speed.
+    /// Calculate Estimated Arrival.
     /// </summary>
     /// <param name="orderDate">The order date/time to use as the base for calculating arrival.</param>
     /// <param name="distanceKm">The delivery distance in kilometers. Must be non-negative.</param>
@@ -691,7 +697,7 @@ internal static class Tools
         => Task.FromResult(CalculateEstimatedArrival(orderDate, distanceKm, speedKmH));
 
     /// <summary>
-    /// Determines the schedule status of a delivery (OnTime, InRisk, or Late)
+    /// Calculate Schedule Status.
     /// based on order status, estimated arrival, maximum allowed arrival, and actual arrival times.
     /// </summary>
     /// <param name="status">The current order status.</param>

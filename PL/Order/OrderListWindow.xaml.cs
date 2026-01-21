@@ -8,8 +8,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL.Order;
 
+/// <summary>
+/// Represents the order list window component in this layer.
+/// </summary>
 public partial class OrderListWindow : Window
 {
     static readonly BlApi.IBl s_bl = BlApi.Factory.Get();
@@ -17,19 +23,31 @@ public partial class OrderListWindow : Window
     // Stage 7: Mutex for order list observer
     private readonly ObserverMutex _orderListMutex = new(); // stage 7
 
+    /// <summary>
+    /// Stores the observer registered value.
+    /// </summary>
     private bool _observerRegistered = false;
 
+    /// <summary>
+    /// Initializes a new instance of the OrderListWindow class.
+    /// </summary>
     public OrderListWindow()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Gets or sets the order list value.
+    /// </summary>
     public IEnumerable<BO.OrderInList> OrderList
     {
         get => (IEnumerable<BO.OrderInList>)GetValue(OrderListProperty);
         set => SetValue(OrderListProperty, value);
     }
 
+    /// <summary>
+    /// Stores the order list property value.
+    /// </summary>
     public static readonly DependencyProperty OrderListProperty =
         DependencyProperty.Register(
             nameof(OrderList),
@@ -37,14 +55,23 @@ public partial class OrderListWindow : Window
             typeof(OrderListWindow),
             new PropertyMetadata(null));
 
+    /// <summary>
+    /// Gets or sets the filter type order value.
+    /// </summary>
     public PL.FilterTypeOrder FilterTypeOrder { get; set; } = PL.FilterTypeOrder.All;
 
+    /// <summary>
+    /// Gets or sets the is loading value.
+    /// </summary>
     public bool IsLoading
     {
         get => (bool)GetValue(IsLoadingProperty);
         set => SetValue(IsLoadingProperty, value);
     }
 
+    /// <summary>
+    /// Stores the is loading property value.
+    /// </summary>
     public static readonly DependencyProperty IsLoadingProperty =
         DependencyProperty.Register(
             nameof(IsLoading),
@@ -52,9 +79,21 @@ public partial class OrderListWindow : Window
             typeof(OrderListWindow),
             new PropertyMetadata(false));
 
+    /// <summary>
+    /// Gets or sets the order status value.
+    /// </summary>
     public BO.OrderStatus OrderStatus { get; set; } = BO.OrderStatus.All;
+    /// <summary>
+    /// Gets or sets the order type value.
+    /// </summary>
     public BO.OrderType OrderType { get; set; } = BO.OrderType.All;
+    /// <summary>
+    /// Gets or sets the fragility level value.
+    /// </summary>
     public BO.FragilityLevel FragilityLevel { get; set; } = BO.FragilityLevel.All;
+    /// <summary>
+    /// Gets or sets the schedule status value.
+    /// </summary>
     public BO.ScheduleStatus ScheduleStatus { get; set; } = BO.ScheduleStatus.All;
 
     private async Task<List<BO.OrderInList>> FetchOrderListAsync()
@@ -117,6 +156,15 @@ public partial class OrderListWindow : Window
     // ================================
     //   STAGE 7 OBSERVER (THREAD SAFE)
     // ================================
+    /// <summary>
+    /// Handles order list observer notifications from the business layer.
+    /// </summary>
+    /// <remarks>
+    /// Observers can be invoked from background threads, so <see cref="Dispatcher"/> is used to
+    /// marshal UI updates to the STA thread. The <see cref="ObserverMutex"/> prevents overlapping
+    /// refreshes and requests a restart when notifications arrive during an active refresh
+    /// (stage 7 observer pattern).
+    /// </remarks>
     private void orderListObserver()
     {
         if (_orderListMutex.CheckAndSetLoadInProgressOrRestartRequired())
@@ -356,6 +404,12 @@ public partial class OrderListWindow : Window
         new OrderWindow().Show();
     }
 
+    /// <summary>
+    /// Apply Filters And Refresh.
+    /// </summary>
+    /// <param name="filterType">The filter type value.</param>
+    /// <param name="null">The null value.</param>
+    /// <param name="null">The null value.</param>
     public void ApplyFiltersAndRefresh(PL.FilterTypeOrder filterType, BO.ScheduleStatus? scheduleStatus = null, BO.OrderStatus? orderStatus = null)
     {
         FilterTypeOrder = filterType;

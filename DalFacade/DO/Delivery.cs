@@ -1,7 +1,7 @@
 ﻿namespace DO
 {
     /// <summary>
-    /// Represents a delivery assignment linking an order to a courier, with timing,
+    /// Fields.
     /// distance and transport metadata used to track and manage the delivery lifecycle.
     /// </summary>
     /// <param name="Id">Unique identifier of the delivery.</param>
@@ -34,7 +34,7 @@
     )
     {
         /// <summary>
-        /// Initializes a new instance of <see cref="Delivery"/> with default values.
+        /// Initializes a new instance of the Delivery class.
         /// </summary>
         /// <remarks>
         /// Defaults:

@@ -11,27 +11,48 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL.Courier;
 
 /// <summary>
-/// Window that lists open orders available to the courier and allows assignment.
+/// Refresh.
 /// Relies on BL observers for refresh (AssignOrderToCourier triggers notifications).
 /// </summary>
 public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChanged
 {
     private static readonly IBl s_bl = Factory.Get();
 
+    /// <summary>
+    /// Stores the courier id value.
+    /// </summary>
     private readonly int _courierId;
+    /// <summary>
+    /// Stores the boss id value.
+    /// </summary>
     private readonly int _bossId;
 
+    /// <summary>
+    /// Stores the orders observer value.
+    /// </summary>
     private readonly Action _ordersObserver;
 
     // Stage 7: prevents re-entrant refreshes and ensures we rerun if updates arrive mid-refresh
     private readonly ObserverMutex _openOrdersMutex = new(); // stage 7
 
+    /// <summary>
+    /// Stores the observer registered value.
+    /// </summary>
     private bool _observerRegistered = false;
 
+    /// <summary>
+    /// Stores the is loading value.
+    /// </summary>
     private bool _isLoading;
+    /// <summary>
+    /// Gets or sets the is loading value.
+    /// </summary>
     public bool IsLoading
     {
         get => _isLoading;
@@ -44,11 +65,23 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     }
 
     // Property to track the assigned order ID
+    /// <summary>
+    /// Gets or sets the assigned order id value.
+    /// </summary>
     public int? AssignedOrderId { get; private set; }
 
+    /// <summary>
+    /// Performs the operation.
+    /// </summary>
     public ObservableCollection<OpenOrderInList> OpenOrders { get; } = new();
 
+    /// <summary>
+    /// Stores the filter status message value.
+    /// </summary>
     private string _filterStatusMessage = string.Empty;
+    /// <summary>
+    /// Gets or sets the filter status message value.
+    /// </summary>
     public string FilterStatusMessage
     {
         get => _filterStatusMessage;
@@ -59,6 +92,10 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
+    /// <summary>
+    /// Initializes a new instance of the CourierOrderSelectionWindow class.
+    /// </summary>
+    /// <param name="courierId">The courier id value.</param>
     public CourierOrderSelectionWindow(int courierId)
     {
         InitializeComponent();
@@ -150,6 +187,15 @@ public partial class CourierOrderSelectionWindow : Window, INotifyPropertyChange
     // ================================
     // Stage 7-safe observer callback
     // ================================
+    /// <summary>
+    /// Handles order observer notifications and refreshes the open-order list.
+    /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to marshal updates to the UI thread and
+    /// <see cref="ObserverMutex"/> to prevent overlapping refresh runs. If a notification arrives
+    /// during an active refresh, the mutex requests a restart to ensure the latest data is shown
+    /// (stage 7 observer pattern).
+    /// </remarks>
     private void OrdersObserverCallback()
     {
         if (_openOrdersMutex.CheckAndSetLoadInProgressOrRestartRequired())

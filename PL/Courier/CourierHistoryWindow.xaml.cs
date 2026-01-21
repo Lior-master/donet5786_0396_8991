@@ -8,37 +8,61 @@ using BlApi;
 using BO;
 using Helpers;
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL.Courier;
 
 /// <summary>
-/// Delivery history window for a courier.
+/// Represents the courier delivery history window component in this layer.
 /// Uses ListBox + full data binding.
 /// </summary>
 public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChanged
 {
     private static readonly IBl s_bl = Factory.Get();
 
+    /// <summary>
+    /// Stores the courier id value.
+    /// </summary>
     private readonly int _courierId;
+    /// <summary>
+    /// Stores the order list observer value.
+    /// </summary>
     private readonly Action _orderListObserver;
 
     // Stage 7: prevents concurrent re-entrant refreshes from observer callbacks
     private readonly ObserverMutex _historyMutex = new(); // stage 7
 
+    /// <summary>
+    /// Stores the observer registered value.
+    /// </summary>
     private bool _observerRegistered = false;
 
     // =========================
     // Bindable collections
     // =========================
 
+    /// <summary>
+    /// Performs the operation.
+    /// </summary>
     public ObservableCollection<ClosedDeliveryInList> Deliveries { get; } = new();
 
+    /// <summary>
+    /// Performs the operation.
+    /// </summary>
     public ObservableCollection<OrderTypeFilterItem> OrderTypeFilters { get; } = new();
 
     // =========================
     // Bindable selected items
     // =========================
 
+    /// <summary>
+    /// Stores the selected delivery value.
+    /// </summary>
     private ClosedDeliveryInList? _selectedDelivery;
+    /// <summary>
+    /// Gets or sets the selected delivery value.
+    /// </summary>
     public ClosedDeliveryInList? SelectedDelivery
     {
         get => _selectedDelivery;
@@ -49,7 +73,13 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
         }
     }
 
+    /// <summary>
+    /// Stores the selected order type filter value.
+    /// </summary>
     private OrderTypeFilterItem? _selectedOrderTypeFilter;
+    /// <summary>
+    /// Gets or sets the selected order type filter value.
+    /// </summary>
     public OrderTypeFilterItem? SelectedOrderTypeFilter
     {
         get => _selectedOrderTypeFilter;
@@ -67,6 +97,10 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
     // ctor
     // =========================
 
+    /// <summary>
+    /// Initializes a new instance of the CourierDeliveryHistoryWindow class.
+    /// </summary>
+    /// <param name="courierId">The courier id value.</param>
     public CourierDeliveryHistoryWindow(int courierId)
     {
         InitializeComponent();
@@ -154,6 +188,14 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
     // Stage 7-safe observer callback
     // =========================
 
+    /// <summary>
+    /// Refreshes courier history in response to order observer notifications.
+    /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to update the UI thread and <see cref="ObserverMutex"/>
+    /// to prevent overlapping refreshes. If a notification arrives mid-refresh, the mutex
+    /// requests a restart so the latest history is displayed (stage 7 observer pattern).
+    /// </remarks>
     private void RefreshFromBl()
     {
         if (_historyMutex.CheckAndSetLoadInProgressOrRestartRequired())
@@ -198,13 +240,24 @@ public partial class CourierDeliveryHistoryWindow : Window, INotifyPropertyChang
 }
 
 /// <summary>
-/// Helper class for OrderType filtering in ComboBox.
+/// Represents the order type filter item component in this layer.
 /// </summary>
 public sealed class OrderTypeFilterItem
 {
+    /// <summary>
+    /// Gets or sets the display value.
+    /// </summary>
     public string Display { get; }
+    /// <summary>
+    /// Gets or sets the order type value.
+    /// </summary>
     public OrderType? OrderType { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the OrderTypeFilterItem class.
+    /// </summary>
+    /// <param name="display">The display value.</param>
+    /// <param name="orderType">The order type value.</param>
     public OrderTypeFilterItem(string display, OrderType? orderType)
     {
         Display = display;

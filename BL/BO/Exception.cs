@@ -9,16 +9,19 @@
 /// This exception is serializable to support cross-AppDomain and remote communication scenarios.
 /// </remarks>
 [Serializable]
+/// <summary>
+/// Represents the BL temporary not available exception component in this layer.
+/// </summary>
 public class BLTemporaryNotAvailableException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLTemporaryNotAvailableException"/> class with a specified error message.
+    /// Initializes a new instance of the BLTemporaryNotAvailableException class.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     public BLTemporaryNotAvailableException(string? message) : base(message) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLTemporaryNotAvailableException"/> class with a specified error message
+    /// Initializes a new instance of the BLTemporaryNotAvailableException class.
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
@@ -36,16 +39,19 @@ public class BLTemporaryNotAvailableException : Exception
 /// This exception is serializable to support cross-AppDomain and remote communication scenarios.
 /// </remarks>
 [Serializable]
+/// <summary>
+/// Represents the BL already exists exception component in this layer.
+/// </summary>
 public class BLAlreadyExistsException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLAlreadyExistsException"/> class with a specified error message.
+    /// Initializes a new instance of the BLAlreadyExistsException class.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     public BLAlreadyExistsException(string? message) : base(message) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLAlreadyExistsException"/> class with a specified error message
+    /// Initializes a new instance of the BLAlreadyExistsException class.
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
@@ -62,16 +68,19 @@ public class BLAlreadyExistsException : Exception
 /// This exception is serializable to support cross-AppDomain and remote communication scenarios.
 /// </remarks>
 [Serializable]
+/// <summary>
+/// Represents the BL not found exception component in this layer.
+/// </summary>
 public class BLNotFoundException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLNotFoundException"/> class with a specified error message.
+    /// Initializes a new instance of the BLNotFoundException class.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     public BLNotFoundException(string? message) : base(message) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLNotFoundException"/> class with a specified error message
+    /// Initializes a new instance of the BLNotFoundException class.
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
@@ -89,16 +98,19 @@ public class BLNotFoundException : Exception
 /// This exception is serializable to support cross-AppDomain and remote communication scenarios.
 /// </remarks>
 [Serializable]
+/// <summary>
+/// Represents the BL invalid input exception component in this layer.
+/// </summary>
 public class BLInvalidInputException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLInvalidInputException"/> class with a specified error message.
+    /// Initializes a new instance of the BLInvalidInputException class.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     public BLInvalidInputException(string? message) : base(message) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLInvalidInputException"/> class with a specified error message
+    /// Initializes a new instance of the BLInvalidInputException class.
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
@@ -116,16 +128,19 @@ public class BLInvalidInputException : Exception
 /// This exception is serializable to support cross-AppDomain and remote communication scenarios.
 /// </remarks>
 [Serializable]
+/// <summary>
+/// Represents the BL unauthorized exception component in this layer.
+/// </summary>
 public class BLUnauthorizedException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLUnauthorizedException"/> class with a specified error message.
+    /// Initializes a new instance of the BLUnauthorizedException class.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     public BLUnauthorizedException(string? message) : base(message) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLUnauthorizedException"/> class with a specified error message
+    /// Initializes a new instance of the BLUnauthorizedException class.
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
@@ -143,16 +158,19 @@ public class BLUnauthorizedException : Exception
 /// This exception is serializable to support cross-AppDomain and remote communication scenarios.
 /// </remarks>
 [Serializable]
+/// <summary>
+/// Represents the BL invalid operation exception component in this layer.
+/// </summary>
 public class BLInvalidOperationException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLInvalidOperationException"/> class with a specified error message.
+    /// Initializes a new instance of the BLInvalidOperationException class.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     public BLInvalidOperationException(string? message) : base(message) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLInvalidOperationException"/> class with a specified error message
+    /// Initializes a new instance of the BLInvalidOperationException class.
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
@@ -170,16 +188,19 @@ public class BLInvalidOperationException : Exception
 /// This exception is serializable to support cross-AppDomain and remote communication scenarios.
 /// </remarks>
 [Serializable]
+/// <summary>
+/// Represents the BL failed operation component in this layer.
+/// </summary>
 public class BLFailedOperation : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLFailedOperation"/> class with a specified error message.
+    /// Initializes a new instance of the BLFailedOperation class.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     public BLFailedOperation(string? message) : base(message) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLFailedOperation"/> class with a specified error message
+    /// Initializes a new instance of the BLFailedOperation class.
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
@@ -188,18 +209,18 @@ public class BLFailedOperation : Exception
 }
 
 /// <summary>
-/// Exception thrown when an address is invalid or cannot be resolved, but the operation succeeded.
+/// Represents the BL bad address exception component in this layer.
 /// Used to surface a non-fatal warning to the UI after persistence.
 /// </summary>
 public class BLBadAddressException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLBadAddressException"/> class with a specified error message.
+    /// Initializes a new instance of the BLBadAddressException class.
     /// </summary>
     public BLBadAddressException(string? message) : base(message) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BLBadAddressException"/> class with a specified error message
+    /// Initializes a new instance of the BLBadAddressException class.
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>

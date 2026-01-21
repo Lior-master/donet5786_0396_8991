@@ -1,5 +1,8 @@
 ﻿namespace Stage0;
 
+/// <summary>
+/// Represents the program component in this layer.
+/// </summary>
 partial class Program
 {
     static void Main(string[] args)

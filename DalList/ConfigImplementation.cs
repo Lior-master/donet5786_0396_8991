@@ -1,7 +1,13 @@
 ﻿using DalApi;
 
+/// <summary>
+/// Defines types for this application layer.
+/// </summary>
 namespace Dal;
 
+/// <summary>
+/// Represents the config implementation component in this layer.
+/// </summary>
 internal class ConfigImplementation : IConfig
 {
     public DateTime Clock { get => Config.Clock; set => Config.Clock = value; }
@@ -30,6 +36,9 @@ internal class ConfigImplementation : IConfig
     public double MaxDistance { get => Config.MaxDistance ?? 0.0; set => Config.MaxDistance = value; }
 
 
+    /// <summary>
+    /// Resets the component.
+    /// </summary>
     public void Reset()
     {
         Config.Reset();

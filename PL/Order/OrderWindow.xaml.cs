@@ -10,22 +10,43 @@ using BlApi;
 using BO;
 using Helpers; // ObserverMutex
 
+/// <summary>
+/// Implements the presentation layer UI and related view models.
+/// </summary>
 namespace PL.Order;
 
+/// <summary>
+/// Represents the order window component in this layer.
+/// </summary>
 public partial class OrderWindow : Window, INotifyPropertyChanged
 {
     private static readonly IBl s_bl = Factory.Get();
 
     private readonly int bossId = s_bl.Admin.GetConfig().BossId;
+    /// <summary>
+    /// Stores the is create mode value.
+    /// </summary>
     private readonly bool _isCreateMode;
 
+    /// <summary>
+    /// Stores the order id value.
+    /// </summary>
     private readonly int? _orderId;
+    /// <summary>
+    /// Stores the order observer value.
+    /// </summary>
     private readonly Action? _orderObserver;
 
     // Stage 7: prevents concurrent re-entrant refreshes from background threads
     private readonly ObserverMutex _orderItemMutex = new(); // stage 7
 
+    /// <summary>
+    /// Stores the order current value.
+    /// </summary>
     private BO.Order? _orderCurrent;
+    /// <summary>
+    /// Gets or sets the order current value.
+    /// </summary>
     public BO.Order OrderCurrent
     {
         get => _orderCurrent!;
@@ -42,7 +63,7 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     /// <summary>
-    /// Create mode constructor (New Order).
+    /// Initializes a new instance of the OrderWindow class.
     /// </summary>
     public OrderWindow()
     {
@@ -64,7 +85,7 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Update mode constructor (Existing Order by Id).
+    /// Initializes a new instance of the OrderWindow class.
     /// </summary>
     public OrderWindow(int orderId)
     {
@@ -120,9 +141,14 @@ public partial class OrderWindow : Window, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Stage 7-safe observer callback: can be invoked from background threads.
-    /// Uses Dispatcher + ObserverMutex to prevent overlapping refreshes.
+    /// Refreshes the order from the business layer.
     /// </summary>
+    /// <remarks>
+    /// Uses <see cref="Dispatcher"/> to marshal updates to the UI thread and
+    /// <see cref="ObserverMutex"/> to prevent overlapping refreshes. If a notification arrives
+    /// during an active refresh, the mutex requests a restart so the UI reflects the latest data
+    /// (stage 7 observer pattern).
+    /// </remarks>
     private void RefreshOrderFromBl()
     {
         // Stage 7: prevent re-entrancy (multiple observer notifications)
